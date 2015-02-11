@@ -22,7 +22,7 @@ Now it compiles in Visual Studio only:
 
 - include fgEngine.h to precompiled header
 - add fgEngine.cpp to project or include to other *.cpp
-- define _CRT_SECURE_NO_WARNINGS, include <windows.h>, may be more
+- define _CRT_SECURE_NO_WARNINGS, include `<windows.h>`, may be more
 - enjoy (see for templates in wiki)
 
 ### Public Domain, 
