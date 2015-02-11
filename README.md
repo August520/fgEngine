@@ -1,9 +1,11 @@
 ### Frenetic Game Engine v0.10
-```
-It is open source native C++ game framework for creating 2D and 3D mobile games. 
+
+It is open source native C++ game framework for creating 2D and 3D mobile games.
+ 
 It offer code-oriented workflow, but it simple to understand, simple to prototyping.
+
 It uses modified versions or parts of:
-```
+
 - lua
 - LodePNG
 - stb libraries
