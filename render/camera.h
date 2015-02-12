@@ -17,7 +17,6 @@ namespace fg {
             const math::p3d &getTarget() const override;
             
             math::m4x4  getVPMatrix() const override;
-            math::m4x4  getOrientedVPMatrix() const override;
             math::p3d   screenToWorld(const math::p2d &screenCoord) const override;
             math::p2d   worldToScreen(const math::p3d &pointInWorld) const override;
 

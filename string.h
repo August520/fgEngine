@@ -6,6 +6,7 @@ namespace fg {
     class string final {
     public:
         static unsigned utf8CharLen(const char *utf8Char);
+        static unsigned utf8ToUTF16(const char *utf8Char, unsigned *utf8Len = nullptr);
 
         static const unsigned short CAPACITY = 16;
 

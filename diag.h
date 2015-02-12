@@ -1,4 +1,6 @@
 
+#include <ctime>
+
 namespace fg {
     namespace diag {
         class LogInterface {

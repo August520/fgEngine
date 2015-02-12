@@ -308,8 +308,8 @@ namespace fg {
             
             void  updateOrientation() override;
             
-            const math::m3x3  &getOrientationTransform2D() const override;
-            const math::m4x4  &getOrientationTransform3D() const override;
+            //const math::m3x3  &getOrientationTransform2D() const override;
+            //const math::m4x4  &getOrientationTransform3D() const override;
 
             void  fsFormFilesList(const char *path, std::string &out) override;
             bool  fsLoadFile(const char *path, void **oBinaryDataPtr, unsigned int *oSize) override;
@@ -355,9 +355,6 @@ namespace fg {
             DesktopRenderTarget     *_curRenderTarget;
             DesktopSampler          *_defSampler;
             DesktopRenderTarget     _defRenderTarget;
-            
-            math::m3x3 _orientationTransform2D;
-            math::m4x4 _orientationTransform3D;
 
             float      _nativeWidth;
             float      _nativeHeight;

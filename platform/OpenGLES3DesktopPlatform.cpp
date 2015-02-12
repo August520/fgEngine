@@ -693,14 +693,6 @@ namespace fg {
         
         }
 
-        const math::m3x3 &ES3DesktopPlatform::getOrientationTransform2D() const {
-            return _orientationTransform2D;
-        }
-
-        const math::m4x4 &ES3DesktopPlatform::getOrientationTransform3D() const {
-            return _orientationTransform3D;
-        }
-
         void ES3DesktopPlatform::fsFormFilesList(const char *path, std::string &out) {
             struct fn {
                 static void formList(const char *path, std::string &out) {

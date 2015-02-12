@@ -12,6 +12,36 @@ namespace fg {
         }
         return i;
     }
+
+    unsigned string::utf8ToUTF16(const char *utf8Char, unsigned *utf8Len) {
+        const unsigned char *src = (const unsigned char *)utf8Char;
+        unsigned length = 1;
+        unsigned result = *src++;
+
+        if((result & 0x80) != 0) {
+            if((result & 0xe0) == 0xc0) {
+                result = (result & 0x1f) << 6;
+                result |= (*src++ & 0x3f);
+                length++;
+            }
+            else if((result & 0xf0) == 0xe0) {
+                result = (result & 0x0f) << 12;
+                result |= (*src++ & 0x3f) << 6;
+                result |= (*src++ & 0x3f);
+                length++;
+            }
+            else if((result & 0xf8) == 0xf0) {
+                result = (result & 0x07) << 18;
+                result |= (*src++ & 0x3f) << 12;
+                result |= (*src++ & 0x3f) << 6;
+                result |= (*src++ & 0x3f);
+                length++;
+            }
+        }
+
+        if(utf8Len) *utf8Len = length;
+        return result < 0xffff ? result : '?';
+    }
     
     string::string() : _size(0), _str(_data.chars), _hash(0) {
         _data.chars[0] = 0;        

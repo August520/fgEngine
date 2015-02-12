@@ -151,7 +151,7 @@ namespace fg {
         public:
             virtual void  cache(const char *mbcharsz, unsigned fontSize) = 0;
             virtual void  getChar(const char *mbChar, unsigned fontSize, FontCharInfo &out) const = 0;
-            virtual void  getChar(wchar_t ch, unsigned fontSize, FontCharInfo &out) const = 0;
+            virtual void  getChar(unsigned short ch, unsigned fontSize, FontCharInfo &out) const = 0;
             virtual float getTextWidth(const char *text, unsigned fontSize) const = 0;
         };
 

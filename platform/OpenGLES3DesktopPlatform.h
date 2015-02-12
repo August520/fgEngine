@@ -214,7 +214,9 @@ namespace fg {
         //---
 
         struct DesktopInitParams : public platform::InitParams {
-            HWND hWindow;
+            float appWidth;
+            float appHeight;
+            HWND  hWindow;
         };
 
         class ES3DesktopPlatform : public platform::EnginePlatformInterface {
@@ -238,8 +240,8 @@ namespace fg {
 
             void  updateOrientation() override;
 
-            const math::m3x3  &getOrientationTransform2D() const override;
-            const math::m4x4  &getOrientationTransform3D() const override;
+            //const math::m3x3  &getOrientationTransform2D() const override;
+            //const math::m4x4  &getOrientationTransform3D() const override;
 
             void  fsFormFilesList(const char *path, std::string &out) override;
             bool  fsLoadFile(const char *path, void **oBinaryDataPtr, unsigned int *oSize) override;
@@ -290,8 +292,6 @@ namespace fg {
             EGLSurface	_eglSurface;
             EGLContext	_eglContext;
 
-            math::m3x3  _orientationTransform2D;
-            math::m4x4  _orientationTransform3D;
             float       _nativeWidth;
             float       _nativeHeight;
 

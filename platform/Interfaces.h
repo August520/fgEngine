@@ -263,8 +263,8 @@ namespace fg {
             virtual float getTextureWidth(TextureSlot slot) const = 0;
             virtual float getTextureHeight(TextureSlot slot) const = 0;
 
-            virtual const math::m3x3  &getOrientationTransform2D() const = 0;
-            virtual const math::m4x4  &getOrientationTransform3D() const = 0;
+            //virtual const math::m3x3  &getOrientationTransform2D() const = 0;
+            //virtual const math::m4x4  &getOrientationTransform3D() const = 0;
 
             virtual void  fsFormFilesList(const char *path, std::string &out) = 0;
             virtual bool  fsLoadFile(const char *path, void **oBinaryDataPtr, unsigned *oSize) = 0;

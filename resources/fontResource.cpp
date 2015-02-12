@@ -1,5 +1,5 @@
 
-//TODO: margin, safe, un-winapi, optimization
+//TODO: margin, safe, optimization, full utf8
 
 namespace fg {
     namespace resources {
@@ -79,12 +79,11 @@ namespace fg {
                 curFontSize = _cacheFontSize(fontSize);
             }
 
-            wchar_t  ch = 0;
+            unsigned short ch = 0;
             unsigned chLen = 0;
 
             for(const char *charPtr = mbcharsz; charPtr[0] != 0; charPtr += chLen){
-                chLen = mblen(charPtr, 6);
-                mbtowc(&ch, charPtr, chLen);
+                ch = string::utf8ToUTF16(charPtr, &chLen);
 
                 auto charIndex = curFontSize->chars.find(ch);
                 if(charIndex == curFontSize->chars.end()){
@@ -94,28 +93,26 @@ namespace fg {
         }
 
         void FontResource::getChar(const char *mbChar, unsigned fontSize, FontCharInfo &out) const {
-            wchar_t ch = 0;
-            MultiByteToWideChar(CP_UTF8, 0, mbChar, 4, &ch, 1);
-            getChar(ch, fontSize, out);
+            getChar(string::utf8ToUTF16(mbChar), fontSize, out);
         }
 
-        void FontResource::getChar(wchar_t ch, unsigned fontSize, FontCharInfo &out) const {
+        void FontResource::getChar(unsigned short ch, unsigned fontSize, FontCharInfo &out) const {
             FontSize        *curFontSize = nullptr;
             const CharData  *charData = nullptr;
             auto  fontSzIndex = _fontSizes.find(fontSize);
 
-            if(fontSzIndex != _fontSizes.end()){
+            if(fontSzIndex != _fontSizes.end()) {
                 curFontSize = fontSzIndex->second;
             }
-            else{
+            else {
                 curFontSize = _cacheFontSize(fontSize);
             }
             auto charIndex = curFontSize->chars.find(ch);
 
-            if(charIndex == curFontSize->chars.end()){
+            if(charIndex == curFontSize->chars.end()) {
                 charData = _cacheChar(ch, curFontSize);
             }
-            else{
+            else {
                 charData = charIndex->second;
             }
 
@@ -131,15 +128,14 @@ namespace fg {
         }
 
         float FontResource::getTextWidth(const char *text, unsigned fontSize) const {
-            float    fontScale = stbtt_ScaleForPixelHeight(&_self, float(fontSize));
-            float    resultWidth = 0.0f;
+            float fontScale = stbtt_ScaleForPixelHeight(&_self, float(fontSize));
+            float resultWidth = 0.0f;
             
             unsigned tchLen = 0;
-            wchar_t  ch = 0;
+            unsigned short ch = 0;
 
-            for(const char *charPtr = text; charPtr[0] != 0; charPtr += tchLen){
-                tchLen = fg::string::utf8CharLen(charPtr);
-                MultiByteToWideChar(CP_UTF8, 0, charPtr, 4, &ch, 1);
+            for(const char *charPtr = text; charPtr[0] != 0; charPtr += tchLen) {
+                string::utf8ToUTF16(charPtr, &tchLen);
 
                 int glyph = stbtt_FindGlyphIndex(&_self, ch);
                 int iadvance, ilsb; 
@@ -153,7 +149,7 @@ namespace fg {
             return resultWidth;
         }
 
-        const FontResource::CharData *FontResource::_cacheChar(wchar_t ch, FontSize *fontSize) const {
+        const FontResource::CharData *FontResource::_cacheChar(unsigned short ch, FontSize *fontSize) const {
             FontSize::Atlas *curAtlas = nullptr;
             CharData *curCharData = new CharData;
 
@@ -203,7 +199,7 @@ namespace fg {
             return curCharData;
         }
 
-        FontResource::FontSize *FontResource::_cacheFontSize(unsigned int fontSize) const {
+        FontResource::FontSize *FontResource::_cacheFontSize(unsigned fontSize) const {
             FontSize *curFontSize = new FontSize();
 
             curFontSize->atlasList = nullptr;

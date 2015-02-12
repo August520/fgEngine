@@ -93,10 +93,6 @@ namespace fg {
             return _viewMatrix * _projMatrix;
         }
 
-        math::m4x4 Camera::getOrientedVPMatrix() const {
-            return _viewMatrix * _projMatrix * _platform.getOrientationTransform3D();
-        }
-
         math::p3d Camera::screenToWorld(const math::p2d &screenCoord) const {
             math::m4x4 tv = _viewMatrix;
             tv._41 = 0.0f;

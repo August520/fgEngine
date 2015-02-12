@@ -203,21 +203,15 @@ namespace fg {
     //---
 
     void Engine::pointerPressed(unsigned pointID, float pointX, float pointY) {
-        math::p2d pos(pointX * _platform.getScreenWidth() / _appWidth, pointY * _platform.getScreenHeight() / _appHeight);
-        pos.transform(_platform.getOrientationTransform2D(), true);
-        _input.genPointerEvent(input::PointerEvent::PRESS, input::PointerEventArgs(pointID, pos.x, pos.y));
+        _input.genPointerEvent(input::PointerEvent::PRESS, input::PointerEventArgs(pointID, pointX, pointY));
     }
 
     void Engine::pointerMoved(unsigned pointID, float pointX, float pointY) {
-        math::p2d pos(pointX * _platform.getScreenWidth() / _appWidth, pointY * _platform.getScreenHeight() / _appHeight);
-        pos.transform(_platform.getOrientationTransform2D(), true);
-        _input.genPointerEvent(input::PointerEvent::MOVE, input::PointerEventArgs(pointID, pos.x, pos.y));
+        _input.genPointerEvent(input::PointerEvent::MOVE, input::PointerEventArgs(pointID, pointX, pointY));
     }
 
     void Engine::pointerReleased(unsigned pointID, float pointX, float pointY) {
-        math::p2d pos(pointX * _platform.getScreenWidth() / _appWidth, pointY * _platform.getScreenHeight() / _appHeight);
-        pos.transform(_platform.getOrientationTransform2D(), true);
-        _input.genPointerEvent(input::PointerEvent::RELEASE, input::PointerEventArgs(pointID, pos.x, pos.y));
+        _input.genPointerEvent(input::PointerEvent::RELEASE, input::PointerEventArgs(pointID, pointX, pointY));
     }
 
     void Engine::keyDown(unsigned vkeyCode) {

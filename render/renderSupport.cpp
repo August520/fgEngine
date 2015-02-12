@@ -54,7 +54,7 @@ namespace fg {
             _platform->rdSetRasterizerParams(_defRasterizerParams);
 
             _frameConstants->data.camPosition = _camera->getPosition();
-            _frameConstants->data.camViewProj = _camera->getOrientedVPMatrix();
+            _frameConstants->data.camViewProj = _camera->getVPMatrix();
             _frameConstants->data.globalSunDirection = math::p3d(1.0f, 2.0f, 1.5f).normalize();
             _frameConstants->data.scrWidth = _platform->getScreenWidth();
             _frameConstants->data.scrHeight = _platform->getScreenHeight();

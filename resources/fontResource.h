@@ -25,7 +25,7 @@ namespace fg {
                     ~Atlas();
                 };
 
-                std::unordered_map <wchar_t, CharData *> chars;
+                std::unordered_map <unsigned short, CharData *> chars;
 
                 Atlas   *atlasList;
                 Atlas   *atlasListEnd;
@@ -58,17 +58,17 @@ namespace fg {
 
             void  cache(const char *mbcharsz, unsigned fontSize) override;
             void  getChar(const char *mbChar, unsigned fontSize, FontCharInfo &out) const override;
-            void  getChar(wchar_t ch, unsigned fontSize, FontCharInfo &out) const override;
+            void  getChar(unsigned short ch, unsigned fontSize, FontCharInfo &out) const override;
             float getTextWidth(const char *text, unsigned fontSize) const override;
 
         protected:
-            mutable std::unordered_map     <unsigned int, FontSize *> _fontSizes;
+            mutable std::unordered_map     <unsigned, FontSize *> _fontSizes;
             mutable tools::stbtt_fontinfo  _self;            
             platform::PlatformInterface    *_api;
             const diag::LogInterface       *_log;
 
-            const CharData  *_cacheChar(wchar_t ch, FontSize *fontSize) const;
-            FontSize        *_cacheFontSize(unsigned int fontSize) const;
+            const CharData  *_cacheChar(unsigned short ch, FontSize *fontSize) const;
+            FontSize        *_cacheFontSize(unsigned fontSize) const;
         };
     }
 }
