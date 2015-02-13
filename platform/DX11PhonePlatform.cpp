@@ -943,6 +943,8 @@ namespace fg {
                 if(curDisplayInfo->NativeOrientation == DisplayOrientations::Portrait || curDisplayInfo->NativeOrientation == DisplayOrientations::PortraitFlipped) {
                     _nativeWidth = params.scrHeight;
                     _nativeHeight = params.scrWidth;
+                    _inputTransform.setRotate(3.0f * M_PI / 2.0f);
+                    _inputTransform._32 = _nativeHeight;
                     rotationMode = DXGI_MODE_ROTATION_ROTATE270;
                 }
                 if(curDisplayInfo->NativeOrientation == DisplayOrientations::LandscapeFlipped) {
@@ -953,6 +955,8 @@ namespace fg {
                 if(curDisplayInfo->NativeOrientation == DisplayOrientations::Landscape || curDisplayInfo->NativeOrientation == DisplayOrientations::LandscapeFlipped) {
                     _nativeWidth = params.scrHeight;
                     _nativeHeight = params.scrWidth;
+                    _inputTransform.setRotate(3.0f * M_PI / 2.0f);
+                    _inputTransform._32 = _nativeHeight;
                     rotationMode = DXGI_MODE_ROTATION_ROTATE270;
                 }
             }
@@ -1161,6 +1165,10 @@ namespace fg {
             return _lastTextureHeight[unsigned(slot)];
         }
 
+        const math::m3x3 &PhonePlatform::getInputTransform() const {
+            return _inputTransform;
+        }
+
         unsigned PhonePlatform::getMemoryUsing() const {
             return unsigned(Windows::System::MemoryManager::AppMemoryUsage / 1024);
         }
@@ -1183,19 +1191,26 @@ namespace fg {
             
             if(_orientation == platform::Orientation::ALBUM) {
                 if(curDisplayInfo->CurrentOrientation == DisplayOrientations::Portrait) {
+                    _inputTransform.setRotate(3.0f * M_PI / 2.0f);
+                    _inputTransform._32 = _nativeHeight;
                     rotationMode = DXGI_MODE_ROTATION_ROTATE270;
                 }
                 if(curDisplayInfo->CurrentOrientation == DisplayOrientations::PortraitFlipped) {
+                    _inputTransform.setRotate(3.0f * M_PI / 2.0f);
+                    _inputTransform._32 = _nativeHeight;
                     rotationMode = DXGI_MODE_ROTATION_ROTATE90;
                 }
                 if(curDisplayInfo->CurrentOrientation == DisplayOrientations::Landscape) {
+                    _inputTransform.identity();                    
                     rotationMode = DXGI_MODE_ROTATION_ROTATE270;
                 }
                 if(curDisplayInfo->CurrentOrientation == DisplayOrientations::LandscapeFlipped) {
+                    _inputTransform.identity();                    
                     rotationMode = DXGI_MODE_ROTATION_ROTATE90;
                 }
             }
             else {
+                _inputTransform.identity();
                 rotationMode = DXGI_MODE_ROTATION_IDENTITY;                
             }
 

@@ -203,15 +203,18 @@ namespace fg {
     //---
 
     void Engine::pointerPressed(unsigned pointID, float pointX, float pointY) {
-        _input.genPointerEvent(input::PointerEvent::PRESS, input::PointerEventArgs(pointID, pointX, pointY));
+        math::p2d pos = math::p2d(pointX, pointY).transform(_platform.getInputTransform(), true);
+        _input.genPointerEvent(input::PointerEvent::PRESS, input::PointerEventArgs(pointID, pos.x, pos.y));
     }
 
     void Engine::pointerMoved(unsigned pointID, float pointX, float pointY) {
-        _input.genPointerEvent(input::PointerEvent::MOVE, input::PointerEventArgs(pointID, pointX, pointY));
+        math::p2d pos = math::p2d(pointX, pointY).transform(_platform.getInputTransform(), true);
+        _input.genPointerEvent(input::PointerEvent::MOVE, input::PointerEventArgs(pointID, pos.x, pos.y));
     }
 
     void Engine::pointerReleased(unsigned pointID, float pointX, float pointY) {
-        _input.genPointerEvent(input::PointerEvent::RELEASE, input::PointerEventArgs(pointID, pointX, pointY));
+        math::p2d pos = math::p2d(pointX, pointY).transform(_platform.getInputTransform(), true);
+        _input.genPointerEvent(input::PointerEvent::RELEASE, input::PointerEventArgs(pointID, pos.x, pos.y));
     }
 
     void Engine::keyDown(unsigned vkeyCode) {

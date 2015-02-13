@@ -311,6 +311,8 @@ namespace fg {
             float getTextureWidth(platform::TextureSlot slot) const override;
             float getTextureHeight(platform::TextureSlot slot) const override;
 
+            const math::m3x3  &getInputTransform() const override;
+
             unsigned  getMemoryUsing() const override;
             unsigned  getMemoryLimit() const override;
             unsigned  long long getTimeMs() const override;
@@ -363,6 +365,7 @@ namespace fg {
             PhoneRenderTarget        _defRenderTarget;
             Agile                    <CoreWindow ^> _window;
             platform::Orientation    _orientation;
+            math::m3x3               _inputTransform;
             
             float      _nativeWidth;
             float      _nativeHeight;
