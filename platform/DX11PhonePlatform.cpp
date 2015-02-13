@@ -1202,14 +1202,6 @@ namespace fg {
             _swapChain->SetRotation(rotationMode);
         }
 
-        const math::m3x3 &PhonePlatform::getOrientationTransform2D() const {
-            return _orientationTransform2D;
-        }
-
-        const math::m4x4 &PhonePlatform::getOrientationTransform3D() const {
-            return _orientationTransform3D;
-        }
-
         void PhonePlatform::fsFormFilesList(const char *path, std::string &out) {
             struct fn {
                 static void formListW(const wchar_t *pathw, std::string &out) {
