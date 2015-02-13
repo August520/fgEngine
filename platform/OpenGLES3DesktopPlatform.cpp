@@ -691,6 +691,11 @@ namespace fg {
         
         }
 
+        const math::m3x3 &ES3DesktopPlatform::getInputTransform() const {
+            static math::m3x3 _idmat;
+            return _idmat;
+        }
+
         void ES3DesktopPlatform::fsFormFilesList(const char *path, std::string &out) {
             struct fn {
                 static void formList(const char *path, std::string &out) {

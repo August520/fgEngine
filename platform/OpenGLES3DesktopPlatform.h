@@ -239,9 +239,8 @@ namespace fg {
             unsigned  long long getTimeMs() const override;
 
             void  updateOrientation() override;
-
-            //const math::m3x3  &getOrientationTransform2D() const override;
-            //const math::m4x4  &getOrientationTransform3D() const override;
+            
+            const math::m3x3  &getInputTransform() const override;
 
             void  fsFormFilesList(const char *path, std::string &out) override;
             bool  fsLoadFile(const char *path, void **oBinaryDataPtr, unsigned int *oSize) override;
