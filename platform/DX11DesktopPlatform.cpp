@@ -1,6 +1,4 @@
 
-#include "pch.h"
-
 namespace fg {
     namespace dx11 {
         

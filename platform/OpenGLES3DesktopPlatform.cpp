@@ -1,6 +1,4 @@
 
-#include "pch.h"
-
 namespace fg {
     namespace opengl {
         const unsigned __VERTEX_PARAMS_MAX     = 5;
