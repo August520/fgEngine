@@ -1,7 +1,6 @@
 
 namespace fg {
-    namespace dx11 {
-        
+    namespace dx11 {        
         const unsigned __VERTEX_SIZES_MAX      = 5;
         const unsigned __CB_NAMES_MAX          = 5;
         const unsigned __LAYOUT_FMT_MAX        = 5;
@@ -1260,29 +1259,54 @@ namespace fg {
                 }
             };
 
-            wchar_t       pathw[260];
-            size_t        tmpSz = 0;
-            mbstowcs_s(&tmpSz, pathw, path, 260);
-            pathw[tmpSz] = 0;
+            wchar_t     pathw[260];            
+            unsigned    wcount = 0;
+            const char  *source = path;
 
+            while(*source != 0) {
+                unsigned chlen = 1;
+                wchar_t  ch = string::utf8ToUTF16(source, &chlen);
+
+                pathw[wcount++] = ch == '/' ? '\\' : ch;
+                source += chlen;
+            }
+
+            pathw[wcount++] = 0;
             fn::formListW(pathw, out);
         }
 
         bool PhonePlatform::fsLoadFile(const char *path, void **oBinaryDataPtr, unsigned int *oSize) {
-            FILE *fp = nullptr;
-            fopen_s(&fp, path, "rb");
+            wchar_t loadPathW[260];
 
-            if(fp) {
-                fseek(fp, 0, SEEK_END);
-                *oSize = ftell(fp);
-                fseek(fp, 0, SEEK_SET);
-                *oBinaryDataPtr = new char [*oSize];
-                fread(*oBinaryDataPtr, 1, *oSize, fp);
+            const char *source = path;
+            unsigned    wcount = 0;
 
-                fclose(fp);
+            while(*source != 0) {
+                unsigned chlen = 1;
+                wchar_t  ch = string::utf8ToUTF16(source, &chlen);
+
+                loadPathW[wcount++] = ch == '/' ? '\\' : ch;
+                source += chlen;
+            }
+
+            loadPathW[wcount++] = 0;
+            auto folder = Windows::ApplicationModel::Package::Current->InstalledLocation;
+
+            try {
+                StorageFile ^file = create_task(folder->GetFileAsync(ref new String(loadPathW))).get();
+                Streams::IRandomAccessStream ^stream = create_task(file->OpenAsync(FileAccessMode::Read)).get();
+                Streams::DataReader ^reader = ref new Streams::DataReader(stream);
+
+                unsigned bytesLoaded = create_task(reader->LoadAsync((unsigned)stream->Size)).get();
+                *oBinaryDataPtr = new char [bytesLoaded];
+                *oSize = bytesLoaded;
+                reader->ReadBytes(Platform::ArrayReference <unsigned char>((unsigned char *)*oBinaryDataPtr, bytesLoaded, false));
                 return true;
             }
-            return false;
+            catch(Exception ^ex) {
+                _log.msgError("cant't open file %s", path);
+                return false;
+            }
         }
 
         void PhonePlatform::sndSetGlobalVolume(float volume) {
