@@ -1308,6 +1308,39 @@ namespace fg {
             }
         }
 
+        // not tested
+        bool PhonePlatform::fsSaveFile(const char *path, void *iBinaryDataPtr, unsigned iSize) {
+            wchar_t loadPathW[260];
+
+            const char *source = path;
+            unsigned    wcount = 0;
+
+            while(*source != 0) {
+                unsigned chlen = 1;
+                wchar_t  ch = string::utf8ToUTF16(source, &chlen);
+
+                loadPathW[wcount++] = ch == '/' ? '\\' : ch;
+                source += chlen;
+            }
+
+            loadPathW[wcount++] = 0;
+            auto folder = Windows::ApplicationModel::Package::Current->InstalledLocation;
+
+            try {
+                StorageFile ^file = create_task(folder->CreateFileAsync(ref new String(loadPathW))).get();
+                Streams::IRandomAccessStream ^stream = create_task(file->OpenAsync(FileAccessMode::ReadWrite)).get();
+                Streams::DataWriter ^writer = ref new Streams::DataWriter (stream);
+
+                writer->WriteBytes(Platform::ArrayReference <unsigned char> ((unsigned char *)iBinaryDataPtr, iSize, false));
+                create_task(writer->StoreAsync()).get();
+
+                return true;
+            }
+            catch(Exception ^ex) {
+                return false;
+            }
+        }
+
         void PhonePlatform::sndSetGlobalVolume(float volume) {
             _mastering->SetVolume(volume);
         }

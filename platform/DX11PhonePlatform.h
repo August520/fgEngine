@@ -321,6 +321,8 @@ namespace fg {
             
             void  fsFormFilesList(const char *path, std::string &out) override;
             bool  fsLoadFile(const char *path, void **oBinaryDataPtr, unsigned int *oSize) override;
+            bool  fsSaveFile(const char *path, void *iBinaryDataPtr, unsigned iSize) override;
+
             void  sndSetGlobalVolume(float volume) override;
 
             platform::SoundEmitterInterface          *sndCreateEmitter(unsigned sampleRate, unsigned channels) override;
