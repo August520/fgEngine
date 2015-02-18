@@ -1304,7 +1304,6 @@ namespace fg {
                 return true;
             }
             catch(Exception ^ex) {
-                _log.msgError("cant't open file %s", path);
                 return false;
             }
         }
