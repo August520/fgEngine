@@ -60,7 +60,7 @@ namespace fg {
             }
             else{
                 log.msgError("ClipSetResource::loaded %s / %s", _loadPath, src.getLastError());
-                _state = ResourceState::INVALID;
+                _loadingState = ResourceLoadingState::INVALID;
             }
         }
 

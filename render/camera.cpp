@@ -4,7 +4,7 @@ namespace fg {
         Camera::Camera(const platform::EnginePlatformInterface &iplatform) : _platform(iplatform) {
             _fov = 90.0f;
             _zNear = 0.1f;
-            _zFar = 1000.0f;
+            _zFar = 100.0f;
 
             setLookAtByRight(math::p3d(8, 8, 8), math::p3d(3, 3, 3), math::p3d(1, 0, -1));
         }
@@ -87,6 +87,14 @@ namespace fg {
 
         const math::p3d &Camera::getTarget() const {
             return _target;
+        }
+
+        float Camera::getZNear() const {
+            return _zNear;
+        }
+
+        float Camera::getZFar() const {
+            return _zFar;
         }
 
         math::m4x4 Camera::getVPMatrix() const {

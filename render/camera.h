@@ -16,6 +16,9 @@ namespace fg {
             const math::p3d &getPosition() const override;
             const math::p3d &getTarget() const override;
             
+            float getZNear() const override;
+            float getZFar() const override;
+
             math::m4x4  getVPMatrix() const override;
             math::p3d   screenToWorld(const math::p2d &screenCoord) const override;
             math::p2d   worldToScreen(const math::p3d &pointInWorld) const override;

@@ -79,6 +79,12 @@ namespace fg {
                 delete[] _physicVertexes;
             }
 
+            delete[] _vertexArray;
+            _vertexArray = nullptr;
+            
+            delete[] _indexArray;
+            _indexArray = nullptr;
+            
             if(_meshBuffer) {
                 _meshBuffer->release();
             }
@@ -264,14 +270,6 @@ namespace fg {
         void ModelResource::Mesh::construct(platform::PlatformInterface &api) {
             if(_vertexArraySize > 0 && _indexArraySize > 0) {
                 _meshBuffer = api.rdCreateIndexedVertexBuffer(platform::VertexType::SKIN_NORMAL, _vertexArraySize, _indexArraySize, false, _vertexArray, _indexArray);
-                
-                delete[] _vertexArray;
-                _vertexArray = nullptr;
-                //_vertexArraySize = 0;
-
-                delete[] _indexArray;
-                _indexArray = nullptr;
-                //_indexArraySize = 0;
             }
 
             if(_skinBoneTableSize > 0) {
@@ -379,7 +377,7 @@ namespace fg {
             return _meshBuffer;
         }
 
-        const platform::ShaderConstantBufferInterface *ModelResource::Mesh::getSkinConstBuffer() const {
+        platform::ShaderConstantBufferInterface *ModelResource::Mesh::getSkinConstBuffer() const {
             return _skinBuffer;
         }
 
@@ -389,6 +387,14 @@ namespace fg {
 
         unsigned ModelResource::Mesh::getGeometryIndexCount() const {
             return _indexArraySize;
+        }
+
+        const VertexSkinnedNormal *ModelResource::Mesh::getGeometryVertexes() const {
+            return _vertexArray;
+        }
+
+        const unsigned short *ModelResource::Mesh::getGeometryIndexes() const {
+            return _indexArray;
         }
 
         //--- Model -----------------------------------------------------------------

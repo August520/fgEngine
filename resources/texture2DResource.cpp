@@ -49,7 +49,7 @@ namespace fg {
                 }
                 else {
                     log.msgError("ResTexture::_loadedCallback %s bad format", _loadPath);
-                    _state = ResourceState::INVALID;
+                    _loadingState = ResourceLoadingState::INVALID;
                 }
             }
         }
