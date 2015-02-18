@@ -1,7 +1,13 @@
 
 namespace fg {
     namespace resources {
-        Resource::Resource(const char *path, bool unloadable) : _binaryData(nullptr), _binarySize(0), _state(ResourceState::NOTLOADED), _unloadable(unloadable) {
+        Resource::Resource(const char *path, bool unloadable) : 
+            _binaryData(nullptr), 
+            _binarySize(0), 
+            _loadingState(ResourceLoadingState::NOTLOADED),
+            _savingState(ResourceSavingState::SAVED),
+            _unloadable(unloadable) 
+        {
             int i = 0;
             
             while(path[i] != 0 && path[i] != '\n' && path[i] != '\r') {
@@ -20,7 +26,7 @@ namespace fg {
         
         bool Resource::valid() const {
             _unusedTime = 0;
-            return _state == ResourceState::CONSTRUCTED;
+            return _loadingState == ResourceLoadingState::CONSTRUCTED;
         }
 
         bool Resource::unloadable() const {
@@ -30,9 +36,13 @@ namespace fg {
         const fg::string &Resource::getFilePath() const {
             return _loadPath;
         }
+        
+        ResourceLoadingState Resource::getLoadingState() const {
+            return _loadingState;
+        }
 
-        ResourceState Resource::getState() const {
-            return _state;
+        ResourceSavingState Resource::getSavingState() const {
+            return _savingState;
         }
 
         unsigned Resource::getUnusedTimeMs() const {
@@ -43,8 +53,12 @@ namespace fg {
             _unusedTime = value;
         }
         
-        void Resource::setState(ResourceState state) {
-            _state = state;
+        void Resource::setLoadingState(ResourceLoadingState state) {
+            _loadingState = state;
+        }
+
+        void Resource::setSavingState(ResourceSavingState state) {
+            _savingState = state;
         }
 
         void Resource::setBinary(void *binaryData, unsigned binarySize) {
@@ -58,6 +72,9 @@ namespace fg {
             _binarySize = 0;
         }
 
+        bool Resource::commit() {
+            return true;
+        }
     }
 }
 

@@ -11,13 +11,17 @@ namespace fg {
             void loaded(const diag::LogInterface &log) override;
             bool constructed(const diag::LogInterface &log, platform::PlatformInterface &api) override;
             void unloaded() override;
+            void save(void **outBinary, unsigned *outSize) const override;
 
+            void setText(const char *txt, unsigned size);
+            bool commit() override;
+            
             const char *getText() const override;
-            int   getSize() const override;
-
+            unsigned    getSize() const override;
+                        
         private:
             char *_text;
-            int  _size;
+            unsigned _size;
         };
     }
 }

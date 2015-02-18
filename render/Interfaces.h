@@ -31,6 +31,9 @@ namespace fg {
 
             virtual const math::p3d &getPosition() const = 0;
             virtual const math::p3d &getTarget() const = 0;
+            
+            virtual float getZNear() const = 0;
+            virtual float getZFar() const = 0;
 
             virtual math::m4x4  getVPMatrix() const = 0;
             virtual math::p3d   screenToWorld(const math::p2d &screenCoord) const = 0;
@@ -61,7 +64,7 @@ namespace fg {
             virtual void drawText2D(const fg::string &utf8text, const math::m3x3 &trfm, float z, const resources::FontResourceInterface *font, unsigned size) = 0;
             virtual void drawScreenQuad(float x, float y, float width, float height) = 0;
             virtual void drawMesh(const resources::MeshInterface *mesh) = 0;
-
+            
             virtual void debugDrawBox(const math::m4x4 &transform, const platform::color &c) = 0;
             virtual void debugDrawBox(const math::p3d &pMin, const math::p3d &pMax, const platform::color &c) = 0;
             virtual void debugDrawFillBox(const math::m4x4 &transform, const platform::color &c) = 0;

@@ -219,36 +219,36 @@ namespace fg {
         }
 
         void DesktopIndexedVertexBuffer::updateVertices(void *data) {
-            D3D11_BOX tbox;
-            tbox.back = 1;
-            tbox.front = 0;
-            tbox.left = 0;
-            tbox.right = _vcount * _vsize;
-            tbox.top = 0;
-            tbox.bottom = 1;
-            _owner->_context->UpdateSubresource(_vbuffer, 0, &tbox, data, 0, 0);
+            D3D11_MAPPED_SUBRESOURCE mapres = {0};
+            _owner->_context->Map(_vbuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapres);
+            
+            if(mapres.pData) {
+                memcpy(mapres.pData, data, _vcount * _vsize);
+            }
+            
+            _owner->_context->Unmap(_vbuffer, 0);
         }
 
         void DesktopIndexedVertexBuffer::updateIndices(void *data) {
-            D3D11_BOX tbox;
-            tbox.back = 1;
-            tbox.front = 0;
-            tbox.left = 0;
-            tbox.right = _icount * sizeof(unsigned short);
-            tbox.top = 0;
-            tbox.bottom = 1;
-            _owner->_context->UpdateSubresource(_ibuffer, 0, &tbox, data, 0, 0);
+            D3D11_MAPPED_SUBRESOURCE mapres = {0};
+            _owner->_context->Map(_ibuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapres);
+
+            if(mapres.pData) {
+                memcpy(mapres.pData, data, _icount * sizeof(unsigned short));
+            }
+
+            _owner->_context->Unmap(_ibuffer, 0);
         }
 
         void *DesktopIndexedVertexBuffer::lockVertices() {
             D3D11_MAPPED_SUBRESOURCE mapres = {0};
-            _owner->_context->Map(_vbuffer, 0, D3D11_MAP_WRITE, 0, &mapres);
+            _owner->_context->Map(_vbuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapres);
             return mapres.pData;
         }
 
         void *DesktopIndexedVertexBuffer::lockIndices() {
             D3D11_MAPPED_SUBRESOURCE mapres = {0};
-            _owner->_context->Map(_ibuffer, 0, D3D11_MAP_WRITE, 0, &mapres);
+            _owner->_context->Map(_ibuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapres);
             return mapres.pData;
         }
 
@@ -480,11 +480,21 @@ namespace fg {
             D3D11_INPUT_ELEMENT_DESC inputDesc[32] = {0};
         
             for(unsigned i = 0; i < inputCount; i++) {
-                binary.readString(inputNames[i]);
-                unsigned int floatCount = binary.readDword();
+                unsigned short nameLen = binary.readWord();
+                binary.readBytes(inputNames[i], nameLen);
+                inputNames[i][nameLen] = 0;
+
+                unsigned  semanticIndex = 0;
+                char      &semanticIndexCh = inputNames[i][nameLen - 1];
+                unsigned  floatCount = binary.readDword();
+
+                if(semanticIndexCh >= '0' && semanticIndexCh <= '9') {
+                    semanticIndex = semanticIndexCh - '0';
+                    semanticIndexCh = 0;
+                }
 
                 inputDesc[i].SemanticName = inputNames[i];
-                inputDesc[i].SemanticIndex = 0;
+                inputDesc[i].SemanticIndex = semanticIndex;
                 inputDesc[i].Format = __nativeLayoutFormats[floatCount].format;
                 inputDesc[i].InputSlot = 0;
                 inputDesc[i].AlignedByteOffset = offset;
@@ -572,10 +582,7 @@ namespace fg {
 
         void DesktopShaderConstantBuffer::set() {
             _owner->_context->VSSetConstantBuffers(_inputIndex, 1, &_self);
-            
-            if(_inputIndex < unsigned(platform::ShaderConstBufferUsing::SKIN_DATA)) {
-                _owner->_context->PSSetConstantBuffers(_inputIndex, 1, &_self);
-            }
+            _owner->_context->PSSetConstantBuffers(_inputIndex, 1, &_self);
         }
 
         bool DesktopShaderConstantBuffer::valid() const {
@@ -1095,7 +1102,7 @@ namespace fg {
 
         unsigned  long long DesktopPlatform::getTimeMs() const {
             unsigned __int64 ttime;
-            GetSystemTimeAsFileTime((FILETIME *)&ttime);
+            GetSystemTimePreciseAsFileTime((FILETIME *)&ttime);
             return ttime / 10000;
         }
 
@@ -1167,6 +1174,18 @@ namespace fg {
                 *oBinaryDataPtr = new char [*oSize];
                 fread(*oBinaryDataPtr, 1, *oSize, fp);
 
+                fclose(fp);
+                return true;
+            }
+            return false;
+        }
+
+        bool DesktopPlatform::fsSaveFile(const char *path, void *iBinaryDataPtr, unsigned iSize) {
+            FILE *fp = nullptr;
+            fopen_s(&fp, path, "wb");
+
+            if(fp) {
+                fwrite(iBinaryDataPtr, 1, iSize, fp);
                 fclose(fp);
                 return true;
             }

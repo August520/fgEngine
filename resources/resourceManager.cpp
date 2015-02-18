@@ -45,6 +45,29 @@ namespace fg {
         
         }
 
+        ResourcePtr ResourceManager::createResource(const fg::string &fullpath) {
+            char bufName[256];
+            char bufExt[16];
+            
+            _getStringsFromPath(fullpath.data(), bufName, bufExt);
+            ManagedResourceInterface *res = _resources.get(bufName);
+
+            if(res == nullptr) {
+                res = _factory.createResource(bufExt, fullpath.data(), false);
+                res->setLoadingState(ResourceLoadingState::CONSTRUCTED);
+
+                if(res) {
+                    _resources.add(bufName, res);
+                    return res;
+                }
+            }
+            else {
+                return res;
+            }
+
+            return (ManagedResourceInterface *)nullptr;
+        }
+
         ResourcePtr ResourceManager::getResource(const fg::string &path) const {
             return _resources.get(path);
         }
@@ -73,25 +96,25 @@ namespace fg {
                 ManagedResourceInterface *curResource = _resources.nextItem();
 
                 if(curResource) {
-                    if(curResource->getState() == ResourceState::NOTLOADED){
-                        if(curResource->getUnusedTimeMs() <= FG_UNLOAD_TIME && _resourceFutures.size() < FG_RES_LOADING_MAX) {
-                            curResource->setState(ResourceState::LOADING);
+                    if(curResource->getLoadingState() == ResourceLoadingState::NOTLOADED){
+                        if(curResource->getUnusedTimeMs() <= FG_UNLOAD_TIME && _resourceLoadingFutures.size() < FG_RES_LOADING_MAX) {
+                            curResource->setLoadingState(ResourceLoadingState::LOADING);
 
                             platform::EnginePlatformInterface &platform = _platform;
                             const fg::diag::LogInterface &log = _log;
 
                             _futuresCount++;
-                            _resourceFutures.push_back(std::async(std::launch::async, [this, curResource, &platform, &log](){
+                            _resourceLoadingFutures.push_back(std::async(std::launch::async, [this, curResource, &platform, &log](){
                                 void      *binaryData = nullptr;
                                 unsigned  binarySize = 0;
                                 
                                 if(platform.fsLoadFile(curResource->getFilePath().data(), &binaryData, &binarySize)){
                                     curResource->setBinary(binaryData, binarySize);
                                     curResource->loaded(log);
-                                    curResource->setState(ResourceState::LOADED);
+                                    curResource->setLoadingState(ResourceLoadingState::LOADED);
                                 }
                                 else{
-                                    curResource->setState(ResourceState::INVALID);
+                                    curResource->setLoadingState(ResourceLoadingState::INVALID);
                                 }
 
                                 _futuresCount--;
@@ -99,11 +122,11 @@ namespace fg {
                             }));
                         }
                     }
-                    else if(curResource->getState() == ResourceState::CONSTRUCTED){
+                    else if(curResource->getLoadingState() == ResourceLoadingState::CONSTRUCTED){
                         #ifdef FG_RESOURCE_UNLOADABLE
                         if(curResource->unloadable() && curResource->getUnusedTimeMs() > FG_UNLOAD_TIME){
                             curResource->unloaded();
-                            curResource->setState(ResourceState::NOTLOADED);
+                            curResource->setLoadingState(ResourceLoadingState::NOTLOADED);
                             _log.msgInfo("%s unloaded", curResource->getFilePath().data());
                         }
                         else{
@@ -111,15 +134,38 @@ namespace fg {
                         }
                         #endif
                     }
+
+                    if(curResource->getSavingState() == ResourceSavingState::NEEDSAVE) {
+                        platform::EnginePlatformInterface &platform = _platform;
+                        const fg::diag::LogInterface &log = _log;
+
+                        curResource->setSavingState(ResourceSavingState::SAVING);
+                        _resourceSavingFutures.push_back(std::async(std::launch::async, [this, curResource, &platform, &log]() {
+                            void      *binaryData = nullptr;
+                            unsigned  binarySize = 0;
+
+                            curResource->save(&binaryData, &binarySize);
+
+                            if(platform.fsSaveFile(curResource->getFilePath().data(), binaryData, binarySize)) {
+                                curResource->setSavingState(ResourceSavingState::SAVED);
+                            }
+                            else {
+                                curResource->setSavingState(ResourceSavingState::INVALID);
+                            }
+
+                            delete binaryData;
+                            return curResource;
+                        }));
+                    }
                 }
             }
 
-            if(_resourceFutures.size()) {
-                if(_resourceFutures.front()._Is_ready()) { //
-                    ManagedResourceInterface *curResource = _resourceFutures.front().get();
-                    _resourceFutures.pop_front();
+            if(_resourceLoadingFutures.size()) {
+                if(_resourceLoadingFutures.front()._Is_ready()) { //
+                    ManagedResourceInterface *curResource = _resourceLoadingFutures.front().get();
+                    _resourceLoadingFutures.pop_front();
 
-                    if(curResource->getState() == ResourceState::LOADED) {
+                    if(curResource->getLoadingState() == ResourceLoadingState::LOADED) {
                         _log.msgInfo("%s loaded", curResource->getFilePath().data());
 
                         if(_platform.isInited()) {
@@ -128,7 +174,7 @@ namespace fg {
                             }
                         }
 
-                        curResource->setState(ResourceState::CONSTRUCTED);
+                        curResource->setLoadingState(ResourceLoadingState::CONSTRUCTED);
                         _log.msgInfo("%s constructed", curResource->getFilePath().data());                        
                     }
                     else {
@@ -136,6 +182,17 @@ namespace fg {
                     }
 
                     _elementInProgress--;
+                }
+            }
+
+            if(_resourceSavingFutures.size()) {
+                if(_resourceSavingFutures.front()._Is_ready()) { //
+                    ManagedResourceInterface *curResource = _resourceSavingFutures.front().get();
+                    _resourceSavingFutures.pop_front();
+
+                    if(curResource->getSavingState() == ResourceSavingState::INVALID) {
+                        _log.msgWarning("ResourceManager::_update / file %s can not be saved", curResource->getFilePath().data());
+                    }
                 }
             }
 
@@ -156,7 +213,7 @@ namespace fg {
             }
 
             _resListFutures.clear();
-            _resourceFutures.clear();
+            _resourceLoadingFutures.clear();
 
             _resources.foreach([](const fg::string &key, ManagedResourceInterface *ptr) {
                 delete ptr;

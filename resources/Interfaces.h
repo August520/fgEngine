@@ -5,13 +5,20 @@
 
 namespace fg {
     namespace resources {
-        enum class ResourceState {
-            NOTLOADED = 0,
-            LOADING = 1,
-            LOADED = 2,
+        enum class ResourceSavingState {
+            SAVED        = 0,
+            SAVING       = 1,
+            NEEDSAVE     = 2,
+            INVALID      = 3,
+        };
+        
+        enum class ResourceLoadingState {
+            NOTLOADED    = 0,
+            LOADING      = 1,
+            LOADED       = 2,
             CONSTRUCTING = 3,
-            CONSTRUCTED = 4,
-            INVALID = 5,
+            CONSTRUCTED  = 4,
+            INVALID      = 5,
         };
 
         //---
@@ -22,17 +29,21 @@ namespace fg {
 
             virtual bool valid() const = 0;
             virtual const fg::string &getFilePath() const = 0;
-            virtual ResourceState getState() const = 0;
+
+            virtual ResourceLoadingState getLoadingState() const = 0;
+            virtual ResourceSavingState  getSavingState() const = 0;
+            virtual bool commit() = 0;
         };
-
-
+        
         class ManagedResourceInterface : virtual public ResourceInterface {
         public:
-            virtual unsigned getUnusedTimeMs() const = 0;            
+            virtual ~ManagedResourceInterface() {}
+            virtual unsigned getUnusedTimeMs() const = 0;
 
             virtual bool unloadable() const = 0;
             virtual void freeBinary() = 0;
-            virtual void setState(ResourceState state) = 0;
+            virtual void setLoadingState(ResourceLoadingState state) = 0;
+            virtual void setSavingState(ResourceSavingState state) = 0;
             virtual void setUnusedTimeMs(unsigned value) = 0;
             virtual void setBinary(void *binaryData, unsigned binarySize) = 0;
             
@@ -42,23 +53,28 @@ namespace fg {
             // resource is ready (formed), and need platform to create
             // return true if engine must keep binary in memory
             virtual bool constructed(const diag::LogInterface &log, platform::PlatformInterface &api) = 0;
-
+            
+            // resource should free memory (unload texture/model data, large binary too)
             virtual void unloaded() = 0;
+
+            // saving to binary, called on a separate thread
+            virtual void save(void **outBinary, unsigned *outSize) const {}
         };
 
         //---------------------------------------------------------------------
 
         class TextResourceInterface : virtual public ResourceInterface {
         public:
+            virtual void  setText(const char *txt, unsigned size) = 0;
             virtual const char *getText() const = 0;
-            virtual int   getSize() const = 0;
+            virtual unsigned getSize() const = 0;
         };
 
         //---
 
         class ShaderResourceInterface : virtual public ResourceInterface {
         public:
-            virtual const platform::ShaderInterface *getPlatformObject() const = 0;
+            virtual const platform::ShaderInterface *getPlatformObject() const = 0;            
         };
 
         //---
@@ -98,11 +114,14 @@ namespace fg {
             virtual const math::p3d  &getMinBBoxPoint() const = 0;
             virtual const math::p3d  &getMaxBBoxPoint() const = 0;
             
-            virtual const platform::IndexedVertexBufferInterface   *getMeshBuffer() const = 0;
-            virtual const platform::ShaderConstantBufferInterface  *getSkinConstBuffer() const = 0;
+            virtual const platform::IndexedVertexBufferInterface  *getMeshBuffer() const = 0;
+            virtual platform::ShaderConstantBufferInterface       *getSkinConstBuffer() const = 0;
 
             virtual unsigned getGeometryVertexCount() const = 0;
             virtual unsigned getGeometryIndexCount() const = 0;
+
+            virtual const VertexSkinnedNormal *getGeometryVertexes() const = 0;
+            virtual const unsigned short *getGeometryIndexes() const = 0;
         };
 
         class ModelResourceInterface : virtual public ResourceInterface {
@@ -214,10 +233,10 @@ namespace fg {
         //---
 
         struct ResourcePtr {
-            const ManagedResourceInterface *_resource;
-            ResourcePtr(const ManagedResourceInterface *mres) : _resource(mres) {}
+            ManagedResourceInterface *_resource;
+            ResourcePtr(ManagedResourceInterface *mres) : _resource(mres) {}
 
-            template <typename DOWNTYPE> operator const DOWNTYPE *();
+            template <typename DOWNTYPE> operator DOWNTYPE *() const;
         };
 
         class ResourceManagerInterface {
@@ -229,6 +248,7 @@ namespace fg {
             virtual void unloadResourcesDir(const fg::string &dir) = 0;
             virtual void unloadResourcesList(const fg::string &resList) = 0;
             
+            virtual ResourcePtr createResource(const fg::string &fullpath) = 0;
             virtual ResourcePtr getResource(const fg::string &path) const = 0;
         };
 

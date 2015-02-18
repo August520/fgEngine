@@ -159,13 +159,14 @@ namespace fg {
 
     void Engine::updateAndDraw() {
         int64 curTime = _platform.getTimeMs();
-        float frameTimeMs = float(curTime - _lastFrameTimeStamp);
+        int64 curDelta = curTime - _lastFrameTimeStamp;
+        float frameTimeMs = float(curDelta);
 
         _lastFrameTimeStamp = curTime;
         _resMan.update(frameTimeMs);
 
         if(_isBaseResourcesLoaded) {
-            if(_updateHandler.isBinded()) {
+            if(_updateHandler.isBinded() && curDelta > 0) {
                 _updateHandler(frameTimeMs);
             }
 

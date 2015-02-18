@@ -29,6 +29,7 @@ typedef long long int64;
 #include "resources/resourceManager.h"
 
 #include "render/shaderConst.h"
+#include "render/transparentDrawer.h"
 #include "render/renderSupport.h"
 #include "render/defaultRender.h"
 

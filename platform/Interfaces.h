@@ -30,11 +30,11 @@ namespace fg {
         };
 
         enum class VertexType {
-            SIMPLE         = 0,  // p3d pos
-            TEXTURED       = 1,  // p3d pos, p2d uv
-            NORMAL         = 2,  // p3d pos, p2d uv, p3d nrm, p3d binormal, p3d tangent
-            SKIN_TEXTURED  = 3,  // p3d pos, p2d uv, p4d boneIndexes, p4d boneWeights
-            SKIN_NORMAL    = 4,  // p3d pos, p2d uv, p3d nrm, p3d binormal, p3d tangent, p4d boneIndexes, p4d boneWeights
+            SIMPLE            = 0,  // p3d pos
+            TEXTURED          = 1,  // p3d pos, p2d uv
+            NORMAL            = 2,  // p3d pos, p2d uv, p3d nrm, p3d binormal, p3d tangent
+            SKIN_TEXTURED     = 3,  // p3d pos, p2d uv, p4d boneIndexes, p4d boneWeights
+            SKIN_NORMAL       = 4,  // p3d pos, p2d uv, p3d nrm, p3d binormal, p3d tangent, p4d boneIndexes, p4d boneWeights
         };
 
         enum class TextureFormat {
@@ -267,6 +267,7 @@ namespace fg {
             
             virtual void  fsFormFilesList(const char *path, std::string &out) = 0;
             virtual bool  fsLoadFile(const char *path, void **oBinaryDataPtr, unsigned *oSize) = 0;
+            virtual bool  fsSaveFile(const char *path, void *iBinaryDataPtr, unsigned iSize) = 0;
 
             virtual void  rdPresent() = 0;
             virtual bool  isInited() = 0;

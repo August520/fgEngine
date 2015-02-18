@@ -91,7 +91,7 @@ namespace fg {
 
         void *ES3DesktopVertexBuffer::lock() {
             glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-            return glMapBufferRange(GL_ARRAY_BUFFER, 0, _length, GL_MAP_WRITE_BIT);
+            return glMapBufferRange(GL_ARRAY_BUFFER, 0, _length, GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
         }
 
         void ES3DesktopVertexBuffer::unlock() {
@@ -753,6 +753,18 @@ namespace fg {
                 *oBinaryDataPtr = new char[*oSize];
                 fread(*oBinaryDataPtr, 1, *oSize, fp);
 
+                fclose(fp);
+                return true;
+            }
+            return false;
+        }
+
+        bool ES3DesktopPlatform::fsSaveFile(const char *path, void *iBinaryDataPtr, unsigned iSize) {
+            FILE *fp = nullptr;
+            fopen_s(&fp, path, "wb");
+
+            if(fp) {
+                fwrite(iBinaryDataPtr, 1, iSize, fp);
                 fclose(fp);
                 return true;
             }

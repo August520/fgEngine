@@ -74,11 +74,14 @@ namespace fg {
                 const math::p3d  &getMinBBoxPoint() const override;
                 const math::p3d  &getMaxBBoxPoint() const override;
 
-                const platform::IndexedVertexBufferInterface *getMeshBuffer() const override;
-                const platform::ShaderConstantBufferInterface  *getSkinConstBuffer() const override;
+                const platform::IndexedVertexBufferInterface  *getMeshBuffer() const override;
+                platform::ShaderConstantBufferInterface       *getSkinConstBuffer() const override;
                 
                 unsigned getGeometryVertexCount() const override;
                 unsigned getGeometryIndexCount() const override;
+
+                const VertexSkinnedNormal *getGeometryVertexes() const override;
+                const unsigned short *getGeometryIndexes() const override;
                                 
             protected:
                 ModelResource  *_container;

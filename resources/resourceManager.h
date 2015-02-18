@@ -32,6 +32,7 @@ namespace fg {
             void unloadResourcesDir(const fg::string &dir) override;
             void unloadResourcesList(const fg::string &resList) override;
 
+            ResourcePtr createResource(const fg::string &fullpath) override;
             ResourcePtr getResource(const fg::string &path) const override;
 
             void init() override;
@@ -62,8 +63,9 @@ namespace fg {
             ResourceFactory _factory;
 
             std::list       <ResListFuture> _resListFutures;
-            std::list       <std::future <ManagedResourceInterface *>> _resourceFutures;
-            
+            std::list       <std::future <ManagedResourceInterface *>> _resourceLoadingFutures;
+            std::list       <std::future <ManagedResourceInterface *>> _resourceSavingFutures;
+
             callback        <void ()> _loadingCompleteCb;
             unsigned        _resListReady;
             unsigned        _elementInProgress;
