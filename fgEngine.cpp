@@ -47,6 +47,12 @@
 
 #include "input/InputManager.cpp"
 
+#include "particles/Modifier.h"
+#include "particles/ParticleEmitter.h"
+
+#include "particles/Modifier.cpp"
+#include "particles/ParticleEmitter.cpp"
+
 #include "objects2D/DisplayObject.h"
 #include "objects2D/Sprite2D.h"
 #include "objects2D/TextField.h"
