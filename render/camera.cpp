@@ -19,11 +19,13 @@ namespace fg {
             _position = ncam._position;
             _target = ncam._target;
             _upVector = ncam._upVector;
+            _rightVector = ncam._rightVector;
+            _forwardVector = ncam._forwardVector;
             _fov = ncam._fov;
             _zNear = ncam._zNear;
             _zFar = ncam._zFar;
             _viewMatrix = ncam._viewMatrix;
-            _projMatrix = ncam._projMatrix;
+            _projMatrix = ncam._projMatrix;            
         }
 
         void Camera::setLookAtByUp(const math::p3d &pos, const math::p3d &target, const math::p3d &upVector) {
@@ -88,6 +90,18 @@ namespace fg {
         const math::p3d &Camera::getTarget() const {
             return _target;
         }
+        
+        const math::p3d &Camera::getForwardDir() const {
+            return _forwardVector;
+        }
+
+        const math::p3d &Camera::getRightDir() const {
+            return _rightVector;
+        }
+
+        const math::p3d &Camera::getUpDir() const {
+            return _upVector;
+        }
 
         float Camera::getZNear() const {
             return _zNear;
@@ -133,6 +147,10 @@ namespace fg {
             float aspect = _platform.getCurrentRTWidth() / _platform.getCurrentRTHeight();
             _viewMatrix.lookAt(_position, _target, _upVector);
             _projMatrix.perspectiveFov(_fov / 180.0f * float(M_PI) * 0.5f, aspect, _zNear, _zFar);
+
+            _upVector = math::p3d(-_viewMatrix._12, -_viewMatrix._22, -_viewMatrix._32);
+            _rightVector = math::p3d(-_viewMatrix._11, -_viewMatrix._21, -_viewMatrix._31);
+            _forwardVector = math::p3d(-_viewMatrix._13, -_viewMatrix._23, -_viewMatrix._33);
         }
     }
 }

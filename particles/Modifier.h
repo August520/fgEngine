@@ -1,7 +1,7 @@
 
 namespace fg {
     namespace particles {
-        class Modifier final : public ModifierInterface {
+        class Modifier : public ModifierInterface {
         public:
             Modifier();
             ~Modifier() override;
@@ -19,9 +19,12 @@ namespace fg {
             float getYAxisMax() const override;
             float getDiagramValue(unsigned id) const override;
 
+            float getMinimum() const override;
+            float getMaximum() const override;
+
             float modify(float koeff, float value) const;
 
-        private:
+        protected:
             static const unsigned DIAGRAM_VALUES_MAX = 16;
 
             struct DiagramValue {

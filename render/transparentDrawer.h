@@ -12,18 +12,19 @@ namespace fg {
             TransparentDrawer() : _ivb(nullptr) {}
             virtual ~TransparentDrawer();
 
+            void drawParticles(platform::PlatformInterface &platform, render::RenderSupportInterface &rendering, const math::m4x4 &trfm, const particles::ParticleEmitterInterface *emitter, BillboardType type);
             void drawMesh(platform::PlatformInterface &platform, render::RenderSupportInterface &rendering, const math::m4x4 &trfm, const resources::MeshInterface *mesh);
 
-        protected:       
+        protected:
             struct SortElement {
-                unsigned value;
-                unsigned primStartIndex;
+                unsigned  value;
+                unsigned  primStartIndex;
             };
 
             platform::IndexedVertexBufferInterface *_ivb;
             
-            unsigned short       _sortIndexes[3 * TRIANGLES_MAX];
-            SortElement          _sortArray[TRIANGLES_MAX];
+            unsigned short  _sortIndexes[3 * TRIANGLES_MAX];
+            SortElement     _sortArray[TRIANGLES_MAX];
                                     
         private:
             TransparentDrawer(const TransparentDrawer &);
@@ -38,7 +39,53 @@ namespace fg {
             }
         }
 
-        template <unsigned TRIANGLES_MAX> void TransparentDrawer <TRIANGLES_MAX>::drawMesh(platform::PlatformInterface &platform, render::RenderSupportInterface &rendering, const math::m4x4 &trfm, const resources::MeshInterface *mesh) {
+        template <unsigned TRIANGLES_MAX> void TransparentDrawer <TRIANGLES_MAX> ::drawParticles(platform::PlatformInterface &platform, render::RenderSupportInterface &rendering, const math::m4x4 &trfm, const particles::ParticleEmitterInterface *emitter, BillboardType type) {
+            if(_ivb == nullptr) {
+                _ivb = platform.rdCreateIndexedVertexBuffer(platform::VertexType::NORMAL, 2 * TRIANGLES_MAX, 3 * TRIANGLES_MAX, true);
+            }
+
+            CameraInterface &cam = rendering.getCamera();
+            VertexNormal *_vertexes = (VertexNormal *)_ivb->lockVertices();
+            unsigned short *_indexes = (unsigned short *)_ivb->lockIndices();
+
+            math::p3d lt = -0.5f * cam.getRightDir() + 0.5f * cam.getUpDir();
+            math::p3d rt = 0.5f * cam.getRightDir() + 0.5f * cam.getUpDir();
+            math::p3d lb = -0.5f * cam.getRightDir() - 0.5f * cam.getUpDir();
+            math::p3d rb = 0.5f * cam.getRightDir() - 0.5f * cam.getUpDir();
+            
+            unsigned   vcount = 0;
+            unsigned   icount = 0;
+            math::m4x4 particleTransform;
+
+            if(type == BillboardType::BILL) {
+                while(emitter->getNextParticleData(particleTransform)) {
+                    math::p3d pos (particleTransform._41, particleTransform._42, particleTransform._43);
+                
+                    *(math::p3d *)(&_vertexes[vcount + 0].x) = pos + lb * particleTransform._11;
+                    *(math::p3d *)(&_vertexes[vcount + 1].x) = pos + lt * particleTransform._11;
+                    *(math::p3d *)(&_vertexes[vcount + 2].x) = pos + rt * particleTransform._11;
+                    *(math::p3d *)(&_vertexes[vcount + 3].x) = pos + rb * particleTransform._11;
+
+                    _indexes[icount++] = vcount + 0;
+                    _indexes[icount++] = vcount + 1;
+                    _indexes[icount++] = vcount + 2;
+                    _indexes[icount++] = vcount + 0;
+                    _indexes[icount++] = vcount + 2;
+                    _indexes[icount++] = vcount + 3;
+
+                    vcount += 4;
+                }
+            }
+
+            _ivb->unlockVertices();
+            _ivb->unlockIndices();
+
+            rendering.defDrawConst().modelTransform.identity();
+            rendering.defDrawConstApplyChanges();
+            platform.rdDrawIndexedGeometry(_ivb, platform::PrimitiveTopology::TRIANGLE_LIST, icount);
+        }
+
+        template <unsigned TRIANGLES_MAX> void TransparentDrawer <TRIANGLES_MAX> ::drawMesh(platform::PlatformInterface &platform, render::RenderSupportInterface &rendering, const math::m4x4 &trfm, const resources::MeshInterface *mesh) {
             if(_ivb == nullptr) {
                 _ivb = platform.rdCreateIndexedVertexBuffer(platform::VertexType::NORMAL, 2 * TRIANGLES_MAX, 3 * TRIANGLES_MAX, true);
             }

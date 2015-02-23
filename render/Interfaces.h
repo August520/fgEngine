@@ -31,7 +31,11 @@ namespace fg {
 
             virtual const math::p3d &getPosition() const = 0;
             virtual const math::p3d &getTarget() const = 0;
-            
+
+            virtual const math::p3d &getForwardDir() const = 0;
+            virtual const math::p3d &getRightDir() const = 0;
+            virtual const math::p3d &getUpDir() const = 0;
+
             virtual float getZNear() const = 0;
             virtual float getZFar() const = 0;
 

@@ -16,6 +16,10 @@ namespace fg {
             const math::p3d &getPosition() const override;
             const math::p3d &getTarget() const override;
             
+            const math::p3d &getForwardDir() const override;
+            const math::p3d &getRightDir() const override;
+            const math::p3d &getUpDir() const override;
+            
             float getZNear() const override;
             float getZFar() const override;
 
@@ -28,7 +32,11 @@ namespace fg {
 
             math::p3d   _position;
             math::p3d   _target;
+
             math::p3d   _upVector;
+            math::p3d   _rightVector;
+            math::p3d   _forwardVector;
+            
             float       _fov;
             float       _zNear;
             float       _zFar;

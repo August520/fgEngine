@@ -43,7 +43,7 @@ namespace fg {
 
         Modifier::Modifier() {
             _diagramValueCount = 0;
-            _minY = 1.0f;
+            _minY = 0.0f;
             _maxY = 1.0f;
             _func = ModifierFunction::CONSTANT;
             _getValue = &Modifier::_getConstValue;
@@ -125,6 +125,41 @@ namespace fg {
                 }
             }
             return 0.0f;
+        }
+
+        float Modifier::getMinimum() const {
+            if(_func == ModifierFunction::DIAGRAM) {
+                float r = _maxY;
+
+                for(unsigned i = 0; i < _diagramValueCount; i++) {
+                    if(_diagram[i].value < r) {
+                        r = _diagram[i].value;
+                    }
+                }
+
+                return r;
+            }
+            else if(_func == ModifierFunction::CONSTANT) {
+                return _maxY;
+            }
+            
+            return _minY;
+        }
+
+        float Modifier::getMaximum() const {
+            if(_func == ModifierFunction::DIAGRAM) {
+                float r = _maxY;
+
+                for(unsigned i = 0; i < _diagramValueCount; i++) {
+                    if(_diagram[i].value > r) {
+                        r = _diagram[i].value;
+                    }
+                }
+
+                return r;
+            }
+
+            return _maxY;
         }
 
         float Modifier::modify(float koeff, float value) const {
