@@ -76,10 +76,9 @@ namespace fg {
 
         class PhoneVertexBuffer : public PlatformObject, public platform::VertexBufferInterface {
         public:
-            PhoneVertexBuffer(PhonePlatform *owner, platform::VertexType type, unsigned vcount, bool isDynamic, void *data);
+            PhoneVertexBuffer(PhonePlatform *owner, platform::VertexType type, unsigned vcount, bool isDynamic, const void *data);
             ~PhoneVertexBuffer() override;
 
-            void update(void *data) override;
             void *lock() override;
             void unlock() override;
             void release() override;
@@ -100,11 +99,8 @@ namespace fg {
 
         class PhoneIndexedVertexBuffer : public PlatformObject, public platform::IndexedVertexBufferInterface {
         public:
-            PhoneIndexedVertexBuffer(PhonePlatform *owner, platform::VertexType type, unsigned vcount, unsigned icount, bool isDynamic, void *vdata, void *idata);
+            PhoneIndexedVertexBuffer(PhonePlatform *owner, platform::VertexType type, unsigned vcount, unsigned icount, bool isDynamic, const void *vdata, const void *idata);
             ~PhoneIndexedVertexBuffer() override;
-
-            void updateVertices(void *data) override;
-            void updateIndices(void *data) override;
 
             void *lockVertices() override;
             void *lockIndices() override;
@@ -126,6 +122,29 @@ namespace fg {
             unsigned       _vcount;
             unsigned       _vsize;
             unsigned       _icount;
+        };
+
+        //---
+
+        class PhoneInstanceData : public PlatformObject, public platform::InstanceDataInterface {
+        public:
+            PhoneInstanceData(PhonePlatform *owner, platform::InstanceDataType type, unsigned instanceCount);
+            ~PhoneInstanceData() override;
+
+            void *lock() override;
+            void unlock() override;
+            void update(const void *data, unsigned instanceCount) override;
+
+            void release() override;
+            bool valid() const override;
+
+            ID3D11Buffer   *getBuffer() const;
+            unsigned       getInstanceDataSize() const;
+
+        protected:
+            ID3D11Buffer   *_instanceBuffer;
+            unsigned       _instanceCount;
+            unsigned       _instanceDataSize;
         };
 
         //--- 
@@ -212,7 +231,7 @@ namespace fg {
             PhoneShaderConstantBuffer(PhonePlatform *owner, platform::ShaderConstBufferUsing appoint, unsigned byteWidth);
             ~PhoneShaderConstantBuffer() override;
 
-            void update(const void *data) const override;
+            void update(const void *data, unsigned byteWidth) override;
 
             void release() override;
             void set();
@@ -232,7 +251,7 @@ namespace fg {
 
         public:
             PhoneTexture2D();
-            PhoneTexture2D(PhonePlatform *owner, unsigned char **imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount);
+            PhoneTexture2D(PhonePlatform *owner, unsigned char * const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount);
             PhoneTexture2D(PhonePlatform *owner, platform::TextureFormat fmt, unsigned originWidth, unsigned originHeight, unsigned mipCount);
             ~PhoneTexture2D() override;
 
@@ -326,21 +345,22 @@ namespace fg {
             void  sndSetGlobalVolume(float volume) override;
 
             platform::SoundEmitterInterface          *sndCreateEmitter(unsigned sampleRate, unsigned channels) override;
-            platform::VertexBufferInterface          *rdCreateVertexBuffer(platform::VertexType vtype, unsigned vcount, bool isDynamic, void *data) override;
-            platform::IndexedVertexBufferInterface   *rdCreateIndexedVertexBuffer(platform::VertexType vtype, unsigned vcount, unsigned ushortIndexCount, bool isDynamic, void *vdata, void *idata) override;
+            platform::VertexBufferInterface          *rdCreateVertexBuffer(platform::VertexType vtype, unsigned vcount, bool isDynamic, const void *data) override;
+            platform::IndexedVertexBufferInterface   *rdCreateIndexedVertexBuffer(platform::VertexType vtype, unsigned vcount, unsigned ushortIndexCount, bool isDynamic, const void *vdata, const void *idata) override;
+            platform::InstanceDataInterface          *rdCreateInstanceData(platform::InstanceDataType type, unsigned instanceCount) override;
             platform::ShaderInterface                *rdCreateShader(const byteform &binary) override;
             platform::RasterizerParamsInterface      *rdCreateRasterizerParams(platform::CullMode cull) override;
             platform::BlenderParamsInterface         *rdCreateBlenderParams(const platform::BlendMode blendMode) override; 
             platform::DepthParamsInterface           *rdCreateDepthParams(bool depthEnabled, platform::DepthFunc compareFunc, bool depthWriteEnabled) override; 
             platform::SamplerInterface               *rdCreateSampler(platform::TextureFilter filter, platform::TextureAddressMode addrMode) override; //!
             platform::ShaderConstantBufferInterface  *rdCreateShaderConstantBuffer(platform::ShaderConstBufferUsing appoint, unsigned byteWidth) override;
-            platform::Texture2DInterface             *rdCreateTexture2D(unsigned char **imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount) override;
+            platform::Texture2DInterface             *rdCreateTexture2D(unsigned char * const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount) override;
             platform::Texture2DInterface             *rdCreateTexture2D(platform::TextureFormat format, unsigned originWidth, unsigned originHeight, unsigned mipCount) override;
             platform::RenderTargetInterface          *rdCreateRenderTarget(unsigned colorTargetCount, unsigned originWidth, unsigned originHeight) override;
             platform::RenderTargetInterface          *rdGetDefaultRenderTarget() override;
 
             void  rdClearCurrentDepthBuffer(float depth = 1.0f) override;
-            void  rdClearCurrentColorBuffer(const platform::color &c = platform::color(0.0f, 0.0f, 0.0f, 0.0f)) override;
+            void  rdClearCurrentColorBuffer(const fg::color &c = fg::color(0.0f, 0.0f, 0.0f, 0.0f)) override;
 
             void  rdSetRenderTarget(const platform::RenderTargetInterface *rt) override;
             void  rdSetShader(const platform::ShaderInterface *shader) override;
@@ -352,8 +372,8 @@ namespace fg {
             void  rdSetTexture2D(platform::TextureSlot slot, const platform::Texture2DInterface *texture) override;
             void  rdSetScissorRect(math::p2d &topLeft, math::p2d &bottomRight) override;
             
-            void  rdDrawGeometry(const platform::VertexBufferInterface *vbuffer, platform::PrimitiveTopology topology, unsigned vertexCount) override;
-            void  rdDrawIndexedGeometry(const platform::IndexedVertexBufferInterface *ivbuffer, platform::PrimitiveTopology topology, unsigned indexCount) override;
+            void  rdDrawGeometry(const platform::VertexBufferInterface *vbuffer, const platform::InstanceDataInterface *instanceData, platform::PrimitiveTopology topology, unsigned vertexCount, unsigned instanceCount) override;
+            void  rdDrawIndexedGeometry(const platform::IndexedVertexBufferInterface *ivbuffer, const platform::InstanceDataInterface *instanceData, platform::PrimitiveTopology topology, unsigned indexCount, unsigned instanceCount) override;
             void  rdPresent() override;
 
             bool  isInited() override;

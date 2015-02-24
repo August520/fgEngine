@@ -7,6 +7,10 @@ namespace fg {
         const unsigned ODDBUFFER_NORMAL_MAX = 32;
         const unsigned ODDBUFFER_TEXTURED_MAX = 512;
 
+        const unsigned ODDBUFFER_SIMPLE_INDEX_MAX = 48;
+        const unsigned ODDBUFFER_NORMAL_INDEX_MAX = 48;
+        const unsigned ODDBUFFER_TEXTURED_INDEX_MAX = 768;
+
         RenderSupport::RenderSupport() {
             _camera = nullptr;
             _platform = nullptr;
@@ -36,9 +40,9 @@ namespace fg {
             _defDepthParams = iplatform.rdCreateDepthParams(true, platform::DepthFunc::LESS_EQUAL, true);
             _defPointSampler = iplatform.rdCreateSampler(platform::TextureFilter::POINT, platform::TextureAddressMode::CLAMP);
             _defLinearSampler = iplatform.rdCreateSampler(platform::TextureFilter::LINEAR, platform::TextureAddressMode::CLAMP);
-            _oddVertexBufferSimple = iplatform.rdCreateVertexBuffer(platform::VertexType::SIMPLE, ODDBUFFER_SIMPLE_MAX, true);
-            _oddVertexBufferTextured = iplatform.rdCreateVertexBuffer(platform::VertexType::TEXTURED, ODDBUFFER_TEXTURED_MAX, true);
-            _oddVertexBufferNormal = iplatform.rdCreateVertexBuffer(platform::VertexType::NORMAL, ODDBUFFER_NORMAL_MAX, true);
+            _oddVertexBufferSimple = iplatform.rdCreateIndexedVertexBuffer(platform::VertexType::SIMPLE, ODDBUFFER_SIMPLE_MAX, ODDBUFFER_SIMPLE_INDEX_MAX, true);
+            _oddVertexBufferTextured = iplatform.rdCreateIndexedVertexBuffer(platform::VertexType::TEXTURED, ODDBUFFER_TEXTURED_MAX, ODDBUFFER_TEXTURED_INDEX_MAX, true);
+            _oddVertexBufferNormal = iplatform.rdCreateIndexedVertexBuffer(platform::VertexType::NORMAL, ODDBUFFER_NORMAL_MAX, ODDBUFFER_NORMAL_INDEX_MAX, true);
             _defInstanceData = iplatform.rdCreateInstanceData(platform::InstanceDataType::DEFAULT, 1);
             _defDisplayObjectInstanceData = iplatform.rdCreateInstanceData(platform::InstanceDataType::DISPLAY_OBJECT, 1);
 
@@ -189,7 +193,8 @@ namespace fg {
             float tytop = ty / _platform->getTextureHeight(platform::TextureSlot::TEXTURE0);
             float tybottom = (ty + clip->height) / _platform->getTextureHeight(platform::TextureSlot::TEXTURE0);
 
-            VertexTextured *tmem = (VertexTextured *)_oddVertexBufferTextured->lock();
+            VertexTextured *tmem = (VertexTextured *)_oddVertexBufferTextured->lockVertices();
+            unsigned short *tind = (unsigned short *)_oddVertexBufferTextured->lockIndices();
 
             tmem[0].position.x = lb.x;
             tmem[0].position.y = lb.y;
@@ -215,12 +220,18 @@ namespace fg {
             tmem[3].uv.x = txright;
             tmem[3].uv.y = tytop;
 
-            _oddVertexBufferTextured->unlock();
-            
+            tind[0] = 0;
+            tind[1] = 1;
+            tind[2] = 2;
+            tind[3] = 3;
+
+            _oddVertexBufferTextured->unlockVertices();
+            _oddVertexBufferTextured->unlockIndices();
+
             _defDisplayObjectInstanceStruct.isGrey = 0.0f;
             _defDisplayObjectInstanceStruct.rgba = c;
             _defDisplayObjectInstanceData->update(&_defDisplayObjectInstanceStruct, 1);
-            _platform->rdDrawGeometry(_oddVertexBufferTextured, _defDisplayObjectInstanceData, platform::PrimitiveTopology::TRIANGLE_STRIP, 4);
+            _platform->rdDrawIndexedGeometry(_oddVertexBufferTextured, _defDisplayObjectInstanceData, platform::PrimitiveTopology::TRIANGLE_STRIP, 4);
         }
 
         void RenderSupport::drawText2D(const fg::string &utf8text, const math::m3x3 &trfm, const resources::FontResourceInterface *font, unsigned size, const fg::color &c) {
@@ -243,7 +254,8 @@ namespace fg {
             resources::FontCharInfo curCharData;
 
             platform::Texture2DInterface *curTexture = nullptr;
-            VertexTextured *tmem = (VertexTextured *)_oddVertexBufferTextured->lock();
+            VertexTextured *tmem = (VertexTextured *)_oddVertexBufferTextured->lockVertices();
+            unsigned short *tind = (unsigned short *)_oddVertexBufferTextured->lockIndices();
 
             for(const char *charPtr = utf8text.data(); charPtr[0] != 0; charPtr += tchLen, i++) {
                 tchLen = fg::string::utf8CharLen(charPtr);
@@ -271,6 +283,7 @@ namespace fg {
                     tmem[index].position.z = 0;
                     tmem[index].uv.x = curCharData.tu;
                     tmem[index].uv.y = curCharData.tv + curCharData.txHeight;
+                    tind[index] = index;
 
                     index++;
 
@@ -279,6 +292,7 @@ namespace fg {
                     tmem[index].position.z = 0;
                     tmem[index].uv.x = curCharData.tu + curCharData.txWidth;
                     tmem[index].uv.y = curCharData.tv + curCharData.txHeight;
+                    tind[index] = index;
 
                     index++;
 
@@ -287,6 +301,7 @@ namespace fg {
                     tmem[index].position.z = 0;
                     tmem[index].uv.x = curCharData.tu;
                     tmem[index].uv.y = curCharData.tv;
+                    tind[index] = index;
 
                     index++;
 
@@ -295,6 +310,7 @@ namespace fg {
                     tmem[index].position.z = 0;
                     tmem[index].uv.x = curCharData.tu;
                     tmem[index].uv.y = curCharData.tv;
+                    tind[index] = index;
 
                     index++;
 
@@ -303,6 +319,7 @@ namespace fg {
                     tmem[index].position.z = 0;
                     tmem[index].uv.x = curCharData.tu + curCharData.txWidth;
                     tmem[index].uv.y = curCharData.tv + curCharData.txHeight;
+                    tind[index] = index;
 
                     index++;
 
@@ -311,17 +328,19 @@ namespace fg {
                     tmem[index].position.z = 0;
                     tmem[index].uv.x = curCharData.tu + curCharData.txWidth;
                     tmem[index].uv.y = curCharData.tv;
+                    tind[index] = index;
 
                     lt += rightDir * floor(curCharData.advance - curCharData.lsb);
                 }
             }
 
-            _oddVertexBufferTextured->unlock();
+            _oddVertexBufferTextured->unlockVertices();
+            _oddVertexBufferTextured->unlockIndices();
 
             _defDisplayObjectInstanceStruct.isGrey = 1.0f;
             _defDisplayObjectInstanceStruct.rgba = c;
             _defDisplayObjectInstanceData->update(&_defDisplayObjectInstanceStruct, 1);
-            _platform->rdDrawGeometry(_oddVertexBufferTextured, _defDisplayObjectInstanceData, platform::PrimitiveTopology::TRIANGLE_LIST, i * 6);
+            _platform->rdDrawIndexedGeometry(_oddVertexBufferTextured, _defDisplayObjectInstanceData, platform::PrimitiveTopology::TRIANGLE_LIST, i * 6);
         }
 
         void RenderSupport::drawScreenQuad(float x, float y, float width, float height) {
@@ -340,7 +359,8 @@ namespace fg {
             rt.y = 1.0f - 2.0f * rt.y / _platform->getScreenHeight();
             rb.y = 1.0f - 2.0f * rb.y / _platform->getScreenHeight();
 
-            VertexTextured *tmem = (VertexTextured *)_oddVertexBufferTextured->lock();
+            VertexTextured *tmem = (VertexTextured *)_oddVertexBufferTextured->lockVertices();
+            unsigned short *tind = (unsigned short *)_oddVertexBufferTextured->lockIndices();
 
             tmem[0].position.x = lb.x;
             tmem[0].position.y = lb.y;
@@ -366,11 +386,18 @@ namespace fg {
             tmem[3].uv.x = 1.0f;
             tmem[3].uv.y = 0.0f;
 
-            _oddVertexBufferTextured->unlock();
+            tind[0] = 0;
+            tind[1] = 1;
+            tind[2] = 2;
+            tind[3] = 3;
+
+            _oddVertexBufferTextured->unlockVertices();
+            _oddVertexBufferTextured->unlockIndices();
+
             _defDisplayObjectInstanceStruct.isGrey = 0.0f;
             _defDisplayObjectInstanceStruct.rgba = fg::color(1, 1, 1, 1);
             _defDisplayObjectInstanceData->update(&_defDisplayObjectInstanceStruct, 1);
-            _platform->rdDrawGeometry(_oddVertexBufferTextured, _defDisplayObjectInstanceData, platform::PrimitiveTopology::TRIANGLE_STRIP, 4);
+            _platform->rdDrawIndexedGeometry(_oddVertexBufferTextured, _defDisplayObjectInstanceData, platform::PrimitiveTopology::TRIANGLE_STRIP, 4);
         }
 
         void RenderSupport::drawMesh(const resources::MeshInterface *mesh, const platform::InstanceDataInterface *instanceData) {
@@ -388,7 +415,8 @@ namespace fg {
                 math::p2d(-0.5f, -0.5f),
             };
 
-            VertexSimple *tmem = (VertexSimple *)_oddVertexBufferSimple->lock();
+            VertexSimple *tmem = (VertexSimple *)_oddVertexBufferSimple->lockVertices();
+            unsigned short *tind = (unsigned short *)_oddVertexBufferSimple->lockIndices();
 
             for(int i = 0; i < 4; i++) {
                 int ti = i * 6;
@@ -396,34 +424,41 @@ namespace fg {
                 tmem[ti + 0].position.x = offs[i].x;
                 tmem[ti + 0].position.y = -0.5f;
                 tmem[ti + 0].position.z = offs[i].y;
+                tind[ti + 0] = ti;
 
                 tmem[ti + 1].position.x = offs[i + 1].x;
                 tmem[ti + 1].position.y = -0.5f;
                 tmem[ti + 1].position.z = offs[i + 1].y;
+                tind[ti + 1] = ti + 1;
 
                 tmem[ti + 2].position.x = offs[i].x;
                 tmem[ti + 2].position.y = -0.5f;
                 tmem[ti + 2].position.z = offs[i].y;
+                tind[ti + 2] = ti + 2;
 
                 tmem[ti + 3].position.x = offs[i].x;
                 tmem[ti + 3].position.y = 0.5f;
                 tmem[ti + 3].position.z = offs[i].y;
+                tind[ti + 3] = ti + 3;
 
                 tmem[ti + 4].position.x = offs[i].x;
                 tmem[ti + 4].position.y = 0.5f;
                 tmem[ti + 4].position.z = offs[i].y;
+                tind[ti + 4] = ti + 4;
 
                 tmem[ti + 5].position.x = offs[i + 1].x;
                 tmem[ti + 5].position.y = 0.5f;
                 tmem[ti + 5].position.z = offs[i + 1].y;
+                tind[ti + 5] = ti + 5;
             }
 
-            _oddVertexBufferSimple->unlock();
+            _oddVertexBufferSimple->unlockVertices();
+            _oddVertexBufferSimple->unlockIndices();
 
             _defInstanceStruct.modelTransform = transform;
             _defInstanceStruct.rgba = c;
             _defInstanceData->update(&_defInstanceStruct, 1);
-            _platform->rdDrawGeometry(_oddVertexBufferSimple, _defInstanceData, platform::PrimitiveTopology::LINE_LIST, 24);
+            _platform->rdDrawIndexedGeometry(_oddVertexBufferSimple, _defInstanceData, platform::PrimitiveTopology::LINE_LIST, 24);
         }
 
         void RenderSupport::debugDrawBox(const math::p3d &pMin, const math::p3d &pMax, const fg::color &c) {
@@ -437,41 +472,49 @@ namespace fg {
                 math::p2d(pMin.x, pMin.z),
             };
 
-            VertexSimple *tmem = (VertexSimple *)_oddVertexBufferSimple->lock();
+            VertexSimple *tmem = (VertexSimple *)_oddVertexBufferSimple->lockVertices();
+            unsigned short *tind = (unsigned short *)_oddVertexBufferSimple->lockIndices();
 
             for(int i = 0; i < 4; i++) {
                 int ti = i * 6;
                 tmem[ti + 0].position.x = offs[i].x;
                 tmem[ti + 0].position.y = pMin.y;
                 tmem[ti + 0].position.z = offs[i].y;
+                tind[ti + 0] = ti;
 
                 tmem[ti + 1].position.x = offs[i + 1].x;
                 tmem[ti + 1].position.y = pMin.y;
                 tmem[ti + 1].position.z = offs[i + 1].y;
+                tind[ti + 1] = ti + 1;
 
                 tmem[ti + 2].position.x = offs[i].x;
                 tmem[ti + 2].position.y = pMin.y;
                 tmem[ti + 2].position.z = offs[i].y;
+                tind[ti + 2] = ti + 2;
 
                 tmem[ti + 3].position.x = offs[i].x;
                 tmem[ti + 3].position.y = pMax.y;
                 tmem[ti + 3].position.z = offs[i].y;
+                tind[ti + 3] = ti + 3;
 
                 tmem[ti + 4].position.x = offs[i].x;
                 tmem[ti + 4].position.y = pMax.y;
                 tmem[ti + 4].position.z = offs[i].y;
+                tind[ti + 4] = ti + 4;
 
                 tmem[ti + 5].position.x = offs[i + 1].x;
                 tmem[ti + 5].position.y = pMax.y;
                 tmem[ti + 5].position.z = offs[i + 1].y;
+                tind[ti + 5] = ti + 5;
             }
 
-            _oddVertexBufferSimple->unlock();
+            _oddVertexBufferSimple->unlockVertices();
+            _oddVertexBufferSimple->unlockIndices();
 
             _defInstanceStruct.modelTransform.identity();
             _defInstanceStruct.rgba = c;
             _defInstanceData->update(&_defInstanceStruct, 1);
-            _platform->rdDrawGeometry(_oddVertexBufferSimple, _defInstanceData, platform::PrimitiveTopology::LINE_LIST, 24);
+            _platform->rdDrawIndexedGeometry(_oddVertexBufferSimple, _defInstanceData, platform::PrimitiveTopology::LINE_LIST, 24);
         }
 
         void RenderSupport::debugDrawFillBox(const math::m4x4 &transform, const fg::color &c) {
@@ -481,7 +524,8 @@ namespace fg {
         void RenderSupport::debugDrawTriangle(const math::p3d &p1, const math::p3d &p2, const math::p3d &p3, const fg::color &c) {
             _platform->rdSetShader(_simpleShader->getPlatformObject());
 
-            VertexNormal *tmem = (VertexNormal *)_oddVertexBufferNormal->lock();
+            VertexNormal *tmem = (VertexNormal *)_oddVertexBufferNormal->lockVertices();
+            unsigned short *tind = (unsigned short *)_oddVertexBufferNormal->lockIndices();
 
             tmem[0].position.x = p1.x;
             tmem[0].position.y = p1.y;
@@ -518,27 +562,33 @@ namespace fg {
                 tmem[i].tangent.z = tleft.z;
             }
 
-            _oddVertexBufferNormal->unlock();
+            _oddVertexBufferNormal->unlockVertices();
+            _oddVertexBufferNormal->unlockIndices();
 
             _defInstanceStruct.modelTransform.identity();
             _defInstanceStruct.rgba = c;
             _defInstanceData->update(&_defInstanceStruct, 1);
-            _platform->rdDrawGeometry(_oddVertexBufferNormal, _defInstanceData, platform::PrimitiveTopology::TRIANGLE_LIST, 3);
+            _platform->rdDrawIndexedGeometry(_oddVertexBufferNormal, _defInstanceData, platform::PrimitiveTopology::TRIANGLE_LIST, 3);
         }
 
         void RenderSupport::debugDrawLine(const math::p3d &p1, const math::p3d &p2, const fg::color &c) {
-            VertexSimple *tmem = (VertexSimple *)_oddVertexBufferSimple->lock();
+            VertexSimple *tmem = (VertexSimple *)_oddVertexBufferSimple->lockVertices();
+            unsigned short *tind = (unsigned short *)_oddVertexBufferSimple->lockIndices();
 
             tmem[0].position = p1;
             tmem[1].position = p2;
 
-            _oddVertexBufferSimple->unlock();
+            tind[0] = 0;
+            tind[1] = 1;
+
+            _oddVertexBufferSimple->unlockVertices();
+            _oddVertexBufferSimple->unlockIndices();
             _platform->rdSetShader(_simpleShader->getPlatformObject());
 
             _defInstanceStruct.modelTransform.identity();
             _defInstanceStruct.rgba = c;
             _defInstanceData->update(&_defInstanceStruct, 1);
-            _platform->rdDrawGeometry(_oddVertexBufferSimple, _defInstanceData, platform::PrimitiveTopology::LINE_LIST, 2);
+            _platform->rdDrawIndexedGeometry(_oddVertexBufferSimple, _defInstanceData, platform::PrimitiveTopology::LINE_LIST, 2);
         }
 
         void RenderSupport::debugDrawAxis() {
