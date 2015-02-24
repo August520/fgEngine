@@ -13,6 +13,7 @@ namespace fg {
 
             CameraInterface &getCamera() override;
             
+            platform::InstanceDataInterface      *getDefaultInstanceData() override;
             platform::RasterizerParamsInterface  *getDefaultRasterizerParams() override;
             platform::BlenderParamsInterface     *getDefaultBlenderParams() override;
             platform::DepthParamsInterface       *getDefaultDepthParams() override;
@@ -20,24 +21,24 @@ namespace fg {
             platform::SamplerInterface           *getDefaultLinearSampler() override;
 
             DefaultFrameConstants  &defFrameConst() override;
-            DefaultDrawConstants   &defDrawConst() override;
+            InstanceDataDefault    &defInstanceData() override;
             
             void defFrameConstApplyChanges() override;
-            void defDrawConstApplyChanges() override;
+            void defInstanceDataApplyChanges() override;
 
             void setShader(const resources::ShaderResourceInterface *shader) override;
             void setTexture(platform::TextureSlot slot, const resources::Texture2DResourceInterface *texture) override;
 
-            void drawQuad2D(const math::m3x3 &trfm, float z, const resources::ClipData *clip, unsigned frame) override;
-            void drawText2D(const fg::string &utf8text, const math::m3x3 &trfm, float z, const resources::FontResourceInterface *font, unsigned size) override;
+            void drawQuad2D(const math::m3x3 &trfm, const resources::ClipData *clip, unsigned frame, const fg::color &c) override;
+            void drawText2D(const fg::string &utf8text, const math::m3x3 &trfm, const resources::FontResourceInterface *font, unsigned size, const fg::color &c) override;
             void drawScreenQuad(float x, float y, float width, float height) override; 
-            void drawMesh(const resources::MeshInterface *mesh) override;
+            void drawMesh(const resources::MeshInterface *mesh, const platform::InstanceDataInterface *instanceData) override;
 
-            void debugDrawBox(const math::m4x4 &transform, const platform::color &c) override;
-            void debugDrawBox(const math::p3d &pMin, const math::p3d &pMax, const platform::color &c) override;
-            void debugDrawFillBox(const math::m4x4 &transform, const platform::color &c) override;
-            void debugDrawTriangle(const math::p3d &p1, const math::p3d &p2, const math::p3d &p3, const platform::color &c) override;
-            void debugDrawLine(const math::p3d &p1, const math::p3d &p2, const platform::color &c) override;
+            void debugDrawBox(const math::m4x4 &transform, const fg::color &c) override;
+            void debugDrawBox(const math::p3d &pMin, const math::p3d &pMax, const fg::color &c) override;
+            void debugDrawFillBox(const math::m4x4 &transform, const fg::color &c) override;
+            void debugDrawTriangle(const math::p3d &p1, const math::p3d &p2, const math::p3d &p3, const fg::color &c) override;
+            void debugDrawLine(const math::p3d &p1, const math::p3d &p2, const fg::color &c) override;
             void debugDrawAxis() override;
 
         protected:
@@ -54,8 +55,12 @@ namespace fg {
             platform::VertexBufferInterface      *_oddVertexBufferTextured;
             platform::VertexBufferInterface      *_oddVertexBufferNormal;
 
+            InstanceDataDefault                  _defInstanceStruct;
+            InstanceDataDisplayObject            _defDisplayObjectInstanceStruct;
+            platform::InstanceDataInterface      *_defInstanceData;
+            platform::InstanceDataInterface      *_defDisplayObjectInstanceData;
+
             ShaderConstantBufferStruct           <DefaultFrameConstants> *_frameConstants;
-            ShaderConstantBufferStruct           <DefaultDrawConstants> *_drawConstants;
             
             const resources::ShaderResourceInterface *_simpleShader;
             const resources::ShaderResourceInterface *_ifaceShader;

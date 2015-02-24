@@ -240,10 +240,10 @@ namespace fg {
         }
 
         void RenderObject::setColor(float r, float g, float b, float a) {
-            _rgba = platform::color(r, g, b, a);
+            _rgba = fg::color(r, g, b, a);
         }
 
-        void RenderObject::setColor(const platform::color &rgba) {
+        void RenderObject::setColor(const fg::color &rgba) {
             _rgba = rgba;
         }
 
@@ -298,7 +298,7 @@ namespace fg {
             return _fullTransform;
         }
 
-        const platform::color &RenderObject::getColor() const {
+        const fg::color &RenderObject::getColor() const {
             return _rgba;
         }
 

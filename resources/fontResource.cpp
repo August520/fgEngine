@@ -4,7 +4,7 @@
 namespace fg {
     namespace resources {
         FontResource::FontSize::Atlas::Atlas(const diag::LogInterface &log, platform::PlatformInterface &api) : hOffset(0), vOffset(0), nextPtr(nullptr) {
-            texture = api.rdCreateTexture2D(platform::TextureFormat::ALPHA8, FONT_ATLAS_SIZE, FONT_ATLAS_SIZE, 1);
+            texture = api.rdCreateTexture2D(platform::TextureFormat::RED8, FONT_ATLAS_SIZE, FONT_ATLAS_SIZE, 1);
 
             if(texture == nullptr){
                 log.msgError("FontResource::Atlas::Atlas can't create texture");

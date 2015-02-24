@@ -7,16 +7,16 @@
 
 typedef long long int64;
 
-#include "luaScript.h"
+#include "LuaScript.h"
 #include "utility.h"
 #include "string.h"
 
-#include "Interfaces.h"
 #include "diag.h"
 
 #include "math/math.h"
 #include "math/mathUtility.h"
 
+#include "Interfaces.h"
 #include "platform/Interfaces.h"
 #include "resources/Interfaces.h"
 #include "input/Interfaces.h"
@@ -26,18 +26,21 @@ typedef long long int64;
 #include "render/Interfaces.h"
 #include "particles/Interfaces.h"
 
-#include "resources/resourceFactory.h"
-#include "resources/resourceManager.h"
+#include "resources/ResourceFactory.h"
+#include "resources/ResourceManager.h"
 
-#include "render/shaderConst.h"
-#include "render/transparentDrawer.h"
-#include "render/renderSupport.h"
-#include "render/defaultRender.h"
+#include "render/ShaderConst.h"
+#include "render/TransparentDrawer.h"
+#include "render/RenderSupport.h"
+#include "render/DefaultRender.h"
 
 #include "input/InputManager.h"
 
-#include "iterators.h"
-#include "gameAPI.h"
+#include "particles/Modifier.h"
+#include "particles/ParticleEmitter.h"
+
+#include "Iterators.h"
+#include "GameAPI.h"
 
 #ifdef FG_RESOURCE_LONGNAME
 #define FG_SIMPLE_SHADER "bin/simpleModel.shader"

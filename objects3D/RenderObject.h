@@ -36,7 +36,7 @@ namespace fg {
 
             void setVisible(bool visible) override;
             void setColor(float r, float g, float b, float a) override;
-            void setColor(const platform::color &rgba) override;
+            void setColor(const fg::color &rgba) override;
 
             void appendPosition(float xInc, float yInc, float zInc) override;
             void appendPosition(const math::p3d &posInc) override;
@@ -48,7 +48,7 @@ namespace fg {
             const math::m4x4  &getTransform() const override;
             const math::m4x4  &getFullTransform() const override;
 
-            const platform::color &getColor() const override;
+            const fg::color &getColor() const override;
             bool  isVisible() const override;
 
             void  updateCoordinates(float frameTimeMs) override;
@@ -63,15 +63,15 @@ namespace fg {
             RenderObjectInterface  *_next;
             RenderObjectInterface  *_back;
             
-            std::vector       <RenderObjectInterface *> _childs;
+            std::vector  <RenderObjectInterface *> _childs;
                         
-            bool              _visible;
-            math::m4x4        _fullTransform;
-            math::m4x4        _localTransform;
-            math::p3d         _localPosition;
-            math::p3d         _localScale;
-            math::quat        _localRotation;
-            platform::color   _rgba;
+            bool         _visible;
+            math::m4x4   _fullTransform;
+            math::m4x4   _localTransform;
+            math::p3d    _localPosition;
+            math::p3d    _localScale;
+            math::quat   _localRotation;
+            fg::color    _rgba;
 
             callback     <void ()> _addHandler;
             callback     <void ()> _removeHandler;

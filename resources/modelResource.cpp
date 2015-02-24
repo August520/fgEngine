@@ -168,24 +168,24 @@ namespace fg {
                         _vertexArray = new VertexSkinnedNormal [_vertexArraySize];
 
                         for(i = 0; i < _vertexArraySize; i++) {
-                            _vertexArray[i].x = importVArray[i].x;
-                            _vertexArray[i].y = importVArray[i].y;
-                            _vertexArray[i].z = importVArray[i].z;
+                            _vertexArray[i].position.x = importVArray[i].x;
+                            _vertexArray[i].position.y = importVArray[i].y;
+                            _vertexArray[i].position.z = importVArray[i].z;
 
-                            _vertexArray[i].tu = importVArray[i].u0;
-                            _vertexArray[i].tv = importVArray[i].v0;
+                            _vertexArray[i].uv.x = importVArray[i].u0;
+                            _vertexArray[i].uv.y = importVArray[i].v0;
 
-                            _vertexArray[i].nx = importVArray[i].nx;
-                            _vertexArray[i].ny = importVArray[i].ny;
-                            _vertexArray[i].nz = importVArray[i].nz;
+                            _vertexArray[i].normal.x = importVArray[i].nx;
+                            _vertexArray[i].normal.y = importVArray[i].ny;
+                            _vertexArray[i].normal.z = importVArray[i].nz;
 
-                            _vertexArray[i].bx = importVArray[i].bx;
-                            _vertexArray[i].by = importVArray[i].by;
-                            _vertexArray[i].bz = importVArray[i].bz;
+                            _vertexArray[i].binormal.x = importVArray[i].bx;
+                            _vertexArray[i].binormal.y = importVArray[i].by;
+                            _vertexArray[i].binormal.z = importVArray[i].bz;
 
-                            _vertexArray[i].tx = importVArray[i].tx;
-                            _vertexArray[i].ty = importVArray[i].ty;
-                            _vertexArray[i].tz = importVArray[i].tz;
+                            _vertexArray[i].tangent.x = importVArray[i].tx;
+                            _vertexArray[i].tangent.y = importVArray[i].ty;
+                            _vertexArray[i].tangent.z = importVArray[i].tz;
                         }
                     }
                     else _vertexArraySize = 0;
@@ -231,15 +231,15 @@ namespace fg {
                             }
                         }
 
-                        _vertexArray[i].bI0 = toVertexIndexes[0];
-                        _vertexArray[i].bI1 = toVertexIndexes[1];
-                        _vertexArray[i].bI2 = toVertexIndexes[2];
-                        _vertexArray[i].bI3 = toVertexIndexes[3];
+                        _vertexArray[i].boneIndexes.x = toVertexIndexes[0];
+                        _vertexArray[i].boneIndexes.y = toVertexIndexes[1];
+                        _vertexArray[i].boneIndexes.z = toVertexIndexes[2];
+                        _vertexArray[i].boneIndexes.w = toVertexIndexes[3];
 
-                        _vertexArray[i].bW0 = toVertexWeights[0];
-                        _vertexArray[i].bW1 = toVertexWeights[1];
-                        _vertexArray[i].bW2 = toVertexWeights[2];
-                        _vertexArray[i].bW3 = toVertexWeights[3];
+                        _vertexArray[i].boneWeights.x = toVertexWeights[0];
+                        _vertexArray[i].boneWeights.y = toVertexWeights[1];
+                        _vertexArray[i].boneWeights.z = toVertexWeights[2];
+                        _vertexArray[i].boneWeights.w = toVertexWeights[3];
                     }
 
                     delete skin;

@@ -6,17 +6,6 @@ namespace fg {
         const unsigned TEXTURE_UNITS_MAX = 8;
         const unsigned RENDERTARGETS_MAX = 4;
 
-        struct color{
-            float r, g, b, a;
-
-            color(float _r = 1.0f, float _g = 1.0f, float _b = 1.0f, float _a = 1.0f) : r(_r), g(_g), b(_b), a(_a) {}
-            color(const math::p4d &v) : r(v.x), g(v.y), b(v.z), a(v.w) {}
-
-            operator math::p4d() const {
-                return math::p4d(r, g, b, a);
-            }
-        };
-        
         enum class Orientation {
             PORTRAIT = 0,
             ALBUM    = 1,
@@ -30,17 +19,20 @@ namespace fg {
         };
 
         enum class VertexType {
-            SIMPLE            = 0,  // p3d pos
-            TEXTURED          = 1,  // p3d pos, p2d uv
-            NORMAL            = 2,  // p3d pos, p2d uv, p3d nrm, p3d binormal, p3d tangent
-            SKIN_TEXTURED     = 3,  // p3d pos, p2d uv, p4d boneIndexes, p4d boneWeights
-            SKIN_NORMAL       = 4,  // p3d pos, p2d uv, p3d nrm, p3d binormal, p3d tangent, p4d boneIndexes, p4d boneWeights
+            SIMPLE            = 0,   // p3d pos
+            TEXTURED          = 1,   // p3d pos, p2d uv
+            NORMAL            = 2,   // p3d pos, p2d uv, p3d nrm, p3d binormal, p3d tangent
+            SKIN_NORMAL       = 3,   // p3d pos, p2d uv, p3d nrm, p3d binormal, p3d tangent, p4d boneIndexes, p4d boneWeights
+        };
+
+        enum class InstanceDataType {
+            DEFAULT         = 0,     // m4x4 transform, p4d color
+            DISPLAY_OBJECT  = 1,     // p3d pos, float isGrey, p4d color
         };
 
         enum class TextureFormat {
             RGBA8   = 0,
             RED8    = 1,
-            ALPHA8  = 2,
             UNKNOWN = -1,
         };
 
@@ -92,10 +84,9 @@ namespace fg {
 
         enum class ShaderConstBufferUsing {
             FRAME_DATA            = 0,
-            DRAW_DATA             = 1,
+            SKIN_DATA             = 1,
             MATERIAL_DATA         = 2,   
             ADDITIONAL_DATA       = 3,
-            SKIN_DATA             = 4,
         };
 
         class InitParams {
@@ -123,7 +114,6 @@ namespace fg {
         class VertexBufferInterface {
         public:
             virtual ~VertexBufferInterface() {}
-            virtual void update(void *data) = 0;
 
             virtual void *lock() = 0;
             virtual void unlock() = 0;
@@ -135,13 +125,21 @@ namespace fg {
         public:
             virtual ~IndexedVertexBufferInterface() {}
 
-            virtual void updateVertices(void *data) = 0;
-            virtual void updateIndices(void *data) = 0;
-            
             virtual void *lockVertices() = 0; 
             virtual void *lockIndices() = 0;
             virtual void unlockVertices() = 0;
             virtual void unlockIndices() = 0;
+
+            virtual void release() = 0;
+        };
+
+        class InstanceDataInterface {
+        public:
+            virtual ~InstanceDataInterface() {}
+
+            virtual void *lock() = 0;
+            virtual void unlock() = 0;
+            virtual void update(const void *data, unsigned instanceCount) = 0;
 
             virtual void release() = 0;
         };
@@ -179,7 +177,7 @@ namespace fg {
         class ShaderConstantBufferInterface {
         public:
             virtual ~ShaderConstantBufferInterface() {}
-            virtual void update(const void *data) const = 0;
+            virtual void update(const void *data, unsigned byteWidth = 0) = 0;
             virtual void release() = 0;
         };
 
@@ -224,15 +222,16 @@ namespace fg {
 
             virtual SoundEmitterInterface         *sndCreateEmitter(unsigned sampleRate, unsigned channels) = 0;
 
-            virtual VertexBufferInterface         *rdCreateVertexBuffer(VertexType vtype, unsigned vcount, bool isDynamic, void *data = nullptr) = 0;
-            virtual IndexedVertexBufferInterface  *rdCreateIndexedVertexBuffer(VertexType vtype, unsigned vcount, unsigned ushortIndexCount, bool isDynamic, void *vdata = nullptr, void *idata = nullptr) = 0;
+            virtual VertexBufferInterface         *rdCreateVertexBuffer(VertexType vtype, unsigned vcount, bool isDynamic, const void *data = nullptr) = 0;
+            virtual IndexedVertexBufferInterface  *rdCreateIndexedVertexBuffer(VertexType vtype, unsigned vcount, unsigned ushortIndexCount, bool isDynamic, const void *vdata = nullptr, const void *idata = nullptr) = 0;
+            virtual InstanceDataInterface         *rdCreateInstanceData(InstanceDataType type, unsigned instanceCount) = 0;
             virtual ShaderInterface               *rdCreateShader(const byteform &binary) = 0;
             virtual RasterizerParamsInterface     *rdCreateRasterizerParams(CullMode cull) = 0;
             virtual BlenderParamsInterface        *rdCreateBlenderParams(const BlendMode blendMode) = 0;
             virtual DepthParamsInterface          *rdCreateDepthParams(bool depthEnabled, DepthFunc compareFunc, bool depthWriteEnabled) = 0;
             virtual SamplerInterface              *rdCreateSampler(TextureFilter filter, TextureAddressMode addrMode) = 0;
             virtual ShaderConstantBufferInterface *rdCreateShaderConstantBuffer(ShaderConstBufferUsing appoint, unsigned byteWidth) = 0;
-            virtual Texture2DInterface            *rdCreateTexture2D(unsigned char **imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount) = 0;
+            virtual Texture2DInterface            *rdCreateTexture2D(unsigned char * const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount) = 0;
             virtual Texture2DInterface            *rdCreateTexture2D(TextureFormat format, unsigned originWidth, unsigned originHeight, unsigned mipCount) = 0;
             virtual RenderTargetInterface         *rdCreateRenderTarget(unsigned colorTargetCount, unsigned originWidth, unsigned originHeight) = 0;
             virtual RenderTargetInterface         *rdGetDefaultRenderTarget() = 0;
@@ -250,8 +249,8 @@ namespace fg {
             virtual void  rdSetTexture2D(TextureSlot slot, const Texture2DInterface *texture = nullptr) = 0;
             virtual void  rdSetScissorRect(math::p2d &topLeft, math::p2d &bottomRight) = 0;
 
-            virtual void  rdDrawGeometry(const VertexBufferInterface *vbuffer, PrimitiveTopology topology, unsigned vertexCount) = 0;
-            virtual void  rdDrawIndexedGeometry(const IndexedVertexBufferInterface *ivbuffer, PrimitiveTopology topology, unsigned indexCount) = 0;
+            virtual void  rdDrawGeometry(const VertexBufferInterface *vbuffer, const InstanceDataInterface *instanceData, PrimitiveTopology topology, unsigned vertexCount, unsigned instanceCount = 1) = 0;
+            virtual void  rdDrawIndexedGeometry(const IndexedVertexBufferInterface *ivbuffer, const InstanceDataInterface *instanceData, PrimitiveTopology topology, unsigned indexCount, unsigned instanceCount = 1) = 0;
         };
 
         class EnginePlatformInterface : public PlatformInterface {

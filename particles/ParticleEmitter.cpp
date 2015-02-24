@@ -45,20 +45,25 @@ namespace fg {
                 position.transform(torsionRotate);
 
                 _animationFrames[i].position = _startPos + position;
+                _animationFrames[i].color.r = _getModifiedParticleParam(modifiers, ParticleParamType::COLOR_R, timeKoeff);
+                _animationFrames[i].color.g = _getModifiedParticleParam(modifiers, ParticleParamType::COLOR_G, timeKoeff);
+                _animationFrames[i].color.b = _getModifiedParticleParam(modifiers, ParticleParamType::COLOR_B, timeKoeff);
+                _animationFrames[i].color.a = _getModifiedParticleParam(modifiers, ParticleParamType::COLOR_A, timeKoeff);
                 _animationFrames[i].size = _getModifiedParticleParam(modifiers, ParticleParamType::SIZE, timeKoeff);
             }
         }
 
-        void ParticleAnimation::getTransform(float animKoeff, math::m4x4 &out) const {
+        void ParticleAnimation::getData(float animKoeff, math::m4x4 &outTransform, fg::color &outColor) const {
             unsigned firstFrameIndex = unsigned(animKoeff * float(_frameCount));
             
             const math::p3d &pos = _animationFrames[firstFrameIndex].position;
             float scl = _animationFrames[firstFrameIndex].size;
+            outColor = _animationFrames[firstFrameIndex].color;
 
-            out.setScaling(scl, scl, scl);
-            out._41 = pos.x;
-            out._42 = pos.y;
-            out._43 = pos.z;
+            outTransform.setScaling(scl, scl, scl);
+            outTransform._41 = pos.x;
+            outTransform._42 = pos.y;
+            outTransform._43 = pos.z;
         }
 
         unsigned ParticleAnimation::getFrameCount() const {
@@ -202,24 +207,29 @@ namespace fg {
                 accumulatedParticles += _getModifiedEmitterParam(EmitterParamType::PARTICLES_PER_SEC, emitterKoeff);
                 accumulatedMs += 1.0f;
                 
-                if(unsigned(accumulatedParticles * 0.001f) > _particles.size()) {
-                    float bornLifeTime  = _getModifiedEmitterRandomParam(EmitterParamType::LIFETIME_MIN, EmitterParamType::LIFETIME_MAX, emitterKoeff);
-                    float bornConeAngle = _getModifiedEmitterRandomParam(EmitterParamType::CONE_ANGLE_MIN, EmitterParamType::CONE_ANGLE_MAX, emitterKoeff);
+                unsigned accumulatedParticlesUint = unsigned(accumulatedParticles * 0.001f);
+                unsigned bornedParticlesCount = unsigned(_particles.size());
 
-                    math::p3d coneDir;
-                    _getConeRandomVectorAroundY(bornConeAngle, coneDir);
+                if(accumulatedParticlesUint > bornedParticlesCount) {
+                    for(unsigned i = bornedParticlesCount; i < accumulatedParticlesUint; i++) {
+                        float bornLifeTime = _getModifiedEmitterRandomParam(EmitterParamType::LIFETIME_MIN, EmitterParamType::LIFETIME_MAX, emitterKoeff);
+                        float bornConeAngle = _getModifiedEmitterRandomParam(EmitterParamType::CONE_ANGLE_MIN, EmitterParamType::CONE_ANGLE_MAX, emitterKoeff);
 
-                    ParticleBornParams bornParams;
-                    bornParams.velocity = _getModifiedEmitterRandomParam(EmitterParamType::VELOCITY_MIN, EmitterParamType::VELOCITY_MAX, emitterKoeff);
-                    bornParams.avelocity = _getModifiedEmitterRandomParam(EmitterParamType::ANGLE_VELOCITY_MIN, EmitterParamType::ANGLE_VELOCITY_MAX, emitterKoeff);
-                    bornParams.torsion = _getModifiedEmitterRandomParam(EmitterParamType::TORSION_MIN, EmitterParamType::TORSION_MAX, emitterKoeff);
-                    bornParams.angle = _getModifiedEmitterRandomParam(EmitterParamType::ANGLE_MIN, EmitterParamType::ANGLE_MAX, emitterKoeff);
-                    bornParams.size = _getModifiedEmitterRandomParam(EmitterParamType::PARTICLE_SIZE_MIN, EmitterParamType::PARTICLE_SIZE_MAX, emitterKoeff);
+                        math::p3d coneDir;
+                        _getConeRandomVectorAroundY(bornConeAngle, coneDir);
 
-                    _particles.resize(_particles.size() + 1);
-                    _particles.back() = new ParticleAnimation(accumulatedMs, bornLifeTime, _frameTimeMs);
-                    _particles.back()->init(math::p3d(), coneDir, bornParams);
-                    _particles.back()->initFrames(_particleModifiers, _torsionAxis);
+                        ParticleBornParams bornParams;
+                        bornParams.velocity = _getModifiedEmitterRandomParam(EmitterParamType::VELOCITY_MIN, EmitterParamType::VELOCITY_MAX, emitterKoeff);
+                        bornParams.avelocity = _getModifiedEmitterRandomParam(EmitterParamType::ANGLE_VELOCITY_MIN, EmitterParamType::ANGLE_VELOCITY_MAX, emitterKoeff);
+                        bornParams.torsion = _getModifiedEmitterRandomParam(EmitterParamType::TORSION_MIN, EmitterParamType::TORSION_MAX, emitterKoeff);
+                        bornParams.angle = _getModifiedEmitterRandomParam(EmitterParamType::ANGLE_MIN, EmitterParamType::ANGLE_MAX, emitterKoeff);
+                        bornParams.size = _getModifiedEmitterRandomParam(EmitterParamType::PARTICLE_SIZE_MIN, EmitterParamType::PARTICLE_SIZE_MAX, emitterKoeff);
+
+                        _particles.resize(_particles.size() + 1);
+                        _particles.back() = new ParticleAnimation(accumulatedMs, bornLifeTime, _frameTimeMs);
+                        _particles.back()->init(math::p3d(), coneDir, bornParams);
+                        _particles.back()->initFrames(_particleModifiers, _torsionAxis);
+                    }
                 }
             }
 
@@ -240,7 +250,7 @@ namespace fg {
             _curParticleIndex = 0;
         }
 
-        bool ParticleEmitter::getNextParticleData(math::m4x4 &trfm) const {
+        bool ParticleEmitter::getNextParticleData(math::m4x4 &outTransform, fg::color &outColor) const {
             while(_curParticleIndex < unsigned(_particles.size())) {
                 const ParticleAnimation *cur = _particles[_curParticleIndex]; 
                 float localTimeMs = _curNrmTimeMs - cur->getBornTimeMs();
@@ -249,7 +259,7 @@ namespace fg {
                 _curParticleIndex++;
 
                 if(cur->getBornTimeMs() < _curTimeMs && localTimeMs < cur->getLifeTimeMs()) {
-                    cur->getTransform(localTimeMs / cur->getLifeTimeMs(), trfm);
+                    cur->getData(localTimeMs / cur->getLifeTimeMs(), outTransform, outColor);
                     return true;
                 }
             }
@@ -335,6 +345,10 @@ namespace fg {
 
         float ParticleEmitter::getLifeTime() const {
             return _lifeTimeMs;
+        }
+
+        unsigned ParticleEmitter::getMaxParticles() const {
+            return unsigned(_particles.size());
         }
 
         bool ParticleEmitter::isCycled() const {

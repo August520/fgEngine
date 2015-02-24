@@ -1,18 +1,22 @@
 
 namespace fg {
     namespace render {
-        enum class BillboardType {
-            BILL       = 0,
-            AXISBILL   = 1,
-            PPVELOCITY = 2,
-        };
-
-        template <unsigned TRIANGLES_MAX> class TransparentDrawer {
+        template <unsigned PRIMITIVE_MAX> class TransparentDrawer {
         public:
-            TransparentDrawer() : _ivb(nullptr) {}
+            TransparentDrawer() {
+                _indexedVertexBuffer = nullptr;
+                _instanceBuffer = nullptr;
+                _lastIndexCount = 0;
+                _lastVertexCount = 0;
+                _lastInstanceCount = 0;
+                _sortArray = nullptr;
+                _sortData = nullptr;
+                _sortIndexes = nullptr;
+            }
+
             virtual ~TransparentDrawer();
 
-            void drawParticles(platform::PlatformInterface &platform, render::RenderSupportInterface &rendering, const math::m4x4 &trfm, const particles::ParticleEmitterInterface *emitter, BillboardType type);
+            void drawParticles(platform::PlatformInterface &platform, render::RenderSupportInterface &rendering, const math::m4x4 &trfm, const particles::ParticleEmitterInterface *emitter, particles::ParticleType type);
             void drawMesh(platform::PlatformInterface &platform, render::RenderSupportInterface &rendering, const math::m4x4 &trfm, const resources::MeshInterface *mesh);
 
         protected:
@@ -21,11 +25,17 @@ namespace fg {
                 unsigned  primStartIndex;
             };
 
-            platform::IndexedVertexBufferInterface *_ivb;
+            platform::IndexedVertexBufferInterface *_indexedVertexBuffer;
+            platform::InstanceDataInterface        *_instanceBuffer;
             
-            unsigned short  _sortIndexes[3 * TRIANGLES_MAX];
-            SortElement     _sortArray[TRIANGLES_MAX];
-                                    
+            unsigned  _lastVertexCount;
+            unsigned  _lastIndexCount;
+            unsigned  _lastInstanceCount;
+            
+            InstanceDataDefault  *_sortData;
+            SortElement          *_sortArray;
+            unsigned short       *_sortIndexes;
+
         private:
             TransparentDrawer(const TransparentDrawer &);
             TransparentDrawer &operator =(const TransparentDrawer &);
@@ -33,79 +43,169 @@ namespace fg {
         
         //-------------------------------------------------------------------------
 
-        template <unsigned TRIANGLES_MAX> TransparentDrawer <TRIANGLES_MAX>::~TransparentDrawer() {
-            if(_ivb) {
-                _ivb->release();
+        template <unsigned PRIMITIVE_MAX> TransparentDrawer <PRIMITIVE_MAX>::~TransparentDrawer() {
+            if(_indexedVertexBuffer) {
+                _indexedVertexBuffer->release();
+            }
+            if(_instanceBuffer) {
+                _instanceBuffer->release();
+            }
+            if(_sortData) {
+                delete []_sortData;
+            }
+            if(_sortArray) {
+                delete []_sortArray;
+            }
+            if(_sortIndexes) {
+                delete []_sortIndexes;
             }
         }
 
-        template <unsigned TRIANGLES_MAX> void TransparentDrawer <TRIANGLES_MAX> ::drawParticles(platform::PlatformInterface &platform, render::RenderSupportInterface &rendering, const math::m4x4 &trfm, const particles::ParticleEmitterInterface *emitter, BillboardType type) {
-            if(_ivb == nullptr) {
-                _ivb = platform.rdCreateIndexedVertexBuffer(platform::VertexType::NORMAL, 2 * TRIANGLES_MAX, 3 * TRIANGLES_MAX, true);
+        template <unsigned PRIMITIVE_MAX> void TransparentDrawer <PRIMITIVE_MAX> ::drawParticles(platform::PlatformInterface &platform, render::RenderSupportInterface &rendering, const math::m4x4 &trfm, const particles::ParticleEmitterInterface *emitter, particles::ParticleType type) {
+            if(_lastVertexCount < 4 || _lastIndexCount < 6) {
+                if(_indexedVertexBuffer) {
+                    _indexedVertexBuffer->release();
+                }
+                
+                _indexedVertexBuffer = platform.rdCreateIndexedVertexBuffer(platform::VertexType::NORMAL, 4, 6, true);
+                _lastIndexCount = 6;
+                _lastVertexCount = 4;
+            }
+            
+            CameraInterface &cam = rendering.getCamera();
+            VertexNormal *_vertexes = (VertexNormal *)_indexedVertexBuffer->lockVertices();
+            unsigned short *_indexes = (unsigned short *)_indexedVertexBuffer->lockIndices();
+
+            _vertexes[0].position = math::p3d(-0.5f, -0.5f, 0.0f);
+            _vertexes[1].position = math::p3d(-0.5f, 0.5f, 0.0f);
+            _vertexes[2].position = math::p3d(0.5f, 0.5f, 0.0f);
+            _vertexes[3].position = math::p3d(0.5f, -0.5f, 0.0f);
+
+            _vertexes[0].uv = math::p2d(1, 0);
+            _vertexes[1].uv = math::p2d(1, 1);
+            _vertexes[2].uv = math::p2d(0, 1);
+            _vertexes[3].uv = math::p2d(0, 0);
+
+            _indexes[0] = 0;
+            _indexes[1] = 1;
+            _indexes[2] = 2;
+            _indexes[3] = 0;
+            _indexes[4] = 2;
+            _indexes[5] = 3;
+
+            _indexedVertexBuffer->unlockVertices();
+            _indexedVertexBuffer->unlockIndices();
+            
+            if(_lastInstanceCount < emitter->getMaxParticles()) {
+                delete []_sortArray;
+                delete []_sortData;
+                delete []_sortIndexes;
+
+                _lastInstanceCount = emitter->getMaxParticles();
+
+                _sortArray = new SortElement[_lastInstanceCount];
+                _sortData = new InstanceDataDefault[_lastInstanceCount];
+                _sortIndexes = new unsigned short[3 * _lastInstanceCount];
+
+                if(_instanceBuffer) {
+                    _instanceBuffer->release();
+                }
+
+                _instanceBuffer = platform.rdCreateInstanceData(platform::InstanceDataType::DEFAULT, _lastInstanceCount);
             }
 
-            CameraInterface &cam = rendering.getCamera();
-            VertexNormal *_vertexes = (VertexNormal *)_ivb->lockVertices();
-            unsigned short *_indexes = (unsigned short *)_ivb->lockIndices();
+            unsigned instanceCount = 0;
 
-            math::p3d lt = -0.5f * cam.getRightDir() + 0.5f * cam.getUpDir();
-            math::p3d rt = 0.5f * cam.getRightDir() + 0.5f * cam.getUpDir();
-            math::p3d lb = -0.5f * cam.getRightDir() - 0.5f * cam.getUpDir();
-            math::p3d rb = 0.5f * cam.getRightDir() - 0.5f * cam.getUpDir();
-            
-            unsigned   vcount = 0;
-            unsigned   icount = 0;
-            math::m4x4 particleTransform;
+            if(type == particles::ParticleType::BILL) {
+                math::m4x4 localTransform;
 
-            if(type == BillboardType::BILL) {
-                while(emitter->getNextParticleData(particleTransform)) {
-                    math::p3d pos (particleTransform._41, particleTransform._42, particleTransform._43);
-                
-                    *(math::p3d *)(&_vertexes[vcount + 0].x) = pos + lb * particleTransform._11;
-                    *(math::p3d *)(&_vertexes[vcount + 1].x) = pos + lt * particleTransform._11;
-                    *(math::p3d *)(&_vertexes[vcount + 2].x) = pos + rt * particleTransform._11;
-                    *(math::p3d *)(&_vertexes[vcount + 3].x) = pos + rb * particleTransform._11;
+                while(emitter->getNextParticleData(localTransform, _sortData[instanceCount].rgba)) {
+                    _sortData[instanceCount].modelTransform = localTransform * trfm;
+                    
+                    InstanceDataDefault &cur = _sortData[instanceCount];
+                    math::p3d dirToParticle = *(math::p3d *)(&cur.modelTransform._41) - rendering.getCamera().getPosition();
+                    float distToParticle = dirToParticle.length();
 
-                    _indexes[icount++] = vcount + 0;
-                    _indexes[icount++] = vcount + 1;
-                    _indexes[icount++] = vcount + 2;
-                    _indexes[icount++] = vcount + 0;
-                    _indexes[icount++] = vcount + 2;
-                    _indexes[icount++] = vcount + 3;
+                    dirToParticle = dirToParticle / distToParticle;
 
-                    vcount += 4;
+                    double range = rendering.getCamera().getZFar();
+                    double v = double(distToParticle * dirToParticle.dot(rendering.getCamera().getForwardDir()));
+                    float  particleSize = cur.modelTransform._11;
+
+                    *(math::p3d *)(&cur.modelTransform._11) = cam.getRightDir() * particleSize;
+                    *(math::p3d *)(&cur.modelTransform._21) = cam.getUpDir() * particleSize;
+                    *(math::p3d *)(&cur.modelTransform._31) = cam.getForwardDir() * particleSize;
+                                
+                    _sortArray[instanceCount].primStartIndex = instanceCount;
+                    _sortArray[instanceCount].value = unsigned(v / (range * range) * 4294967295.0); //!!!
+
+                    instanceCount++;
                 }
             }
 
-            _ivb->unlockVertices();
-            _ivb->unlockIndices();
+            qsort(_sortArray, instanceCount, sizeof(SortElement), [](const void *v1, const void *v2) {
+                if(*(unsigned *)v1 <= *(unsigned *)v2) {
+                    return 1;
+                }
 
-            rendering.defDrawConst().modelTransform.identity();
-            rendering.defDrawConstApplyChanges();
-            platform.rdDrawIndexedGeometry(_ivb, platform::PrimitiveTopology::TRIANGLE_LIST, icount);
+                return -1;
+            });           
+
+            InstanceDataDefault *_instances = (InstanceDataDefault *)_instanceBuffer->lock();
+
+            for(unsigned i = 0; i < instanceCount; i++) {
+                _instances[i] = _sortData[_sortArray[i].primStartIndex];
+            }
+            
+            _instanceBuffer->unlock();
+            platform.rdDrawIndexedGeometry(_indexedVertexBuffer, _instanceBuffer, platform::PrimitiveTopology::TRIANGLE_LIST, 6, instanceCount);
         }
 
         template <unsigned TRIANGLES_MAX> void TransparentDrawer <TRIANGLES_MAX> ::drawMesh(platform::PlatformInterface &platform, render::RenderSupportInterface &rendering, const math::m4x4 &trfm, const resources::MeshInterface *mesh) {
-            if(_ivb == nullptr) {
-                _ivb = platform.rdCreateIndexedVertexBuffer(platform::VertexType::NORMAL, 2 * TRIANGLES_MAX, 3 * TRIANGLES_MAX, true);
+            if(_lastIndexCount < mesh->getGeometryIndexCount() || _lastVertexCount < mesh->getGeometryVertexCount()) {
+                _lastIndexCount = mesh->getGeometryIndexCount();
+                _lastVertexCount = mesh->getGeometryVertexCount();
+                
+                if(_indexedVertexBuffer) {
+                    _indexedVertexBuffer->release();
+                }
+
+                _indexedVertexBuffer = platform.rdCreateIndexedVertexBuffer(platform::VertexType::NORMAL, _lastVertexCount, _lastIndexCount, true);
+            }
+
+            if(_lastInstanceCount < mesh->getGeometryIndexCount() / 3) {
+                delete []_sortArray;
+                delete []_sortData;
+                delete []_sortIndexes;
+
+                _lastInstanceCount = mesh->getGeometryIndexCount() / 3;
+                _sortArray = new SortElement[_lastInstanceCount];
+                _sortData = new InstanceDataDefault [_lastInstanceCount];
+                _sortIndexes = new unsigned short[mesh->getGeometryIndexCount()];
+
+                if(_instanceBuffer) {
+                    _instanceBuffer->release();
+                }
+
+                _instanceBuffer = platform.rdCreateInstanceData(platform::InstanceDataType::DEFAULT, _lastInstanceCount);
             }
 
             unsigned vcount = 0;
             unsigned icount = 0;
             unsigned scount = 0;
 
-            VertexNormal *_vertexes = (VertexNormal *)_ivb->lockVertices();
-            unsigned short *_indexes = (unsigned short *)_ivb->lockIndices();
+            VertexNormal *_vertexes = (VertexNormal *)_indexedVertexBuffer->lockVertices();
+            unsigned short *_indexes = (unsigned short *)_indexedVertexBuffer->lockIndices();
 
             for(unsigned i = 0; i < mesh->getGeometryVertexCount(); i++) {
                 const VertexSkinnedNormal &mshVertex = mesh->getGeometryVertexes()[i];
                 VertexNormal &target = _vertexes[vcount++];
 
-                *(math::p3d *)(&target.x) = math::p3d(mshVertex.x, mshVertex.y, mshVertex.z).transform(trfm, true);
-                *(math::p2d *)(&target.tu) = math::p2d(mshVertex.tu, mshVertex.tv);
-                *(math::p3d *)(&target.nx) = math::p3d(mshVertex.nx, mshVertex.ny, mshVertex.nz).transform(trfm, false);
-                *(math::p3d *)(&target.bx) = math::p3d(mshVertex.bx, mshVertex.by, mshVertex.bz).transform(trfm, false);
-                *(math::p3d *)(&target.tx) = math::p3d(mshVertex.tx, mshVertex.ty, mshVertex.tz).transform(trfm, false);
+                target.position = math::p3d(mshVertex.position).transform(trfm, true);
+                target.uv = math::p2d(mshVertex.uv);
+                target.normal = math::p3d(mshVertex.normal).transform(trfm, false);
+                target.binormal = math::p3d(mshVertex.binormal).transform(trfm, false);
+                target.tangent = math::p3d(mshVertex.tangent).transform(trfm, false);
             }
 
             for(unsigned i = 0; i < mesh->getGeometryIndexCount(); i += 3) {
@@ -115,9 +215,9 @@ namespace fg {
                 unsigned index1 = _sortIndexes[icount++] = mesh->getGeometryIndexes()[i + 1];
                 unsigned index2 = _sortIndexes[icount++] = mesh->getGeometryIndexes()[i + 2];
 
-                math::p3d &tp1 = *(math::p3d *)(&_vertexes[index0].x);
-                math::p3d &tp2 = *(math::p3d *)(&_vertexes[index1].x);
-                math::p3d &tp3 = *(math::p3d *)(&_vertexes[index2].x);
+                math::p3d &tp1 = _vertexes[index0].position;
+                math::p3d &tp2 = _vertexes[index1].position;
+                math::p3d &tp3 = _vertexes[index2].position;
 
                 double v = ((tp1 + tp2 + tp3) / 3.0f).distanceToSqr(rendering.getCamera().getPosition());
                 double range = rendering.getCamera().getZFar();
@@ -143,12 +243,12 @@ namespace fg {
                 _indexes[off++] = _sortIndexes[cur.primStartIndex + 2];
             }
 
-            _ivb->unlockVertices();
-            _ivb->unlockIndices();
+            _indexedVertexBuffer->unlockVertices();
+            _indexedVertexBuffer->unlockIndices();
 
-            rendering.defDrawConst().modelTransform.identity();
-            rendering.defDrawConstApplyChanges();
-            platform.rdDrawIndexedGeometry(_ivb, platform::PrimitiveTopology::TRIANGLE_LIST, icount);
+            rendering.defInstanceData().modelTransform.identity();
+            rendering.defInstanceDataApplyChanges();
+            platform.rdDrawIndexedGeometry(_indexedVertexBuffer, rendering.getDefaultInstanceData(), platform::PrimitiveTopology::TRIANGLE_LIST, icount);
         }
     }
 }

@@ -2,48 +2,65 @@
 #include <string>
 
 namespace fg {
+    struct color {
+        float r, g, b, a;
+
+        color(float _r = 1.0f, float _g = 1.0f, float _b = 1.0f, float _a = 1.0f) : r(_r), g(_g), b(_b), a(_a) {}
+        color(const math::p4d &v) : r(v.x), g(v.y), b(v.z), a(v.w) {}
+
+        operator math::p4d() const {
+            return math::p4d(r, g, b, a);
+        }
+    };
+
     // p3d pos
     //
     struct VertexSimple {
-        float x, y, z;
+        math::p3d position;
     };
 
     // p3d pos, p2d uv
     //
     struct VertexTextured {
-        float x, y, z;
-        float tu, tv;
+        math::p3d position;
+        math::p2d uv;
     };
 
     // p3d pos, p2d uv, p3d nrm, p3d binormal, p3d tangent
     //
     struct VertexNormal {
-        float x, y, z;
-        float tu, tv;
-        float nx, ny, nz;
-        float bx, by, bz;
-        float tx, ty, tz;
-    };
-
-    // p3d pos, p2d uv, p4d boneIndexes, p4d boneWeights
-    //
-    struct VertexSkinnedTextured {
-        float x, y, z;
-        float tu, tv;
-        float bI0, bI1, bI2, bI3;
-        float bW0, bW1, bW2, bW3;
+        math::p3d position;
+        math::p2d uv;
+        math::p3d normal;
+        math::p3d binormal;
+        math::p3d tangent;
     };
 
     // p3d pos, p2d uv, p3d nrm, p3d binormal, p3d tangent, p4d boneIndexes, p4d boneWeights
     //
     struct VertexSkinnedNormal {
-        float x, y, z;
-        float tu, tv;
-        float nx, ny, nz;
-        float bx, by, bz;
-        float tx, ty, tz;
-        float bI0, bI1, bI2, bI3;
-        float bW0, bW1, bW2, bW3;
+        math::p3d position;
+        math::p2d uv;
+        math::p3d normal;
+        math::p3d binormal;
+        math::p3d tangent;
+        math::p4d boneIndexes;
+        math::p4d boneWeights;
+    };
+
+    // m4x4 modelTransform, p4d color
+    //
+    struct InstanceDataDefault {
+        math::m4x4 modelTransform;
+        color rgba;
+    };
+
+    // p3d pos, float isGrey, p4d color // isGrey > 0.0 texture have only R component
+    //
+    struct InstanceDataDisplayObject {
+        math::p3d position;
+        float isGrey;             
+        color rgba;
     };
 
 }

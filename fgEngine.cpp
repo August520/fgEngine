@@ -1,7 +1,7 @@
 
 #include "pch.h"
 
-#include "luaScript.cpp"
+#include "LuaScript.cpp"
 #include "diag.cpp"
 #include "math/math.cpp"
 #include "math/mathUtility.cpp"
@@ -10,45 +10,44 @@
 #include "tools/tools.h"
 #include "tools/tools.cpp"
 
-#include "resources/resource.h"
-#include "resources/textResource.h"
-#include "resources/shaderResource.h"
-#include "resources/modelResource.h"
-#include "resources/texture2DResource.h"
-#include "resources/fontResource.h"
-#include "resources/materialResource.h"
-#include "resources/clipSetResource.h"
-#include "resources/animationResource.h"
-#include "resources/soundResource.h"
+#include "resources/Resource.h"
+#include "resources/TextResource.h"
+#include "resources/ShaderResource.h"
+#include "resources/ModelResource.h"
+#include "resources/Texture2DResource.h"
+#include "resources/FontResource.h"
+#include "resources/MaterialResource.h"
+#include "resources/ClipSetResource.h"
+#include "resources/AnimationResource.h"
+#include "resources/SoundResource.h"
 
-#include "resources/resource.cpp"
-#include "resources/textResource.cpp"
-#include "resources/shaderResource.cpp"
-#include "resources/modelResource.cpp"
-#include "resources/texture2DResource.cpp"
-#include "resources/fontResource.cpp"
-#include "resources/materialResource.cpp"
-#include "resources/clipSetResource.cpp"
-#include "resources/animationResource.cpp"
-#include "resources/soundResource.cpp"
+#include "resources/Resource.cpp"
+#include "resources/TextResource.cpp"
+#include "resources/ShaderResource.cpp"
+#include "resources/ModelResource.cpp"
+#include "resources/Texture2DResource.cpp"
+#include "resources/FontResource.cpp"
+#include "resources/MaterialResource.cpp"
+#include "resources/ClipSetResource.cpp"
+#include "resources/AnimationResource.cpp"
+#include "resources/SoundResource.cpp"
 
-#include "resources/resourceFactory.cpp"
-#include "resources/resourceManager.cpp"
+#include "resources/ResourceFactory.cpp"
+#include "resources/ResourceManager.cpp"
 
-#include "render/camera.h"
+#include "render/Camera.h"
 
-#include "render/displayObjectIterator.h"
-#include "render/displayObjectIterator.cpp"
-#include "render/renderObjectIterator.h"
-#include "render/renderObjectIterator.cpp"
-#include "render/renderSupport.cpp"
-#include "render/camera.cpp"
-#include "render/defaultRender.cpp"
+#include "render/DisplayObjectIterator.h"
+#include "render/DisplayObjectIterator.cpp"
+#include "render/RenderObjectIterator.h"
+#include "render/RenderObjectIterator.cpp"
+#include "render/RenderSupport.cpp"
+#include "render/Camera.cpp"
+#include "render/DefaultRender.cpp"
 
 #include "input/InputManager.cpp"
 
-#include "particles/Modifier.h"
-#include "particles/ParticleEmitter.h"
+
 
 #include "particles/Modifier.cpp"
 #include "particles/ParticleEmitter.cpp"
@@ -75,13 +74,14 @@
 #include "objects3D/Particles.cpp"
 #include "objects3D/Billboard.cpp"
 
-#include "iterators.cpp"
-#include "gameAPI.cpp"
+#include "Iterators.cpp"
+#include "GameAPI.cpp"
 
 const char *_binaryResources = "\
 bin/simpleModel.shader\n\
 bin/simpleSkin.shader\n\
 bin/displayObject.shader\n\
+bin/texturedModel.shader\n\
 bin/lightedModel.shader\n\
 bin/lightedNormalModel.shader\n\
 bin/lightedSkin.shader\n\

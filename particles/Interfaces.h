@@ -1,6 +1,12 @@
 
 namespace fg {
     namespace particles {
+        enum class ParticleType {
+            BILL = 0,
+            AXISBILL = 1,
+            PPVELOCITY = 2,
+        };
+
         enum class ModifierFunction {
             CONSTANT  = 0,
             LINEUP    = 1,
@@ -68,7 +74,7 @@ namespace fg {
 
             virtual void  build() = 0;
             virtual void  setTimeStamp(float timeMs) = 0;
-            virtual bool  getNextParticleData(math::m4x4 &trfm) const = 0;
+            virtual bool  getNextParticleData(math::m4x4 &outTransform, fg::color &outColor) const = 0;
 
             virtual ModifierInterface *createEmitterModifier(EmitterParamType type) = 0;
             virtual ModifierInterface *createParticleModifier(ParticleParamType type) = 0;
@@ -85,6 +91,8 @@ namespace fg {
             virtual float getParam(EmitterParamType param) const = 0;
             virtual float getFps() const = 0;
             virtual float getLifeTime() const = 0;
+            
+            virtual unsigned getMaxParticles() const = 0;
 
             virtual bool  isCycled() const = 0;
         };

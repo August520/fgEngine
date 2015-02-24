@@ -57,7 +57,7 @@ namespace fg {
 
             virtual void setVisible(bool visible) = 0;
             virtual void setColor(float r, float g, float b, float a) = 0;
-            virtual void setColor(const platform::color &rgba) = 0;
+            virtual void setColor(const fg::color &rgba) = 0;
 
             virtual void appendPosition(float xInc, float yInc, float zInc) = 0;
             virtual void appendPosition(const math::p3d &posInc) = 0;
@@ -69,7 +69,7 @@ namespace fg {
             virtual const math::m4x4  &getTransform() const = 0;
             virtual const math::m4x4  &getFullTransform() const = 0;
             
-            virtual const platform::color &getColor() const = 0;
+            virtual const fg::color &getColor() const = 0;
             virtual bool  isVisible() const = 0;
                         
             virtual void  updateCoordinates(float frameTimeMs) = 0;

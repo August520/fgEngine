@@ -19,16 +19,17 @@ namespace fg {
             void init(const math::p3d &startPos, const math::p3d &dir, const ParticleBornParams &bornParams);
             void initFrames(const std::unordered_map <ParticleParamType, Modifier *> &modifiers, const math::p3d &torsionAxis);
 
-            void getTransform(float animKoeff, math::m4x4 &out) const;
-
+            void getData(float animKoeff, math::m4x4 &outTransform, fg::color &outColor) const;
+            
             unsigned getFrameCount() const;
             float    getLifeTimeMs() const;
             float    getBornTimeMs() const;
 
         private:
             struct Frame {
-                math::p3d position;  
-                float     size;
+                math::p3d  position; 
+                fg::color  color;
+                float      size;
             };
 
             float      _bornTimeMs;
@@ -60,25 +61,28 @@ namespace fg {
             ParticleEmitter();
             ~ParticleEmitter() override;
 
-            void  build();
-            void  setTimeStamp(float timeMs);
-            bool  getNextParticleData(math::m4x4 &trfm) const;
+            void  build() override;
+            void  setTimeStamp(float timeMs) override;
+            bool  getNextParticleData(math::m4x4 &outTransform, fg::color &outColor) const override;
 
-            ModifierInterface *createEmitterModifier(EmitterParamType type);
-            ModifierInterface *createParticleModifier(ParticleParamType type);
+            ModifierInterface *createEmitterModifier(EmitterParamType type) override;
+            ModifierInterface *createParticleModifier(ParticleParamType type) override;
 
-            void  removeEmitterModifier(EmitterParamType type);
-            void  removeParticleModifier(ParticleParamType type);
+            void  removeEmitterModifier(EmitterParamType type) override;
+            void  removeParticleModifier(ParticleParamType type) override;
 
-            void  setTorsionAxis(const math::p3d &axis);
-            void  setParam(EmitterParamType param, float value);
-            void  setFps(float framesPerSecond);
-            void  setLifeTime(float lifeTimeMs);
-            void  setCycled(bool cycled);
+            void  setTorsionAxis(const math::p3d &axis) override;
+            void  setParam(EmitterParamType param, float value) override;
+            void  setFps(float framesPerSecond) override;
+            void  setLifeTime(float lifeTimeMs) override;
+            void  setCycled(bool cycled) override;
 
-            float getParam(EmitterParamType param) const;
-            float getFps() const;
-            float getLifeTime() const;
+            float getParam(EmitterParamType param) const override;
+            float getFps() const override;
+            float getLifeTime() const override;
+            
+            unsigned getMaxParticles() const override;
+
             bool  isCycled() const;
 
         protected:

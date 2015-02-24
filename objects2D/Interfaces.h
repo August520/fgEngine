@@ -116,8 +116,8 @@ namespace fg {
             virtual ~TextFieldInterface() {}
 
             virtual void setText(const fg::string &text) = 0;
-            virtual void setFont(const fg::string &fontResourceName, unsigned size = 16, const platform::color &c = platform::color()) = 0;
-            virtual void setColor(const platform::color &c) = 0;
+            virtual void setFont(const fg::string &fontResourceName, unsigned size = 16, const fg::color &c = fg::color()) = 0;
+            virtual void setColor(const fg::color &c) = 0;
 
             virtual const fg::string &getText() const = 0;
         };

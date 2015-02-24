@@ -12,11 +12,6 @@ namespace fg {
             math::p3d   globalSunDirection;
             float       scrHeight;
         };
-
-        struct DefaultDrawConstants { 
-            math::m4x4       modelTransform;
-            platform::color  rgba;
-        };
         
         class CameraInterface {
         public:
@@ -49,31 +44,32 @@ namespace fg {
             virtual ~RenderSupportInterface() {}
             virtual CameraInterface &getCamera() = 0;
 
+            virtual platform::InstanceDataInterface      *getDefaultInstanceData() = 0;
             virtual platform::RasterizerParamsInterface  *getDefaultRasterizerParams() = 0;
             virtual platform::BlenderParamsInterface     *getDefaultBlenderParams() = 0;
             virtual platform::DepthParamsInterface       *getDefaultDepthParams() = 0;
             virtual platform::SamplerInterface           *getDefaultPointSampler() = 0;
             virtual platform::SamplerInterface           *getDefaultLinearSampler() = 0;
-
+            
             virtual DefaultFrameConstants  &defFrameConst() = 0;
-            virtual DefaultDrawConstants   &defDrawConst() = 0;
+            virtual InstanceDataDefault    &defInstanceData() = 0;
             
             virtual void defFrameConstApplyChanges() = 0;
-            virtual void defDrawConstApplyChanges() = 0;
+            virtual void defInstanceDataApplyChanges() = 0;
 
             virtual void setShader(const resources::ShaderResourceInterface *shader) = 0;
             virtual void setTexture(platform::TextureSlot slot, const resources::Texture2DResourceInterface *texture) = 0;
 
-            virtual void drawQuad2D(const math::m3x3 &trfm, float z, const resources::ClipData *clip, unsigned frame) = 0;
-            virtual void drawText2D(const fg::string &utf8text, const math::m3x3 &trfm, float z, const resources::FontResourceInterface *font, unsigned size) = 0;
+            virtual void drawQuad2D(const math::m3x3 &trfm, const resources::ClipData *clip, unsigned frame, const fg::color &c) = 0;
+            virtual void drawText2D(const fg::string &utf8text, const math::m3x3 &trfm, const resources::FontResourceInterface *font, unsigned size, const fg::color &c) = 0;
             virtual void drawScreenQuad(float x, float y, float width, float height) = 0;
-            virtual void drawMesh(const resources::MeshInterface *mesh) = 0;
+            virtual void drawMesh(const resources::MeshInterface *mesh, const platform::InstanceDataInterface *instanceData = nullptr) = 0;
             
-            virtual void debugDrawBox(const math::m4x4 &transform, const platform::color &c) = 0;
-            virtual void debugDrawBox(const math::p3d &pMin, const math::p3d &pMax, const platform::color &c) = 0;
-            virtual void debugDrawFillBox(const math::m4x4 &transform, const platform::color &c) = 0;
-            virtual void debugDrawTriangle(const math::p3d &p1, const math::p3d &p2, const math::p3d &p3, const platform::color &c) = 0;
-            virtual void debugDrawLine(const math::p3d &p1, const math::p3d &p2, const platform::color &c) = 0;
+            virtual void debugDrawBox(const math::m4x4 &transform, const fg::color &c) = 0;
+            virtual void debugDrawBox(const math::p3d &pMin, const math::p3d &pMax, const fg::color &c) = 0;
+            virtual void debugDrawFillBox(const math::m4x4 &transform, const fg::color &c) = 0;
+            virtual void debugDrawTriangle(const math::p3d &p1, const math::p3d &p2, const math::p3d &p3, const fg::color &c) = 0;
+            virtual void debugDrawLine(const math::p3d &p1, const math::p3d &p2, const fg::color &c) = 0;
             virtual void debugDrawAxis() = 0;
         };
 
