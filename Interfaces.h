@@ -8,6 +8,22 @@ namespace fg {
         color(float _r = 1.0f, float _g = 1.0f, float _b = 1.0f, float _a = 1.0f) : r(_r), g(_g), b(_b), a(_a) {}
         color(const math::p4d &v) : r(v.x), g(v.y), b(v.z), a(v.w) {}
 
+        color operator +(const color &v) const {
+            return color(r + v.r, g + v.g, b + v.b, a + v.a);
+        }
+
+        color operator -(const color &v) const {
+            return color(r - v.r, g - v.g, b - v.b, a - v.a);
+        }
+
+        color operator *(float v) const {
+            return color(r * v, g * v, b * v, a * v);
+        }
+
+        color operator /(float v) const {
+            return color(r / v, g / v, b / v, a / v);
+        }
+
         operator math::p4d() const {
             return math::p4d(r, g, b, a);
         }

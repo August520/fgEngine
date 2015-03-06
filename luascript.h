@@ -121,7 +121,7 @@ struct luaObj{
     bool    operator == (const luaObj &rVal) const;
     bool    operator < (const luaObj &rVal) const;
 
-    LUATYPE type() const{                                                    // возвращает тип
+    LUATYPE type() const{                                                    
         return _type;
     }
 
@@ -129,25 +129,25 @@ struct luaObj{
         return _std.meta;
     }
 
-    luaObj &add(const luaObj &key, const luaObj &value = luaObj());          // добавляет новое значение, возвращает ссылку на новый элемент
+    luaObj &add(const luaObj &key, const luaObj &value = luaObj());          // return reference to new element
     luaObj &add(luaObj &&key, luaObj &&value);
     luaObj &add(const luaObj &key, luaObj &&value);
     luaObj &add(luaObj &&key, const luaObj &value);
 
-    luaObj &push(const luaObj &key, const luaObj &value);                    // добавляет новое значение, возвращает ссылку на this 
+    luaObj &push(const luaObj &key, const luaObj &value);                    // return this 
     luaObj &push(luaObj &&key, luaObj &&value);
     luaObj &push(const luaObj &key, luaObj &&value);
     luaObj &push(luaObj &&key, const luaObj &value);
 
-    luaObj &luaObj::get(const luaObj &key) const;                            // возвращает ссылку на значение из таблицы
-    luaObj *luaObj::getptr(const luaObj &key);                               // возвращает указатель на значение из таблицы
+    luaObj &luaObj::get(const luaObj &key) const;                            // return reference to table value or null obj
+    luaObj *luaObj::getptr(const luaObj &key);                               // return pointer to table value or nullptr
 
-    unsigned int count() const;                                              // размер таблицы
+    unsigned int count() const;                                              // size of table
 
     void luaObj::clear();
     bool remove(const luaObj &key);
 
-    template <typename F> void  foreach(F functor){                          // цикл по всем элементам таблицы / bool functor(const luaObj &key, luaObj &value);
+    template <typename F> void  foreach(F functor){                          // functor signature: bool functor(const luaObj &key, luaObj &value);
         if(_type == LUATYPE_TABLE){
             for(auto index = _table->begin(); index != _table->end(); ++index){
                 if(functor(index->first, *(index->second)) == false) break;
@@ -155,7 +155,7 @@ struct luaObj{
         }
     }
 
-    template <typename F> void  foreach(F functor) const{                          // цикл по всем элементам таблицы / bool functor(const luaObj &key, luaObj &value);
+    template <typename F> void  foreach(F functor) const{                    // functor signature: bool functor(const luaObj &key, luaObj &value);
         if(_type == LUATYPE_TABLE){
             for(auto index = _table->begin(); index != _table->end(); ++index){
                 if(functor(index->first, *(index->second)) == false) break;
@@ -163,13 +163,13 @@ struct luaObj{
         }
     }
 
-    void  toLuaStack(lua_State *L) const;                                    // поместить объект на вершину стека Lua
-    void  fromLuaStack(lua_State *L, int idx);                               // достать объект из стека Lua
+    void  toLuaStack(lua_State *L) const;                                    
+    void  fromLuaStack(lua_State *L, int idx);                               
 
-    int   tableExport(unsigned char *oBin);                                  // экспорт таблицы в бинарник
-    void  tableImport(unsigned char *iBin, int iBinSize);                    // импорт таблицы из бинарника
+    int   tableExport(unsigned char *oBin);                                  // export to binary
+    void  tableImport(unsigned char *iBin, int iBinSize);                    // import from binary
 
-    void  tableImport(const byteform & target);                    // импорт таблицы из бинарника, формат изменен
+    void  tableImport(const byteform & target);                              // import from byteform, TODO: format changes?
 
 };
 

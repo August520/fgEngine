@@ -4,6 +4,8 @@
 
 namespace fg {
     namespace particles {
+        static const bool FG_PARTICLE_INTERPOLATION = true;
+
         struct ParticleBornParams {
             float velocity;
             float avelocity;
@@ -13,7 +15,7 @@ namespace fg {
         };
 
         class ParticleAnimation final {
-            friend class ParticleEmitter;
+            friend class Emitter;
 
         public:
             void init(const math::p3d &startPos, const math::p3d &dir, const ParticleBornParams &bornParams);
@@ -56,10 +58,10 @@ namespace fg {
 
         //---------------------------------------------------------------------
 
-        class ParticleEmitter : public ParticleEmitterInterface {
+        class Emitter : public EmitterInterface {
         public:
-            ParticleEmitter();
-            ~ParticleEmitter() override;
+            Emitter();
+            ~Emitter() override;
 
             void  build() override;
             void  setTimeStamp(float timeMs) override;
@@ -67,9 +69,13 @@ namespace fg {
 
             ModifierInterface *createEmitterModifier(EmitterParamType type) override;
             ModifierInterface *createParticleModifier(ParticleParamType type) override;
-
+            
             void  removeEmitterModifier(EmitterParamType type) override;
             void  removeParticleModifier(ParticleParamType type) override;
+            
+            void  setShader(const fg::string &shaderPath) override;
+            void  addTextureBind(const fg::string &texturePath) override;
+            void  clearTextureBinds() override;
 
             void  setTorsionAxis(const math::p3d &axis) override;
             void  setParam(EmitterParamType param, float value) override;
@@ -80,8 +86,12 @@ namespace fg {
             float getParam(EmitterParamType param) const override;
             float getFps() const override;
             float getLifeTime() const override;
-            
-            unsigned getMaxParticles() const override;
+
+            const fg::string &getShader() const override;
+            const fg::string &getTextureBind(unsigned index) const override;
+
+            unsigned getTextureBindCount() const override;
+            unsigned getMaxParticleCount() const override;
 
             bool  isCycled() const;
 
@@ -102,6 +112,10 @@ namespace fg {
             math::p3d         _torsionAxis;
             std::vector       <ParticleAnimation *> _particles;
 
+            fg::string        _shaderPath;
+            fg::string        _textureBinds[resources::FG_MATERIAL_TEXTURE_MAX];
+            unsigned          _textureBindCount;
+
             float _getModifiedEmitterRandomParam(EmitterParamType paramTypeMin, EmitterParamType paramTypeMax, float koeff) const;
             float _getModifiedEmitterParam(EmitterParamType paramType, float koeff) const;
             float _getMaximumEmitterParam(EmitterParamType paramType) const;
@@ -109,8 +123,8 @@ namespace fg {
             void  _getConeRandomVectorAroundY(float maxAngle, math::p3d &out) const;
 
         private:
-            ParticleEmitter(const ParticleEmitter &);
-            ParticleEmitter &operator =(const ParticleEmitter &);
+            Emitter(const Emitter &);
+            Emitter &operator =(const Emitter &);
         };
     }
 }

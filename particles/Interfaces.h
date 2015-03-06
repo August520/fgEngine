@@ -2,9 +2,10 @@
 namespace fg {
     namespace particles {
         enum class ParticleType {
-            BILL = 0,
-            AXISBILL = 1,
-            PPVELOCITY = 2,
+            BILL       = 0,         // face to camera
+            AXISBILL   = 1,         // face to camera around axis
+            PPVELOCITY = 2,         // face to velocity dir
+            _count,
         };
 
         enum class ModifierFunction {
@@ -12,6 +13,7 @@ namespace fg {
             LINEUP    = 1,
             LINEDOWN  = 2,
             DIAGRAM   = 3,
+            _count,
         };
 
         enum class ParticleParamType {
@@ -25,7 +27,7 @@ namespace fg {
             STRETCH             = 7,
             ANGLE               = 8,
             TORSION             = 9, 
-            _count              = 10,
+            _count,
         };
 
         enum class EmitterParamType {
@@ -44,7 +46,7 @@ namespace fg {
             ANGLE_VELOCITY_MAX  = 12,
             TORSION_MIN         = 13,
             TORSION_MAX         = 14,
-            _count              = 15,
+            _count,
         };
 
         class ModifierInterface {
@@ -68,9 +70,9 @@ namespace fg {
             virtual float getMaximum() const = 0;
         };
 
-        class ParticleEmitterInterface {
+        class EmitterInterface {
         public:
-            virtual ~ParticleEmitterInterface() {}
+            virtual ~EmitterInterface() {}
 
             virtual void  build() = 0;
             virtual void  setTimeStamp(float timeMs) = 0;
@@ -82,6 +84,10 @@ namespace fg {
             virtual void  removeEmitterModifier(EmitterParamType type) = 0;
             virtual void  removeParticleModifier(ParticleParamType type) = 0;
 
+            virtual void  setShader(const fg::string &shaderPath) = 0;
+            virtual void  addTextureBind(const fg::string &texturePath) = 0;
+            virtual void  clearTextureBinds() = 0;
+            
             virtual void  setTorsionAxis(const math::p3d &axis) = 0;
             virtual void  setParam(EmitterParamType param, float value) = 0;
             virtual void  setFps(float framesPerSecond) = 0;
@@ -92,7 +98,11 @@ namespace fg {
             virtual float getFps() const = 0;
             virtual float getLifeTime() const = 0;
             
-            virtual unsigned getMaxParticles() const = 0;
+            virtual const fg::string &getShader() const = 0;
+            virtual const fg::string &getTextureBind(unsigned index) const = 0;
+
+            virtual unsigned getTextureBindCount() const = 0;
+            virtual unsigned getMaxParticleCount() const = 0;
 
             virtual bool  isCycled() const = 0;
         };

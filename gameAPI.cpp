@@ -17,6 +17,9 @@ namespace fg {
         if(type == object3d::RenderObjectType::MODEL) {
             return static_cast <object3d::Model3DInterface *> (new object3d::Model3D ());
         }
+        if(type == object3d::RenderObjectType::PARTICLES) {
+            return static_cast <object3d::Particles3DInterface *> (new object3d::Particles3D());
+        }
         return nullptr;
     }
 

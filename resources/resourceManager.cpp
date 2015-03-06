@@ -174,8 +174,12 @@ namespace fg {
                             }
                         }
 
-                        curResource->setLoadingState(ResourceLoadingState::CONSTRUCTED);
-                        _log.msgInfo("%s constructed", curResource->getFilePath().data());                        
+                        // errors can occur in 'constucted' method (resource must set state to INVALID)
+                        //
+                        if(curResource->getLoadingState() != ResourceLoadingState::INVALID) {  
+                            _log.msgInfo("%s constructed", curResource->getFilePath().data());
+                            curResource->setLoadingState(ResourceLoadingState::CONSTRUCTED);
+                        }
                     }
                     else {
                         _log.msgWarning("ResourceManager::_update / file %s not found or resource invalid", curResource->getFilePath().data());

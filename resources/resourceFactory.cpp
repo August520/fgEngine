@@ -32,6 +32,9 @@ namespace fg {
         template <> struct ResourceInterfaceTable <SoundResourceInterface> {
             typedef SoundResource type;
         };
+        template <> struct ResourceInterfaceTable <ParticleResourceInterface> {
+            typedef ParticleResource type;
+        };
 
         ResourceFactory::ResourceFactory() {
             _creators.add("lua", [](const char *path, bool unloadable) {
@@ -70,6 +73,9 @@ namespace fg {
             _creators.add("ogg", [](const char *path, bool unloadable) {
                 return static_cast <ManagedResourceInterface *> (new SoundResource(path, unloadable));
             });
+            _creators.add("ptc", [](const char *path, bool unloadable) {
+                return static_cast <ManagedResourceInterface *> (new ParticleResource(path, unloadable));
+            });
         }
 
         ManagedResourceInterface *ResourceFactory::createResource(const fg::string &ext, const char *path, bool unloadable) const {
@@ -94,6 +100,7 @@ namespace fg {
         template ResourcePtr::operator const ClipSetResourceInterface *() const;
         template ResourcePtr::operator const AnimationResourceInterface *() const;
         template ResourcePtr::operator const SoundResourceInterface *() const;
+        template ResourcePtr::operator const ParticleResourceInterface *() const;
         
         template ResourcePtr::operator TextResourceInterface *() const;
         template ResourcePtr::operator ShaderResourceInterface *() const;
@@ -104,6 +111,7 @@ namespace fg {
         template ResourcePtr::operator ClipSetResourceInterface *() const;
         template ResourcePtr::operator AnimationResourceInterface *() const;
         template ResourcePtr::operator SoundResourceInterface *() const;
+        template ResourcePtr::operator ParticleResourceInterface *() const;
     }
 }
 

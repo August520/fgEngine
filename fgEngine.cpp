@@ -10,6 +10,9 @@
 #include "tools/tools.h"
 #include "tools/tools.cpp"
 
+#include "particles/Modifier.h"
+#include "particles/ParticleEmitter.h"
+
 #include "resources/Resource.h"
 #include "resources/TextResource.h"
 #include "resources/ShaderResource.h"
@@ -20,6 +23,7 @@
 #include "resources/ClipSetResource.h"
 #include "resources/AnimationResource.h"
 #include "resources/SoundResource.h"
+#include "resources/ParticleResource.h"
 
 #include "resources/Resource.cpp"
 #include "resources/TextResource.cpp"
@@ -31,6 +35,7 @@
 #include "resources/ClipSetResource.cpp"
 #include "resources/AnimationResource.cpp"
 #include "resources/SoundResource.cpp"
+#include "resources/ParticleResource.cpp"
 
 #include "resources/ResourceFactory.cpp"
 #include "resources/ResourceManager.cpp"
@@ -46,8 +51,6 @@
 #include "render/DefaultRender.cpp"
 
 #include "input/InputManager.cpp"
-
-
 
 #include "particles/Modifier.cpp"
 #include "particles/ParticleEmitter.cpp"

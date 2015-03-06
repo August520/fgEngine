@@ -54,16 +54,34 @@ namespace fg {
         }
 
         void ParticleAnimation::getData(float animKoeff, math::m4x4 &outTransform, fg::color &outColor) const {
-            unsigned firstFrameIndex = unsigned(animKoeff * float(_frameCount));
+            float    frameIndex = animKoeff * float(_frameCount);
+            unsigned firstFrameIndex = unsigned(frameIndex);
             
             const math::p3d &pos = _animationFrames[firstFrameIndex].position;
+            fg::color rgba = _animationFrames[firstFrameIndex].color;
             float scl = _animationFrames[firstFrameIndex].size;
-            outColor = _animationFrames[firstFrameIndex].color;
+            
+            if(FG_PARTICLE_INTERPOLATION) {
+                unsigned nextFrameIndex = firstFrameIndex + 1 < _frameCount ? firstFrameIndex + 1 : firstFrameIndex;
+                float    betweenKoeff = frameIndex - float(firstFrameIndex);
 
-            outTransform.setScaling(scl, scl, scl);
-            outTransform._41 = pos.x;
-            outTransform._42 = pos.y;
-            outTransform._43 = pos.z;
+                math::p3d lerpPos = pos + (_animationFrames[nextFrameIndex].position - pos) * betweenKoeff;
+                fg::color lerpRGBA = rgba + (_animationFrames[nextFrameIndex].color - rgba) * betweenKoeff;                
+                float lerpScl = math::flerp(scl, _animationFrames[nextFrameIndex].size, betweenKoeff);
+                
+                outTransform.setScaling(lerpScl, lerpScl, lerpScl);
+                outTransform._41 = lerpPos.x;
+                outTransform._42 = lerpPos.y;
+                outTransform._43 = lerpPos.z;
+                outColor = lerpRGBA;
+            }
+            else {
+                outTransform.setScaling(scl, scl, scl);
+                outTransform._41 = pos.x;
+                outTransform._42 = pos.y;
+                outTransform._43 = pos.z;
+                outColor = rgba;
+            }
         }
 
         unsigned ParticleAnimation::getFrameCount() const {
@@ -91,7 +109,7 @@ namespace fg {
 
         //---------------------------------------------------------------------
 
-        ParticleEmitter::ParticleEmitter() {
+        Emitter::Emitter() {
             _nrmLifePeriodMs = 1.0f;
             _lifeTimeMs = 100.0f;
             _frameTimeMs = 33.34f;
@@ -118,13 +136,13 @@ namespace fg {
             _curTimeMs = 0.0f;
             _curNrmTimeMs = 0.0f;
             _curParticleIndex = 0;
+            _textureBindCount = 0;
         }
 
-        ParticleEmitter::~ParticleEmitter() {
+        Emitter::~Emitter() {
             for(auto index = _particles.begin(); index != _particles.end(); ++index) {
                 delete *index;
             }
-
             for(auto index = _emitterModifiers.begin(); index != _emitterModifiers.end(); ++index) {
                 delete index->second;
             }
@@ -133,15 +151,15 @@ namespace fg {
             }
         }
 
-        float ParticleEmitter::_getModifiedEmitterRandomParam(EmitterParamType paramTypeMin, EmitterParamType paramTypeMax, float koeff) const {
+        float Emitter::_getModifiedEmitterRandomParam(EmitterParamType paramTypeMin, EmitterParamType paramTypeMax, float koeff) const {
             float  tmin = _getModifiedEmitterParam(paramTypeMin, koeff);
             float  tmax = _getModifiedEmitterParam(paramTypeMax, koeff);
-            float  dist = max(tmax - tmin, 0.0f);
+            float  dist = math::fmax(tmax - tmin, 0.0f);
             float  rndf = float(rand() % 1000) / 1000.0f;
             return tmin + dist * rndf;
         }
 
-        float ParticleEmitter::_getModifiedEmitterParam(EmitterParamType paramType, float koeff) const {
+        float Emitter::_getModifiedEmitterParam(EmitterParamType paramType, float koeff) const {
             auto  index = _emitterModifiers.find(paramType);
             float value = _dynamicParams[unsigned(paramType)];
 
@@ -152,7 +170,7 @@ namespace fg {
             return value; 
         }
 
-        float ParticleEmitter::_getMaximumEmitterParam(EmitterParamType paramType) const {
+        float Emitter::_getMaximumEmitterParam(EmitterParamType paramType) const {
             auto  index = _emitterModifiers.find(paramType);
             float value = _dynamicParams[unsigned(paramType)];
 
@@ -163,7 +181,7 @@ namespace fg {
             return value; 
         }
 
-        float ParticleEmitter::_getMinimumEmitterParam(EmitterParamType paramType) const {
+        float Emitter::_getMinimumEmitterParam(EmitterParamType paramType) const {
             auto  index = _emitterModifiers.find(paramType);
             float value = _dynamicParams[unsigned(paramType)];
 
@@ -174,7 +192,7 @@ namespace fg {
             return value; 
         }
 
-        void ParticleEmitter::_getConeRandomVectorAroundY(float maxAngle, math::p3d &out) const {
+        void Emitter::_getConeRandomVectorAroundY(float maxAngle, math::p3d &out) const {
             float Y = cosf(maxAngle / 180.0f * M_PI);
             float root = sqrtf(1.0f - Y * Y);
             float randKoeff = float(rand() % 2000) / 1000.0f * M_PI;
@@ -184,7 +202,7 @@ namespace fg {
             out.y = Y;
         }
 
-        void ParticleEmitter::build() {
+        void Emitter::build() {
             for(auto index = _particles.begin(); index != _particles.end(); ++index) {
                 delete *index;
             }
@@ -237,20 +255,20 @@ namespace fg {
             _curParticleIndex = 0;
         }
 
-        void ParticleEmitter::setTimeStamp(float timeMs) {
+        void Emitter::setTimeStamp(float timeMs) {
             if(_cycled) {
                 _curTimeMs = timeMs;
                 _curNrmTimeMs = fmod(timeMs, _nrmLifePeriodMs);
             }
             else {
-                _curTimeMs = min(timeMs, _lifeTimeMs);
+                _curTimeMs = math::fmin(timeMs, _lifeTimeMs);
                 _curNrmTimeMs = timeMs;
             }
 
             _curParticleIndex = 0;
         }
 
-        bool ParticleEmitter::getNextParticleData(math::m4x4 &outTransform, fg::color &outColor) const {
+        bool Emitter::getNextParticleData(math::m4x4 &outTransform, fg::color &outColor) const {
             while(_curParticleIndex < unsigned(_particles.size())) {
                 const ParticleAnimation *cur = _particles[_curParticleIndex]; 
                 float localTimeMs = _curNrmTimeMs - cur->getBornTimeMs();
@@ -268,7 +286,7 @@ namespace fg {
             return false;
         }
 
-        ModifierInterface *ParticleEmitter::createEmitterModifier(EmitterParamType type) {
+        ModifierInterface *Emitter::createEmitterModifier(EmitterParamType type) {
             Modifier *mdf = nullptr;
             
             if(_emitterModifiers.find(type) == _emitterModifiers.end()) {
@@ -279,7 +297,7 @@ namespace fg {
             return mdf;
         }
 
-        ModifierInterface *ParticleEmitter::createParticleModifier(ParticleParamType type) {
+        ModifierInterface *Emitter::createParticleModifier(ParticleParamType type) {
             Modifier *mdf = nullptr;
 
             if(_particleModifiers.find(type) == _particleModifiers.end()) {
@@ -290,7 +308,7 @@ namespace fg {
             return mdf;
         }
 
-        void ParticleEmitter::removeEmitterModifier(EmitterParamType type) {
+        void Emitter::removeEmitterModifier(EmitterParamType type) {
             auto index = _emitterModifiers.find(type);
 
             if(index != _emitterModifiers.end()) {
@@ -299,7 +317,7 @@ namespace fg {
             }
         }
 
-        void ParticleEmitter::removeParticleModifier(ParticleParamType type) {
+        void Emitter::removeParticleModifier(ParticleParamType type) {
             auto index = _particleModifiers.find(type);
 
             if(index != _particleModifiers.end()) {
@@ -307,8 +325,20 @@ namespace fg {
                 _particleModifiers.erase(index);
             }
         }
+        
+        void Emitter::setShader(const fg::string &shaderPath) {
+            _shaderPath = shaderPath;
+        }
 
-        void ParticleEmitter::setTorsionAxis(const math::p3d &axis) {
+        void Emitter::addTextureBind(const fg::string &texturePath) {
+            _textureBinds[_textureBindCount++] = texturePath;
+        }
+
+        void Emitter::clearTextureBinds() {
+            _textureBindCount = 0;
+        }
+
+        void Emitter::setTorsionAxis(const math::p3d &axis) {
             float tlen = axis.length();
 
             if(tlen > M_EPSILON) {
@@ -319,39 +349,51 @@ namespace fg {
             }
         }
 
-        void ParticleEmitter::setParam(EmitterParamType param, float value) {
+        void Emitter::setParam(EmitterParamType param, float value) {
             _dynamicParams[unsigned(param)] = value;
         }
 
-        void ParticleEmitter::setFps(float framesPerSecond) {
+        void Emitter::setFps(float framesPerSecond) {
             _frameTimeMs = 1000.0f / framesPerSecond;
         }
 
-        void ParticleEmitter::setLifeTime(float lifeTimeMs) {
+        void Emitter::setLifeTime(float lifeTimeMs) {
             _lifeTimeMs = lifeTimeMs;
         }
 
-        void ParticleEmitter::setCycled(bool cycled) {
+        void Emitter::setCycled(bool cycled) {
             _cycled = cycled;
         }
 
-        float ParticleEmitter::getParam(EmitterParamType param) const {
+        float Emitter::getParam(EmitterParamType param) const {
             return _dynamicParams[unsigned(param)];
         }
 
-        float ParticleEmitter::getFps() const {
+        float Emitter::getFps() const {
             return 1000.0f / _frameTimeMs;
         }
 
-        float ParticleEmitter::getLifeTime() const {
+        float Emitter::getLifeTime() const {
             return _lifeTimeMs;
         }
 
-        unsigned ParticleEmitter::getMaxParticles() const {
+        const fg::string &Emitter::getShader() const {
+            return _shaderPath;
+        }
+
+        const fg::string &Emitter::getTextureBind(unsigned index) const {
+            return _textureBinds[index];
+        }
+
+        unsigned Emitter::getTextureBindCount() const {
+            return _textureBindCount;
+        }
+
+        unsigned Emitter::getMaxParticleCount() const {
             return unsigned(_particles.size());
         }
 
-        bool ParticleEmitter::isCycled() const {
+        bool Emitter::isCycled() const {
             return _cycled;
         }
     }

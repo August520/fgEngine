@@ -1,4 +1,4 @@
-// TODO:
+// TODO: 
 //
 
 
@@ -94,10 +94,7 @@ namespace fg {
             }
         }
         ~StaticHash() {
-            for(unsigned i = 0; i < ARRAYMAX; i++) {
-                free(_data[i].keys);
-                free(_data[i].ptrs);
-            }
+            clear();
         }
 
         void clear() {
@@ -115,6 +112,8 @@ namespace fg {
             }
         }
 
+        // TODO: 'overriding' flag working
+        //
         bool add(const fg::string &keystr, PTRTYPE ptr, bool overriding = false) {
             size_t origin = keystr.hash() & (ARRAYMAX - 1);
             Entry  &cur = _data[origin];
@@ -148,9 +147,35 @@ namespace fg {
             return nullptr;
         }
 
+        bool tryGet(const fg::string &keystr, PTRTYPE &out) const {
+            size_t origin = keystr.hash() & (ARRAYMAX - 1);
+
+            const fg::string *keys = _data[origin].keys;
+            PTRTYPE const    *ptrs = _data[origin].ptrs;
+
+            for(size_t i = 0, cnti = _data[origin].count; i < cnti; ++i) {
+                if(keys[i] == keystr) {
+                    out = ptrs[i];
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         // input lambda must have signature: [](const fg::string &, PTRTYPE){}
         //
         template <typename LAMBDA> void foreach(LAMBDA func) {
+            for(unsigned i = 0; i < ARRAYMAX; i++) {
+                for(unsigned c = 0; c < _data[i].count; c++) {
+                    func(_data[i].keys[c], _data[i].ptrs[c]);
+                }
+            }
+        }
+
+        // input lambda must have signature: [](const fg::string &, PTRTYPE){}
+        //
+        template <typename LAMBDA> void foreach(LAMBDA func) const {
             for(unsigned i = 0; i < ARRAYMAX; i++) {
                 for(unsigned c = 0; c < _data[i].count; c++) {
                     func(_data[i].keys[c], _data[i].ptrs[c]);

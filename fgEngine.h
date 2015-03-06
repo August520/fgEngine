@@ -18,13 +18,13 @@ typedef long long int64;
 
 #include "Interfaces.h"
 #include "platform/Interfaces.h"
+#include "audio/Interfaces.h"
+#include "particles/Interfaces.h"
 #include "resources/Interfaces.h"
 #include "input/Interfaces.h"
-#include "audio/Interfaces.h"
 #include "objects2D/Interfaces.h"
 #include "objects3D/Interfaces.h"
 #include "render/Interfaces.h"
-#include "particles/Interfaces.h"
 
 #include "resources/ResourceFactory.h"
 #include "resources/ResourceManager.h"
@@ -35,9 +35,6 @@ typedef long long int64;
 #include "render/DefaultRender.h"
 
 #include "input/InputManager.h"
-
-#include "particles/Modifier.h"
-#include "particles/ParticleEmitter.h"
 
 #include "Iterators.h"
 #include "GameAPI.h"

@@ -16,7 +16,7 @@ namespace fg {
 
             virtual ~TransparentDrawer();
 
-            void drawParticles(platform::PlatformInterface &platform, render::RenderSupportInterface &rendering, const math::m4x4 &trfm, const particles::ParticleEmitterInterface *emitter, particles::ParticleType type);
+            void drawParticles(platform::PlatformInterface &platform, render::RenderSupportInterface &rendering, const math::m4x4 &trfm, const particles::EmitterInterface *emitter, particles::ParticleType type);
             void drawMesh(platform::PlatformInterface &platform, render::RenderSupportInterface &rendering, const math::m4x4 &trfm, const resources::MeshInterface *mesh);
 
         protected:
@@ -61,7 +61,7 @@ namespace fg {
             }
         }
 
-        template <unsigned PRIMITIVE_MAX> void TransparentDrawer <PRIMITIVE_MAX> ::drawParticles(platform::PlatformInterface &platform, render::RenderSupportInterface &rendering, const math::m4x4 &trfm, const particles::ParticleEmitterInterface *emitter, particles::ParticleType type) {
+        template <unsigned PRIMITIVE_MAX> void TransparentDrawer <PRIMITIVE_MAX> ::drawParticles(platform::PlatformInterface &platform, render::RenderSupportInterface &rendering, const math::m4x4 &trfm, const particles::EmitterInterface *emitter, particles::ParticleType type) {
             if(_lastVertexCount < 4 || _lastIndexCount < 6) {
                 if(_indexedVertexBuffer) {
                     _indexedVertexBuffer->release();
@@ -96,12 +96,12 @@ namespace fg {
             _indexedVertexBuffer->unlockVertices();
             _indexedVertexBuffer->unlockIndices();
             
-            if(_lastInstanceCount < emitter->getMaxParticles()) {
+            if(_lastInstanceCount < emitter->getMaxParticleCount()) {
                 delete []_sortArray;
                 delete []_sortData;
                 delete []_sortIndexes;
 
-                _lastInstanceCount = emitter->getMaxParticles();
+                _lastInstanceCount = emitter->getMaxParticleCount();
 
                 _sortArray = new SortElement[_lastInstanceCount];
                 _sortData = new InstanceDataDefault[_lastInstanceCount];
@@ -161,6 +161,8 @@ namespace fg {
             platform.rdDrawIndexedGeometry(_indexedVertexBuffer, _instanceBuffer, platform::PrimitiveTopology::TRIANGLE_LIST, 6, instanceCount);
         }
 
+        // TODO: optimize matrix mul by using inverse cam matrix
+        //
         template <unsigned TRIANGLES_MAX> void TransparentDrawer <TRIANGLES_MAX> ::drawMesh(platform::PlatformInterface &platform, render::RenderSupportInterface &rendering, const math::m4x4 &trfm, const resources::MeshInterface *mesh) {
             if(_lastIndexCount < mesh->getGeometryIndexCount() || _lastVertexCount < mesh->getGeometryVertexCount()) {
                 _lastIndexCount = mesh->getGeometryIndexCount();

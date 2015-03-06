@@ -48,6 +48,7 @@ namespace fg {
             virtual void setBinary(void *binaryData, unsigned binarySize) = 0;
             
             // called on a separate thread when the file has loaded
+            // resource binary is in 'Resource' class fields: '_binaryData/_binarySize'
             virtual void loaded(const diag::LogInterface &log) = 0;
 
             // resource is ready (formed), and need platform to create
@@ -228,6 +229,16 @@ namespace fg {
         public:
             virtual unsigned getSize() const = 0;
             virtual const unsigned char *getChunkPtr(unsigned offset) const = 0;
+        };
+
+        //---
+
+        static const unsigned FG_EMITTERS_MAX = 32;
+
+        class ParticleResourceInterface : virtual public ResourceInterface {
+        public:
+            virtual void getEmitters(std::vector <particles::EmitterInterface *> &out) const = 0;
+            virtual particles::EmitterInterface *getEmitter(const fg::string &name) const = 0;
         };
 
         //---
