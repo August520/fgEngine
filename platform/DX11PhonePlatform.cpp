@@ -1,20 +1,25 @@
 
 namespace fg {
     namespace dx11 {        
-        const unsigned __VERTEX_SIZES_MAX      = 5;
-        const unsigned __CB_NAMES_MAX          = 5;
-        const unsigned __LAYOUT_FMT_MAX        = 5;
-        const unsigned __BUFFER_MAX            = 4096;
-        
+        const unsigned __VERTEX_SIZES_MAX = 4;
+        const unsigned __INSTANCE_DATA_SIZES_MAX = 2;
+        const unsigned __CB_NAMES_MAX = 5;
+        const unsigned __LAYOUT_FMT_MAX = 5;
+        const unsigned __BUFFER_MAX = 4096;
+
         unsigned __vertexSizes[__VERTEX_SIZES_MAX] = {
-            3 * sizeof(float), 
-            5 * sizeof(float), 
-            14 * sizeof(float), 
-            13 * sizeof(float), 
-            22 * sizeof(float),
+            sizeof(VertexSimple),
+            sizeof(VertexTextured),
+            sizeof(VertexNormal),
+            sizeof(VertexSkinnedNormal),
         };
 
-        unsigned __texturePixelSizes[] = {4, 1, 1};
+        unsigned __instanceDataSizes[__INSTANCE_DATA_SIZES_MAX] = {
+            sizeof(InstanceDataDefault),
+            sizeof(InstanceDataDisplayObject),
+        };
+
+        unsigned __texturePixelSizes[] = {4, 1};
 
         struct NativeLayoutComponent {
             DXGI_FORMAT  format;
@@ -26,14 +31,6 @@ namespace fg {
                 {DXGI_FORMAT_R32G32_FLOAT, 8},
                 {DXGI_FORMAT_R32G32B32_FLOAT, 12},
                 {DXGI_FORMAT_R32G32B32A32_FLOAT, 16},
-        };
-
-        const char *__cbNames[__CB_NAMES_MAX] = {
-            "FrameData",
-            "DrawData",
-            "MaterialData",
-            "SkinData",
-            "AdditionalData",
         };
 
         char __buffer[__BUFFER_MAX];
@@ -120,7 +117,7 @@ namespace fg {
 
         //---
 
-        PhoneVertexBuffer::PhoneVertexBuffer(PhonePlatform *owner, platform::VertexType type, unsigned vcount, bool isDynamic, void *data) : PlatformObject(owner) {
+        PhoneVertexBuffer::PhoneVertexBuffer(PhonePlatform *owner, platform::VertexType type, unsigned vcount, bool isDynamic, const void *data) : PlatformObject(owner) {
             D3D11_SUBRESOURCE_DATA  resdata = {0};
             D3D11_BUFFER_DESC       dsc;
 
@@ -141,15 +138,6 @@ namespace fg {
 
         PhoneVertexBuffer::~PhoneVertexBuffer() {
 
-        }
-
-        void PhoneVertexBuffer::update(void *data) {
-            D3D11_MAPPED_SUBRESOURCE mapres = {0};
-            _owner->_context->Map(_self, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapres);
-            if(mapres.pData) {
-                memcpy(mapres.pData, data, _vcount * _vsize);
-            }
-            _owner->_context->Unmap(_self, 0);
         }
 
         void *PhoneVertexBuffer::lock() {
@@ -187,7 +175,7 @@ namespace fg {
 
         //--- 
 
-        PhoneIndexedVertexBuffer::PhoneIndexedVertexBuffer(PhonePlatform *owner, platform::VertexType type, unsigned vcount, unsigned icount, bool isDynamic, void *vdata, void *idata) : PlatformObject(owner) {
+        PhoneIndexedVertexBuffer::PhoneIndexedVertexBuffer(PhonePlatform *owner, platform::VertexType type, unsigned vcount, unsigned icount, bool isDynamic, const void *vdata, const void *idata) : PlatformObject(owner) {
             D3D11_SUBRESOURCE_DATA  resdata = {0};
             D3D11_BUFFER_DESC       dsc;
 
@@ -217,37 +205,15 @@ namespace fg {
         
         }
 
-        void PhoneIndexedVertexBuffer::updateVertices(void *data) {
-            D3D11_BOX tbox;
-            tbox.back = 1;
-            tbox.front = 0;
-            tbox.left = 0;
-            tbox.right = _vcount * _vsize;
-            tbox.top = 0;
-            tbox.bottom = 1;
-            _owner->_context->UpdateSubresource(_vbuffer, 0, &tbox, data, 0, 0);
-        }
-
-        void PhoneIndexedVertexBuffer::updateIndices(void *data) {
-            D3D11_BOX tbox;
-            tbox.back = 1;
-            tbox.front = 0;
-            tbox.left = 0;
-            tbox.right = _icount * sizeof(unsigned short);
-            tbox.top = 0;
-            tbox.bottom = 1;
-            _owner->_context->UpdateSubresource(_ibuffer, 0, &tbox, data, 0, 0);
-        }
-
         void *PhoneIndexedVertexBuffer::lockVertices() {
             D3D11_MAPPED_SUBRESOURCE mapres = {0};
-            _owner->_context->Map(_vbuffer, 0, D3D11_MAP_WRITE, 0, &mapres);
+            _owner->_context->Map(_vbuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapres);
             return mapres.pData;
         }
 
         void *PhoneIndexedVertexBuffer::lockIndices() {
             D3D11_MAPPED_SUBRESOURCE mapres = {0};
-            _owner->_context->Map(_ibuffer, 0, D3D11_MAP_WRITE, 0, &mapres);
+            _owner->_context->Map(_ibuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapres);
             return mapres.pData;
         }
 
@@ -293,6 +259,67 @@ namespace fg {
             return _vbuffer != nullptr && _ibuffer != nullptr;
         }
 
+        //---
+
+        PhoneInstanceData::PhoneInstanceData(PhonePlatform *owner, platform::InstanceDataType type, unsigned instanceCount) : PlatformObject(owner) {
+            D3D11_BUFFER_DESC       dsc;
+
+            _instanceDataSize = sizeof(InstanceDataDefault);
+            _instanceCount = instanceCount;
+
+            dsc.Usage = D3D11_USAGE_DYNAMIC;
+            dsc.ByteWidth = _instanceCount * _instanceDataSize;
+            dsc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+            dsc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+            dsc.MiscFlags = 0;
+
+            _instanceBuffer = nullptr;
+            _owner->_device->CreateBuffer(&dsc, nullptr, &_instanceBuffer);
+        }
+
+        PhoneInstanceData::~PhoneInstanceData() {
+
+        }
+
+        void *PhoneInstanceData::lock() {
+            D3D11_MAPPED_SUBRESOURCE mapres = {0};
+            _owner->_context->Map(_instanceBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapres);
+            return mapres.pData;
+        }
+
+        void PhoneInstanceData::unlock() {
+            _owner->_context->Unmap(_instanceBuffer, 0);
+        }
+
+        void PhoneInstanceData::update(const void *data, unsigned instanceCount) {
+            D3D11_MAPPED_SUBRESOURCE mapres = {0};
+            _owner->_context->Map(_instanceBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapres);
+
+            if(mapres.pData) {
+                memcpy(mapres.pData, data, instanceCount * _instanceDataSize);
+            }
+
+            _owner->_context->Unmap(_instanceBuffer, 0);
+        }
+
+        void PhoneInstanceData::release() {
+            if(_instanceBuffer) {
+                _instanceBuffer->Release();
+            }
+            delete this;
+        }
+
+        bool PhoneInstanceData::valid() const {
+            return _instanceBuffer != nullptr;
+        }
+
+        ID3D11Buffer *PhoneInstanceData::getBuffer() const {
+            return _instanceBuffer;
+        }
+
+        unsigned PhoneInstanceData::getInstanceDataSize() const {
+            return _instanceDataSize;
+        }
 
         //---
 
@@ -470,27 +497,46 @@ namespace fg {
 
             binary.readDword(); // received flags
 
-            unsigned  offset = 0;
+            unsigned  offsetPerVertexData = 0;
+            unsigned  offsetPerInstanceData = 0;
             unsigned  inputCount = binary.readDword();
             unsigned  vsLength = binary.readDword();
             unsigned  psLength = binary.readDword();
             char      inputNames[32][32];
-            
+
             D3D11_INPUT_ELEMENT_DESC inputDesc[32] = {0};
-        
+
             for(unsigned i = 0; i < inputCount; i++) {
-                binary.readString(inputNames[i]);
-                unsigned int floatCount = binary.readDword();
+                unsigned short nameLen = binary.readWord();
+                binary.readBytes(inputNames[i], nameLen);
+                inputNames[i][nameLen] = 0;
+
+                unsigned  semanticIndex = 0;
+
+                char      &semanticIndexCh = inputNames[i][nameLen - 1];
+                unsigned  floatCount = binary.readDword();
+                unsigned  isPerInstance = binary.readDword();
+
+
+                if(semanticIndexCh >= '0' && semanticIndexCh <= '9') {
+                    semanticIndex = semanticIndexCh - '0';
+                    semanticIndexCh = 0;
+                }
 
                 inputDesc[i].SemanticName = inputNames[i];
-                inputDesc[i].SemanticIndex = 0;
+                inputDesc[i].SemanticIndex = semanticIndex;
                 inputDesc[i].Format = __nativeLayoutFormats[floatCount].format;
-                inputDesc[i].InputSlot = 0;
-                inputDesc[i].AlignedByteOffset = offset;
-                inputDesc[i].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-                inputDesc[i].InstanceDataStepRate = 0;
+                inputDesc[i].InputSlot = isPerInstance;
+                inputDesc[i].AlignedByteOffset = isPerInstance ? offsetPerInstanceData : offsetPerVertexData;
+                inputDesc[i].InputSlotClass = isPerInstance ? D3D11_INPUT_PER_INSTANCE_DATA : D3D11_INPUT_PER_VERTEX_DATA;
+                inputDesc[i].InstanceDataStepRate = isPerInstance;
 
-                offset += __nativeLayoutFormats[floatCount].size;
+                if(isPerInstance) {
+                    offsetPerInstanceData += __nativeLayoutFormats[floatCount].size;
+                }
+                else {
+                    offsetPerVertexData += __nativeLayoutFormats[floatCount].size;
+                }
             }
 
             if(_owner->_device->CreateVertexShader(binary.getCurrentPtr(), vsLength, nullptr, &_vsh) == S_OK) {
@@ -549,8 +595,16 @@ namespace fg {
         
         }
 
-        void PhoneShaderConstantBuffer::update(const void *data) const {
-            _owner->_context->UpdateSubresource(_self, 0, nullptr, data, 0, 0);
+        void PhoneShaderConstantBuffer::update(const void *data, unsigned byteWidth) {
+            D3D11_BOX tbox;
+            tbox.back = 1;
+            tbox.front = 0;
+            tbox.left = 0;
+            tbox.right = byteWidth;
+            tbox.top = 0;
+            tbox.bottom = 1;
+
+            _owner->_context->UpdateSubresource(_self, 0, byteWidth ? &tbox : nullptr, data, 0, 0);
             
             //D3D11_MAPPED_SUBRESOURCE mapres = {0};
             //_owner->_context->Map(_self, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapres);
@@ -592,7 +646,7 @@ namespace fg {
             _pixelsz = 0;
         }
 
-        PhoneTexture2D::PhoneTexture2D(PhonePlatform *owner, unsigned char **imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount) : PlatformObject(owner) {
+        PhoneTexture2D::PhoneTexture2D(PhonePlatform *owner, unsigned char * const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount) : PlatformObject(owner) {
             _self = nullptr;
             _view = nullptr;
             _width = originWidth;
@@ -909,7 +963,7 @@ namespace fg {
             //-- graphics
 
             unsigned flags = D3D11_CREATE_DEVICE_SINGLETHREADED;
-            //unsigned flags = 0; //D3D11_CREATE_DEVICE_DEBUG; //| D3D11_CREATE_DEVICE_BGRA_SUPPORT
+            //unsigned flags = D3D11_CREATE_DEVICE_DEBUG; //D3D11_CREATE_DEVICE_DEBUG; //| D3D11_CREATE_DEVICE_BGRA_SUPPORT
             
             D3D_FEATURE_LEVEL features[] = {
                 D3D_FEATURE_LEVEL_10_0,
@@ -1358,7 +1412,7 @@ namespace fg {
             }
         }
 
-        platform::VertexBufferInterface *PhonePlatform::rdCreateVertexBuffer(platform::VertexType vtype, unsigned vcount, bool isDynamic, void *data) {
+        platform::VertexBufferInterface *PhonePlatform::rdCreateVertexBuffer(platform::VertexType vtype, unsigned vcount, bool isDynamic, const void *data) {
             PhoneVertexBuffer *r = new PhoneVertexBuffer (this, vtype, vcount, isDynamic, data);
 
             if(r->valid()) {
@@ -1371,7 +1425,7 @@ namespace fg {
             }
         }
 
-        platform::IndexedVertexBufferInterface *PhonePlatform::rdCreateIndexedVertexBuffer(platform::VertexType vtype, unsigned vcount, unsigned ushortIndexCount, bool isDynamic, void *vdata, void *idata) {
+        platform::IndexedVertexBufferInterface *PhonePlatform::rdCreateIndexedVertexBuffer(platform::VertexType vtype, unsigned vcount, unsigned ushortIndexCount, bool isDynamic, const void *vdata, const void *idata) {
             PhoneIndexedVertexBuffer *r = new PhoneIndexedVertexBuffer (this, vtype, vcount, ushortIndexCount, isDynamic, vdata, idata);
 
             if(r->valid()) {
@@ -1382,6 +1436,20 @@ namespace fg {
                 delete r;
                 return nullptr;
             }
+        }
+
+        platform::InstanceDataInterface *PhonePlatform::rdCreateInstanceData(platform::InstanceDataType type, unsigned instanceCount) {
+            PhoneInstanceData *r = new PhoneInstanceData(this, type, instanceCount);
+
+            if(r->valid()) {
+                return r;
+            }
+            else {
+                _log.msgError("cant't create instance buffer");
+                delete r;
+                return nullptr;
+            }
+
         }
 
         platform::ShaderInterface *PhonePlatform::rdCreateShader(const byteform &binary) {
@@ -1462,7 +1530,7 @@ namespace fg {
             }
         }
 
-        platform::Texture2DInterface *PhonePlatform::rdCreateTexture2D(unsigned char **imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount) {
+        platform::Texture2DInterface *PhonePlatform::rdCreateTexture2D(unsigned char * const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount) {
             PhoneTexture2D *r = new PhoneTexture2D(this, imgMipsBinaryData, originWidth, originHeight, mipCount);
 
             if(r->valid()) {
@@ -1511,7 +1579,7 @@ namespace fg {
             _context->ClearDepthStencilView(_curRenderTarget->_depthView, D3D11_CLEAR_DEPTH, depth, 0);
         }
 
-        void PhonePlatform::rdClearCurrentColorBuffer(const platform::color &c) {
+        void PhonePlatform::rdClearCurrentColorBuffer(const fg::color &c) {
             for(unsigned i = 0; i < _curRenderTarget->_colorTargetCount; i++) {
                 _context->ClearRenderTargetView(_curRenderTarget->_rtView[i], (float *)&c);
             }
@@ -1575,28 +1643,32 @@ namespace fg {
             _context->RSSetScissorRects(1, &rect);
         }
 
-        void PhonePlatform::rdDrawGeometry(const platform::VertexBufferInterface *vbuffer, platform::PrimitiveTopology topology, unsigned vertexCount) {
-            PhoneVertexBuffer *dxObj = (PhoneVertexBuffer *)vbuffer;
-            unsigned int offset = 0;
-            unsigned int stride = dxObj->getVertexSize();
-            ID3D11Buffer *buf = dxObj->getBuffer();
+        void PhonePlatform::rdDrawGeometry(const platform::VertexBufferInterface *vbuffer, const platform::InstanceDataInterface *instanceData, platform::PrimitiveTopology topology, unsigned vertexCount, unsigned instanceCount) {
+            PhoneVertexBuffer *dxVB = (PhoneVertexBuffer *)vbuffer;
+            PhoneInstanceData *dxInstanceData = (PhoneInstanceData *)instanceData;
 
-            _context->IASetVertexBuffers(0, 1, &buf, &stride, &offset);
+            unsigned int offsets[2] = {0, 0};
+            unsigned int strides[2] = {dxVB->getVertexSize(), dxInstanceData->getInstanceDataSize()};
+            ID3D11Buffer *buffers[2] = {dxVB->getBuffer(), dxInstanceData->getBuffer()};
+
+            _context->IASetVertexBuffers(0, 2, buffers, strides, offsets);
             _context->IASetPrimitiveTopology(__nativeTopology[(unsigned int)topology]);
-            _context->Draw(vertexCount, 0);
+            _context->Draw(vertexCount, 0); // instancing draw now not working on windows phone 
         }
 
-        void PhonePlatform::rdDrawIndexedGeometry(const platform::IndexedVertexBufferInterface *ivbuffer, platform::PrimitiveTopology topology, unsigned indexCount) {
-            PhoneIndexedVertexBuffer *dxObj = (PhoneIndexedVertexBuffer *)ivbuffer;
-            unsigned int offset = 0;
-            unsigned int stride = dxObj->getVertexSize();
-            ID3D11Buffer *vbuf = dxObj->getVBuffer();
-            ID3D11Buffer *ibuf = dxObj->getIBuffer();
+        void PhonePlatform::rdDrawIndexedGeometry(const platform::IndexedVertexBufferInterface *ivbuffer, const platform::InstanceDataInterface *instanceData, platform::PrimitiveTopology topology, unsigned indexCount, unsigned instanceCount) {
+            PhoneIndexedVertexBuffer *dxIVB = (PhoneIndexedVertexBuffer *)ivbuffer;
+            PhoneInstanceData *dxInstanceData = (PhoneInstanceData *)instanceData;
 
-            _context->IASetVertexBuffers(0, 1, &vbuf, &stride, &offset);
-            _context->IASetIndexBuffer(ibuf, DXGI_FORMAT_R16_UINT, 0);
+            unsigned int offsets[2] = {0, 0};
+            unsigned int strides[2] = {dxIVB->getVertexSize(), dxInstanceData->getInstanceDataSize()};
+            ID3D11Buffer *buffers[2] = {dxIVB->getVBuffer(), dxInstanceData->getBuffer()};
+            ID3D11Buffer *indexBuff = dxIVB->getIBuffer();
+
+            _context->IASetVertexBuffers(0, 2, buffers, strides, offsets);
+            _context->IASetIndexBuffer(indexBuff, DXGI_FORMAT_R16_UINT, 0);
             _context->IASetPrimitiveTopology(__nativeTopology[(unsigned int)topology]);
-            _context->DrawIndexed(indexCount, 0, 0);
+            _context->DrawIndexedInstanced(indexCount, instanceCount, 0, 0, 0); 
         }
 
         void PhonePlatform::rdPresent() {

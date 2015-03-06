@@ -51,9 +51,9 @@ namespace fg {
             platform::SamplerInterface           *_defLinearSampler;
             platform::SamplerInterface           *_defPointSampler;
 
-            platform::VertexBufferInterface      *_oddVertexBufferSimple;
-            platform::VertexBufferInterface      *_oddVertexBufferTextured;
-            platform::VertexBufferInterface      *_oddVertexBufferNormal;
+            platform::IndexedVertexBufferInterface  *_oddVertexBufferSimple;
+            platform::IndexedVertexBufferInterface  *_oddVertexBufferTextured;
+            platform::IndexedVertexBufferInterface  *_oddVertexBufferNormal;
 
             InstanceDataDefault                  _defInstanceStruct;
             InstanceDataDisplayObject            _defDisplayObjectInstanceStruct;

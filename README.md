@@ -18,6 +18,7 @@ It uses modified versions or parts of:
 #### Compiling
 
 All sources of engine are included relatively into fgEngine.h/fgEngine.cpp
+
 Now it compiles in Visual Studio only:
 
 - include fgEngine.h to precompiled header
