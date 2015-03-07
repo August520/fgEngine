@@ -37,6 +37,10 @@ namespace fg {
                 modifierFunctionConstants.add("CONSTANT", particles::ModifierFunction::CONSTANT);
                 modifierFunctionConstants.add("LINEUP", particles::ModifierFunction::LINEUP);
                 modifierFunctionConstants.add("LINEDOWN", particles::ModifierFunction::LINEDOWN);
+                modifierFunctionConstants.add("EXPUP", particles::ModifierFunction::EXPUP);
+                modifierFunctionConstants.add("EXPDOWN", particles::ModifierFunction::EXPDOWN);
+                modifierFunctionConstants.add("LOGUP", particles::ModifierFunction::LOGUP);
+                modifierFunctionConstants.add("LOGDOWN", particles::ModifierFunction::LOGDOWN);
                 modifierFunctionConstants.add("DIAGRAM", particles::ModifierFunction::DIAGRAM);
             }
 
@@ -82,7 +86,7 @@ namespace fg {
                         emitterTable.get("textureBinds").foreach([emitter](const luaObj &, const luaObj &textureBind){
                             const char *texturePath = textureBind;
                             emitter->addTextureBind(texturePath);
-                            return true; // continue cycle
+                            return true; 
                         });
 
                         luaObj &axisCoord = emitterTable.get("torsionAxis");
@@ -95,7 +99,7 @@ namespace fg {
                                 emitter->setParam(paramType, value);
                             }
 
-                            return true; // continue cycle
+                            return true; 
                         });
 
                         emitterTable.get("emitterModifiers").foreach([emitter](const char *paramName, const luaObj &modifierParams) {
@@ -108,6 +112,13 @@ namespace fg {
                                 if(__paramTypeConstTable.getConstant(modifierParams.get("func"), modifierFuncType)) {
                                     mdf->setFunction(modifierFuncType);
                                     mdf->setYAxisLimit(modifierParams.get("minValue"), modifierParams.get("maxValue"));
+
+                                    if(modifierFuncType == particles::ModifierFunction::DIAGRAM) {
+                                        modifierParams.get("diagram").foreach([mdf](const luaObj &key, const luaObj &valuePair) {
+                                            mdf->addDiargamValue(valuePair.get(1), valuePair.get(2));
+                                            return true; 
+                                        });
+                                    }
                                 }
                             }
 
@@ -124,6 +135,13 @@ namespace fg {
                                 if(__paramTypeConstTable.getConstant(modifierParams.get("func"), modifierFuncType)) {
                                     mdf->setFunction(modifierFuncType);
                                     mdf->setYAxisLimit(modifierParams.get("minValue"), modifierParams.get("maxValue"));
+
+                                    if(modifierFuncType == particles::ModifierFunction::DIAGRAM) {
+                                        modifierParams.get("diagram").foreach([mdf](const luaObj &key, const luaObj &valuePair) {
+                                            mdf->addDiargamValue(valuePair.get(1), valuePair.get(2));
+                                            return true; 
+                                        });
+                                    }
                                 }
                             }
 

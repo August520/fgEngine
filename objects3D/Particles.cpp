@@ -69,7 +69,9 @@ namespace fg {
         }
 
         Particles3D::~Particles3D() {
-        
+            for(auto index = _emitters.begin(); index != _emitters.end(); ++index) {
+                delete *index;
+            }
         }
 
         void Particles3D::setResource(const fg::string &particlesResourcePath) {
@@ -101,6 +103,7 @@ namespace fg {
         }
 
         void Particles3D::updateCoordinates(float frameTimeMs) {
+            RenderObject::updateCoordinates(frameTimeMs);
             _timeElapsed += frameTimeMs;
             
             for(auto index = _emitters.begin(); index != _emitters.end(); ++index) {

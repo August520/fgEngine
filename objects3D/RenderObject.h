@@ -30,7 +30,7 @@ namespace fg {
             void setPosition(const math::p3d &position) override;
             void setScaling(float sclX, float sclY, float sclZ) override;
             void setScaling(const math::p3d &scale) override;
-            void setRotation(float yawRad, float pitchRad, float rollRad) override;
+            void setRotation(float angleRad, const math::p3d &axis) override;
             void setRotation(const math::quat &rotation) override;
             void setTransform(const math::m4x4 &transform) override;
 

@@ -13,6 +13,22 @@ namespace fg {
             return _minY + (_maxY - _minY) * (1.0f - koeff);
         }
 
+        float Modifier::_getExpUpValue(float koeff) const {
+            return _minY + (_maxY - _minY) * (koeff * koeff);
+        }
+
+        float Modifier::_getExpDownValue(float koeff) const {
+            return _minY + (_maxY - _minY) * ((1.0f - koeff) * (1.0f - koeff));        
+        }
+
+        float Modifier::_getLogUpValue(float koeff) const {
+            return _minY + (_maxY - _minY) * (1.0f - ((1.0f - koeff) * (1.0f - koeff)));        
+        }
+
+        float Modifier::_getLogDownValue(float koeff) const {
+            return _minY + (_maxY - _minY) * (1.0f - koeff * koeff);        
+        }
+
         float Modifier::_getDiagramValue(float koeff) const {
             float leftValue = _maxY;
             float leftKoeff = 0.0f;
@@ -23,8 +39,6 @@ namespace fg {
                 if(koeff > _diagram[i].koeff) {
                     leftValue = _diagram[i].value;
                     leftKoeff = _diagram[i].koeff;
-                    rightValue = leftValue;
-                    break;
                 }
             }
 
@@ -32,7 +46,6 @@ namespace fg {
                 if(koeff < _diagram[i].koeff) {
                     rightValue = _diagram[i].value;
                     rightKoeff = _diagram[i].koeff;
-                    break;
                 }
             }
 
@@ -60,10 +73,14 @@ namespace fg {
         }
 
         void Modifier::setFunction(ModifierFunction func) {
-            static float (Modifier::*_modifierEvaluateFunctions[4])(float) const = {
+            static float (Modifier::*_modifierEvaluateFunctions[ModifierFunction::_count])(float) const = {
                 &Modifier::_getConstValue,
                 &Modifier::_getLineUpValue,
                 &Modifier::_getLineDownValue,
+                &Modifier::_getExpUpValue,
+                &Modifier::_getExpDownValue,
+                &Modifier::_getLogUpValue,
+                &Modifier::_getLogDownValue,
                 &Modifier::_getDiagramValue,
             };
 

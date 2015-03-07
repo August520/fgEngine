@@ -51,7 +51,7 @@ namespace fg {
             virtual void setPosition(const math::p3d &position) = 0;
             virtual void setScaling(float sclX, float sclY, float sclZ) = 0;
             virtual void setScaling(const math::p3d &scale) = 0;
-            virtual void setRotation(float yawRad, float pitchRad, float rollRad) = 0;
+            virtual void setRotation(float angleRad, const math::p3d &axis) = 0;
             virtual void setRotation(const math::quat &rotation) = 0;
             virtual void setTransform(const math::m4x4 &transform) = 0;
 

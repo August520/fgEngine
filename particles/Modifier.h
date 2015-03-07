@@ -45,6 +45,10 @@ namespace fg {
             float  _getConstValue(float koeff) const;
             float  _getLineUpValue(float koeff) const;
             float  _getLineDownValue(float koeff) const;
+            float  _getExpUpValue(float koeff) const;
+            float  _getExpDownValue(float koeff) const;
+            float  _getLogUpValue(float koeff) const;
+            float  _getLogDownValue(float koeff) const;
             float  _getDiagramValue(float koeff) const;
 
         private:

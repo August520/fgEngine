@@ -12,7 +12,11 @@ namespace fg {
             CONSTANT  = 0,
             LINEUP    = 1,
             LINEDOWN  = 2,
-            DIAGRAM   = 3,
+            EXPUP     = 3,
+            EXPDOWN   = 4,
+            LOGUP     = 5,
+            LOGDOWN   = 6,
+            DIAGRAM   = 7,
             _count,
         };
 

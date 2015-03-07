@@ -165,26 +165,9 @@ namespace fg {
             setScaling(scale.x, scale.y, scale.z);
         }
 
-        void RenderObject::setRotation(float yawRad, float pitchRad, float rollRad) {
-            float cosYaw = cosf(rollRad);
-            float cosPitch = cosf(yawRad);
-            float cosRoll = cosf(pitchRad);
-
-            float sinYaw = sinf(rollRad);
-            float sinPitch = sinf(yawRad);
-            float sinRoll = sinf(pitchRad);
-        
-            _localTransform._11 = cosPitch * cosYaw,
-            _localTransform._12 = -sinYaw * cosPitch,
-            _localTransform._13 = sinPitch,
-    
-            _localTransform._21 = cosYaw * sinPitch * sinRoll + sinYaw * cosRoll,
-            _localTransform._22 = -sinYaw * sinPitch * sinRoll + cosYaw * cosRoll,
-            _localTransform._23 = -cosPitch * sinRoll,
-        
-            _localTransform._31 = -cosYaw * sinPitch * cosRoll + sinYaw * sinRoll,
-            _localTransform._32 = sinYaw * sinPitch * cosRoll + cosYaw * sinRoll,
-            _localTransform._33 = cosPitch * cosRoll;
+        void RenderObject::setRotation(float angleRad, const math::p3d &axis) {
+            _localRotation.rotationAxis(angleRad, axis);
+            _localRotation.toMatrix(_localTransform);
 
             _localTransform._11 *= _localScale.x;
             _localTransform._12 *= _localScale.x;
@@ -201,8 +184,6 @@ namespace fg {
             _localTransform._41 = _localPosition.x;
             _localTransform._42 = _localPosition.y;
             _localTransform._43 = _localPosition.z;
-
-            _localTransform.toQuaternion(_localRotation);
         }
 
         void RenderObject::setRotation(const math::quat &rotation) {
