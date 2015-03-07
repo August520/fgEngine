@@ -31,19 +31,19 @@ namespace fg {
 
         float Modifier::_getDiagramValue(float koeff) const {
             float leftValue = _maxY;
-            float leftKoeff = 0.0f;
-            float rightKoeff = 1.0f;
+            float leftKoeff = -0.00001f;
+            float rightKoeff = 1.00001f;
             float rightValue = _maxY;
 
             for(unsigned i = 0; i < _diagramValueCount; i++) {
-                if(koeff > _diagram[i].koeff) {
+                if(koeff >= _diagram[i].koeff) {
                     leftValue = _diagram[i].value;
                     leftKoeff = _diagram[i].koeff;
                 }
             }
 
             for(int i = int(_diagramValueCount) - 1; i >= 0; i--) {
-                if(koeff < _diagram[i].koeff) {
+                if(koeff <= _diagram[i].koeff) {
                     rightValue = _diagram[i].value;
                     rightKoeff = _diagram[i].koeff;
                 }

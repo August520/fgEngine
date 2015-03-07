@@ -70,10 +70,10 @@ namespace fg {
             luaScript cfgSource;
 
             if(cfgSource.execLuaChunk((char *)_binaryData, _binarySize)) {
-                luaObj cfg;
-                cfgSource.getGlobalVar("particle", cfg);
-
-                cfg.foreach([this, &log](const char *emitterName, const luaObj &emitterTable) {
+                luaObj emittersCfg;                
+                cfgSource.getGlobalVar("emitters", emittersCfg);
+                
+                emittersCfg.foreach([this, &log](const char *emitterName, const luaObj &emitterTable) {
                     if(emitterName[0] && emitterTable.type() == LUATYPE_TABLE) {
                         particles::Emitter *emitter = new particles::Emitter ();
                         const char *shaderPath = emitterTable.get("shader");
@@ -81,6 +81,7 @@ namespace fg {
                         emitter->setLifeTime(math::clamp(emitterTable.get("lifeTime"), 0, 60000));
                         emitter->setFps(math::clamp(emitterTable.get("framesPerSecond"), 1, 1000));
                         emitter->setCycled(emitterTable.get("isCycled"));
+                        emitter->setWorldSpace(emitterTable.get("isWorldSpace"));
                         emitter->setShader(shaderPath);
 
                         emitterTable.get("textureBinds").foreach([emitter](const luaObj &, const luaObj &textureBind){

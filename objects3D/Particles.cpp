@@ -1,10 +1,10 @@
 
 namespace fg {
     namespace object3d {
-        Particles3D::EmitterData::EmitterData(particles::EmitterInterface *emitter, const math::m4x4 &ownerTransform) : 
+        Particles3D::EmitterData::EmitterData(particles::EmitterInterface *emitter, const Particles3D &owner) :
             _emitter(emitter), 
             _shader(nullptr),
-            _ownerTransform(ownerTransform) 
+            _owner(owner) 
         {
             for(unsigned i = 0; i < resources::FG_MATERIAL_TEXTURE_MAX; i++) {
                 _textureBinds[i] = nullptr;
@@ -42,7 +42,7 @@ namespace fg {
         }
 
         const math::m4x4 &Particles3D::EmitterData::getFullTransform() const {
-            return _ownerTransform;
+            return _owner.getFullTransform();
         }
 
         const particles::EmitterInterface *Particles3D::EmitterData::getEmitter() const {
@@ -61,29 +61,30 @@ namespace fg {
             return _emitter;
         }
 
+        const math::m4x4 &Particles3D::EmitterData::getTransformHistory(float timeBeforeMs) const {
+            unsigned index = (unsigned(timeBeforeMs / 10.0f) + _owner._transformHistoryIndex + 1) % _owner._transformHistorySize;
+            return _owner._transformHistoryData[index];
+        }
+
         //---
                     
-        Particles3D::Particles3D() : _particles(nullptr) {
+        Particles3D::Particles3D() : _particles(nullptr), _transformHistoryData(nullptr) {
             _type = RenderObjectType::PARTICLES;
             _timeElapsed = 0.0f;
+            _transformHistorySize = 0;
+            _transformHistoryIndex = 0;
         }
 
         Particles3D::~Particles3D() {
             for(auto index = _emitters.begin(); index != _emitters.end(); ++index) {
                 delete *index;
             }
+
+            delete [] _transformHistoryData;
         }
 
         void Particles3D::setResource(const fg::string &particlesResourcePath) {
             _particlesResourcePath = particlesResourcePath;
-        }
-
-        particles::EmitterInterface *Particles3D::addEmitter(const fg::string &name) {
-            if(_particles) {
-                
-            }
-
-            return nullptr;
         }
 
         particles::EmitterInterface *Particles3D::getEmitter(const fg::string &name) const {
@@ -94,17 +95,18 @@ namespace fg {
             return nullptr;
         }
 
-        void Particles3D::removeEmitter(const fg::string &name) {
-        
-        }
-
-        void Particles3D::buildEmitters() {
-        
-        }
-
         void Particles3D::updateCoordinates(float frameTimeMs) {
             RenderObject::updateCoordinates(frameTimeMs);
             _timeElapsed += frameTimeMs;
+
+            if(_transformHistoryData) {
+                unsigned nextHistoryIndex = _transformHistorySize - unsigned(_timeElapsed / 10.0f) % _transformHistorySize - 1;
+            
+                while(_transformHistoryIndex != nextHistoryIndex) {
+                    _transformHistoryData[_transformHistoryIndex] = _fullTransform;
+                    _transformHistoryIndex > 0 ? _transformHistoryIndex-- : _transformHistoryIndex = _transformHistorySize - 1;
+                }
+            }
             
             for(auto index = _emitters.begin(); index != _emitters.end(); ++index) {
                 (*index)->getEmitter()->setTimeStamp(_timeElapsed);
@@ -120,14 +122,23 @@ namespace fg {
 
             if(_particles->valid()) {
                 if(_emitters.size() == 0) {
+                    float maxParticleLifeTime = 1.0f;
+                    
                     std::vector <particles::EmitterInterface *> rawEmitters;
-
                     _particles->getEmitters(rawEmitters);
 
                     for(auto index = rawEmitters.begin(); index != rawEmitters.end(); ++index) {
-                        EmitterData *tdata = new EmitterData (*index, _fullTransform); 
+                        EmitterData *tdata = new EmitterData (*index, *this); 
                         _emitters.push_back(tdata);
+                    
+                        if((*index)->getMaxParticleLifeTime() > maxParticleLifeTime) {
+                            maxParticleLifeTime = (*index)->getMaxParticleLifeTime();
+                        }
                     }
+
+                    _transformHistorySize = unsigned(maxParticleLifeTime / 10.0f) + 1;
+                    _transformHistoryData = new math::m4x4 [_transformHistorySize];
+                    _transformHistoryIndex = _transformHistorySize - 1;
                 }
 
                 return true;
@@ -136,6 +147,11 @@ namespace fg {
             for(auto index = _emitters.begin(); index != _emitters.end(); ++index) {
                 delete *index;
             }
+
+            delete[] _transformHistoryData;
+
+            _transformHistorySize = 0;
+            _transformHistoryData = nullptr;
 
             _emitters.clear();
             return false;
@@ -148,7 +164,6 @@ namespace fg {
         RenderObject::ComponentInterface *Particles3D::getComponentInterface(unsigned index) {
             return _emitters[index];
         }
-
     }
 }
 

@@ -141,16 +141,13 @@ namespace fg {
                 virtual const particles::EmitterInterface *getEmitter() const = 0;
                 virtual const resources::ShaderResourceInterface *getShader() const = 0;
                 virtual const resources::Texture2DResourceInterface *getTextureBind(unsigned bindIndex) const = 0;
+
+                virtual const math::m4x4 &getTransformHistory(float timeBeforeMs) const = 0;
             };
 
             virtual ~Particles3DBase() {}
-            virtual void setResource(const fg::string &particlesResourcePath) = 0;
-            
-            virtual particles::EmitterInterface *addEmitter(const fg::string &name) = 0;
-            virtual particles::EmitterInterface *getEmitter(const fg::string &name) const = 0;
-
-            virtual void removeEmitter(const fg::string &name) = 0;
-            virtual void buildEmitters() = 0;
+            virtual void  setResource(const fg::string &particlesResourcePath) = 0;            
+            virtual const particles::EmitterInterface *getEmitter(const fg::string &name) const = 0;
         };
 
         class Particles3DInterface : public RenderObjectInterface, virtual public Particles3DBase {

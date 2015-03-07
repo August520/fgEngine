@@ -7,7 +7,7 @@ namespace fg {
                 friend class Particles3D;
 
             public:
-                EmitterData(particles::EmitterInterface *emitter, const math::m4x4 &ownerTransform);
+                EmitterData(particles::EmitterInterface *emitter, const Particles3D &owner);
                 ~EmitterData() override;
 
                 bool isResourcesReady(platform::PlatformInterface &platform, resources::ResourceManagerInterface &resMan) override;
@@ -18,8 +18,10 @@ namespace fg {
                 const resources::ShaderResourceInterface *getShader() const override;
                 const resources::Texture2DResourceInterface *getTextureBind(unsigned bindIndex) const override;
 
+                const math::m4x4 &getTransformHistory(float timeBeforeMs) const override;
+
             protected:
-                const math::m4x4             &_ownerTransform;
+                const Particles3D            &_owner;
                 particles::EmitterInterface  *_emitter;
 
                 const resources::Texture2DResourceInterface  *_textureBinds[resources::FG_MATERIAL_TEXTURE_MAX];
@@ -30,15 +32,10 @@ namespace fg {
             
             Particles3D();
             ~Particles3D() override;
-                        
-            void  setResource(const fg::string &particlesResourcePath) override;
-
-            particles::EmitterInterface *addEmitter(const fg::string &name) override;
+            
             particles::EmitterInterface *getEmitter(const fg::string &name) const override;
 
-            void  removeEmitter(const fg::string &name) override;
-            void  buildEmitters() override;
-
+            void  setResource(const fg::string &particlesResourcePath) override;
             void  updateCoordinates(float frameTimeMs) override;
             bool  isResourcesReady(platform::PlatformInterface &platform, resources::ResourceManagerInterface &resMan) override;
 
@@ -49,6 +46,9 @@ namespace fg {
             float        _timeElapsed;
             fg::string   _particlesResourcePath;
             std::vector  <EmitterData *> _emitters;
+            math::m4x4   *_transformHistoryData;
+            unsigned     _transformHistorySize;
+            unsigned     _transformHistoryIndex;
 
             const resources::ParticleResourceInterface *_particles;
         };

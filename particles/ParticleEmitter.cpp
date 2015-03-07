@@ -131,12 +131,14 @@ namespace fg {
             _dynamicParams[unsigned(EmitterParamType::TORSION_MAX)] = 0.0f;
 
             _cycled = true;
+            _worldSpace = true;
             _torsionAxis = math::p3d(0, 1, 0);
 
             _curTimeMs = 0.0f;
             _curNrmTimeMs = 0.0f;
             _curParticleIndex = 0;
             _textureBindCount = 0;
+            _maxParticleLifeTimeMs = 1.0f;
         }
 
         Emitter::~Emitter() {
@@ -207,10 +209,10 @@ namespace fg {
                 delete *index;
             }
             
-            float  maxParticlelifeMs = _getMaximumEmitterParam(EmitterParamType::LIFETIME_MAX);
+            _maxParticleLifeTimeMs = math::fmax(_getMaximumEmitterParam(EmitterParamType::LIFETIME_MAX), _getMaximumEmitterParam(EmitterParamType::LIFETIME_MIN));
             float  minParticleBornPeriodMs = 1000.0f / _getMaximumEmitterParam(EmitterParamType::PARTICLES_PER_SEC);
             
-            _nrmLifePeriodMs = _lifeTimeMs > maxParticlelifeMs ? _lifeTimeMs : maxParticlelifeMs;
+            _nrmLifePeriodMs = _lifeTimeMs > _maxParticleLifeTimeMs ? _lifeTimeMs : _maxParticleLifeTimeMs;
             _nrmLifePeriodMs += _lifeTimeMs - fmod(_nrmLifePeriodMs, _lifeTimeMs);
             _nrmLifePeriodMs += minParticleBornPeriodMs - fmod(_nrmLifePeriodMs, minParticleBornPeriodMs);
 
@@ -268,7 +270,7 @@ namespace fg {
             _curParticleIndex = 0;
         }
 
-        bool Emitter::getNextParticleData(math::m4x4 &outTransform, fg::color &outColor) const {
+        bool Emitter::getNextParticleData(math::m4x4 &outTransform, fg::color &outColor, float &outLifeTimeMs) const {
             while(_curParticleIndex < unsigned(_particles.size())) {
                 const ParticleAnimation *cur = _particles[_curParticleIndex]; 
                 float localTimeMs = _curNrmTimeMs - cur->getBornTimeMs();
@@ -278,6 +280,7 @@ namespace fg {
 
                 if(cur->getBornTimeMs() < _curTimeMs && localTimeMs < cur->getLifeTimeMs()) {
                     cur->getData(localTimeMs / cur->getLifeTimeMs(), outTransform, outColor);
+                    outLifeTimeMs = localTimeMs;
                     return true;
                 }
             }
@@ -365,6 +368,10 @@ namespace fg {
             _cycled = cycled;
         }
 
+        void Emitter::setWorldSpace(bool worldSpace) {
+            _worldSpace = worldSpace;
+        }
+
         float Emitter::getParam(EmitterParamType param) const {
             return _dynamicParams[unsigned(param)];
         }
@@ -375,6 +382,10 @@ namespace fg {
 
         float Emitter::getLifeTime() const {
             return _lifeTimeMs;
+        }
+
+        float Emitter::getMaxParticleLifeTime() const {
+            return _maxParticleLifeTimeMs;
         }
 
         const fg::string &Emitter::getShader() const {
@@ -395,6 +406,10 @@ namespace fg {
 
         bool Emitter::isCycled() const {
             return _cycled;
+        }
+
+        bool Emitter::isWorldSpace() const {
+            return _worldSpace;
         }
     }
 }

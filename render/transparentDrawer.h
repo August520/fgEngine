@@ -16,8 +16,8 @@ namespace fg {
 
             virtual ~TransparentDrawer();
 
-            void drawParticles(platform::PlatformInterface &platform, render::RenderSupportInterface &rendering, const math::m4x4 &trfm, const particles::EmitterInterface *emitter, particles::ParticleType type);
-            void drawMesh(platform::PlatformInterface &platform, render::RenderSupportInterface &rendering, const math::m4x4 &trfm, const resources::MeshInterface *mesh);
+            void drawParticles(render::RenderAPI &api, const object3d::Particles3DInterface::EmitterComponentInterface *emitterComponent, particles::ParticleType type);
+            void drawMesh(render::RenderAPI &api, const math::m4x4 &trfm, const resources::MeshInterface *mesh);
 
         protected:
             struct SortElement {
@@ -61,18 +61,20 @@ namespace fg {
             }
         }
 
-        template <unsigned PRIMITIVE_MAX> void TransparentDrawer <PRIMITIVE_MAX> ::drawParticles(platform::PlatformInterface &platform, render::RenderSupportInterface &rendering, const math::m4x4 &trfm, const particles::EmitterInterface *emitter, particles::ParticleType type) {
+        template <unsigned PRIMITIVE_MAX> void TransparentDrawer <PRIMITIVE_MAX> ::drawParticles(render::RenderAPI &api, const object3d::Particles3DInterface::EmitterComponentInterface *emitterComponent, particles::ParticleType type) {
+            const particles::EmitterInterface *emitter = emitterComponent->getEmitter();
+            
             if(_lastVertexCount < 4 || _lastIndexCount < 6) {
                 if(_indexedVertexBuffer) {
                     _indexedVertexBuffer->release();
                 }
                 
-                _indexedVertexBuffer = platform.rdCreateIndexedVertexBuffer(platform::VertexType::NORMAL, 4, 6, true);
+                _indexedVertexBuffer = api.platform.rdCreateIndexedVertexBuffer(platform::VertexType::NORMAL, 4, 6, true);
                 _lastIndexCount = 6;
                 _lastVertexCount = 4;
             }
             
-            CameraInterface &cam = rendering.getCamera();
+            CameraInterface &cam = api.rendering.getCamera();
             VertexNormal *_vertexes = (VertexNormal *)_indexedVertexBuffer->lockVertices();
             unsigned short *_indexes = (unsigned short *)_indexedVertexBuffer->lockIndices();
 
@@ -103,33 +105,39 @@ namespace fg {
 
                 _lastInstanceCount = emitter->getMaxParticleCount();
 
-                _sortArray = new SortElement[_lastInstanceCount];
-                _sortData = new InstanceDataDefault[_lastInstanceCount];
-                _sortIndexes = new unsigned short[3 * _lastInstanceCount];
+                _sortArray = new SortElement [_lastInstanceCount];
+                _sortData = new InstanceDataDefault [_lastInstanceCount];
+                _sortIndexes = new unsigned short [3 * _lastInstanceCount];
 
                 if(_instanceBuffer) {
                     _instanceBuffer->release();
                 }
 
-                _instanceBuffer = platform.rdCreateInstanceData(platform::InstanceDataType::DEFAULT, _lastInstanceCount);
+                _instanceBuffer = api.platform.rdCreateInstanceData(platform::InstanceDataType::DEFAULT, _lastInstanceCount);
             }
 
             unsigned instanceCount = 0;
 
             if(type == particles::ParticleType::BILL) {
                 math::m4x4 localTransform;
+                float particleLifeTime = 0.0f;
 
-                while(emitter->getNextParticleData(localTransform, _sortData[instanceCount].rgba)) {
-                    _sortData[instanceCount].modelTransform = localTransform * trfm;
+                while(emitter->getNextParticleData(localTransform, _sortData[instanceCount].rgba, particleLifeTime)) {
+                    if(emitter->isWorldSpace()) {
+                        _sortData[instanceCount].modelTransform = localTransform * emitterComponent->getTransformHistory(particleLifeTime);
+                    }
+                    else {
+                        _sortData[instanceCount].modelTransform = localTransform * emitterComponent->getFullTransform();
+                    }
                     
                     InstanceDataDefault &cur = _sortData[instanceCount];
-                    math::p3d dirToParticle = *(math::p3d *)(&cur.modelTransform._41) - rendering.getCamera().getPosition();
+                    math::p3d dirToParticle = *(math::p3d *)(&cur.modelTransform._41) - api.rendering.getCamera().getPosition();
                     float distToParticle = dirToParticle.length();
 
                     dirToParticle = dirToParticle / distToParticle;
 
-                    double range = rendering.getCamera().getZFar();
-                    double v = double(distToParticle * dirToParticle.dot(rendering.getCamera().getForwardDir()));
+                    double range = api.rendering.getCamera().getZFar();
+                    double v = double(distToParticle * dirToParticle.dot(api.rendering.getCamera().getForwardDir()));
                     float  particleSize = cur.modelTransform._11;
 
                     *(math::p3d *)(&cur.modelTransform._11) = cam.getRightDir() * particleSize;
@@ -158,12 +166,12 @@ namespace fg {
             }
             
             _instanceBuffer->unlock();
-            platform.rdDrawIndexedGeometry(_indexedVertexBuffer, _instanceBuffer, platform::PrimitiveTopology::TRIANGLE_LIST, 6, instanceCount);
+            api.platform.rdDrawIndexedGeometry(_indexedVertexBuffer, _instanceBuffer, platform::PrimitiveTopology::TRIANGLE_LIST, 6, instanceCount);
         }
 
         // TODO: optimize matrix mul by using inverse cam matrix
         //
-        template <unsigned TRIANGLES_MAX> void TransparentDrawer <TRIANGLES_MAX> ::drawMesh(platform::PlatformInterface &platform, render::RenderSupportInterface &rendering, const math::m4x4 &trfm, const resources::MeshInterface *mesh) {
+        template <unsigned TRIANGLES_MAX> void TransparentDrawer <TRIANGLES_MAX> ::drawMesh(render::RenderAPI &api, const math::m4x4 &trfm, const resources::MeshInterface *mesh) {
             if(_lastIndexCount < mesh->getGeometryIndexCount() || _lastVertexCount < mesh->getGeometryVertexCount()) {
                 _lastIndexCount = mesh->getGeometryIndexCount();
                 _lastVertexCount = mesh->getGeometryVertexCount();
@@ -172,7 +180,7 @@ namespace fg {
                     _indexedVertexBuffer->release();
                 }
 
-                _indexedVertexBuffer = platform.rdCreateIndexedVertexBuffer(platform::VertexType::NORMAL, _lastVertexCount, _lastIndexCount, true);
+                _indexedVertexBuffer = api.platform.rdCreateIndexedVertexBuffer(platform::VertexType::NORMAL, _lastVertexCount, _lastIndexCount, true);
             }
 
             if(_lastInstanceCount < mesh->getGeometryIndexCount() / 3) {
@@ -189,7 +197,7 @@ namespace fg {
                     _instanceBuffer->release();
                 }
 
-                _instanceBuffer = platform.rdCreateInstanceData(platform::InstanceDataType::DEFAULT, _lastInstanceCount);
+                _instanceBuffer = api.platform.rdCreateInstanceData(platform::InstanceDataType::DEFAULT, _lastInstanceCount);
             }
 
             unsigned vcount = 0;
@@ -248,9 +256,9 @@ namespace fg {
             _indexedVertexBuffer->unlockVertices();
             _indexedVertexBuffer->unlockIndices();
 
-            rendering.defInstanceData().modelTransform.identity();
-            rendering.defInstanceDataApplyChanges();
-            platform.rdDrawIndexedGeometry(_indexedVertexBuffer, rendering.getDefaultInstanceData(), platform::PrimitiveTopology::TRIANGLE_LIST, icount);
+            api.rendering.defInstanceData().modelTransform.identity();
+            api.rendering.defInstanceDataApplyChanges();
+            api.platform.rdDrawIndexedGeometry(_indexedVertexBuffer, rendering.getDefaultInstanceData(), platform::PrimitiveTopology::TRIANGLE_LIST, icount);
         }
     }
 }

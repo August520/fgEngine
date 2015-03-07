@@ -238,7 +238,7 @@ namespace fg {
         class ParticleResourceInterface : virtual public ResourceInterface {
         public:
             virtual void getEmitters(std::vector <particles::EmitterInterface *> &out) const = 0;
-            virtual particles::EmitterInterface *getEmitter(const fg::string &name) const = 0;
+            virtual particles::EmitterInterface *getEmitter(const fg::string &name) const = 0;            
         };
 
         //---

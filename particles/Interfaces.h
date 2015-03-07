@@ -80,7 +80,7 @@ namespace fg {
 
             virtual void  build() = 0;
             virtual void  setTimeStamp(float timeMs) = 0;
-            virtual bool  getNextParticleData(math::m4x4 &outTransform, fg::color &outColor) const = 0;
+            virtual bool  getNextParticleData(math::m4x4 &outTransform, fg::color &outColor, float &outLifeTimeMs) const = 0;
 
             virtual ModifierInterface *createEmitterModifier(EmitterParamType type) = 0;
             virtual ModifierInterface *createParticleModifier(ParticleParamType type) = 0;
@@ -97,10 +97,12 @@ namespace fg {
             virtual void  setFps(float framesPerSecond) = 0;
             virtual void  setLifeTime(float lifeTimeMs) = 0;
             virtual void  setCycled(bool cycled) = 0;
+            virtual void  setWorldSpace(bool worldSpace) = 0;
 
             virtual float getParam(EmitterParamType param) const = 0;
             virtual float getFps() const = 0;
             virtual float getLifeTime() const = 0;
+            virtual float getMaxParticleLifeTime() const = 0;
             
             virtual const fg::string &getShader() const = 0;
             virtual const fg::string &getTextureBind(unsigned index) const = 0;
@@ -108,6 +110,7 @@ namespace fg {
             virtual unsigned getTextureBindCount() const = 0;
             virtual unsigned getMaxParticleCount() const = 0;
 
+            virtual bool  isWorldSpace() const = 0;
             virtual bool  isCycled() const = 0;
         };
     }
