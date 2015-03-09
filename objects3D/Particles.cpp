@@ -62,7 +62,7 @@ namespace fg {
         }
 
         const math::m4x4 &Particles3D::EmitterData::getTransformHistory(float timeBeforeMs) const {
-            unsigned index = (unsigned(timeBeforeMs / 10.0f) + _owner._transformHistoryIndex + 1) % _owner._transformHistorySize;
+            unsigned index = (unsigned(timeBeforeMs / _owner._frameTime) + _owner._transformHistoryIndex + 1) % _owner._transformHistorySize;
             return _owner._transformHistoryData[index];
         }
 
@@ -73,6 +73,7 @@ namespace fg {
             _timeElapsed = 0.0f;
             _transformHistorySize = 0;
             _transformHistoryIndex = 0;
+            _frameTime = 2.0f;
         }
 
         Particles3D::~Particles3D() {
@@ -100,7 +101,7 @@ namespace fg {
             _timeElapsed += frameTimeMs;
 
             if(_transformHistoryData) {
-                unsigned nextHistoryIndex = _transformHistorySize - unsigned(_timeElapsed / 10.0f) % _transformHistorySize - 1;
+                unsigned nextHistoryIndex = _transformHistorySize - unsigned(_timeElapsed / _frameTime) % _transformHistorySize - 1;
             
                 while(_transformHistoryIndex != nextHistoryIndex) {
                     _transformHistoryData[_transformHistoryIndex] = _fullTransform;
@@ -123,7 +124,8 @@ namespace fg {
             if(_particles->valid()) {
                 if(_emitters.size() == 0) {
                     float maxParticleLifeTime = 1.0f;
-                    
+                    bool  worldSpace = false;
+
                     std::vector <particles::EmitterInterface *> rawEmitters;
                     _particles->getEmitters(rawEmitters);
 
@@ -134,11 +136,15 @@ namespace fg {
                         if((*index)->getMaxParticleLifeTime() > maxParticleLifeTime) {
                             maxParticleLifeTime = (*index)->getMaxParticleLifeTime();
                         }
+
+                        worldSpace = worldSpace || (*index)->isWorldSpace();
                     }
 
-                    _transformHistorySize = unsigned(maxParticleLifeTime / 10.0f) + 1;
-                    _transformHistoryData = new math::m4x4 [_transformHistorySize];
-                    _transformHistoryIndex = _transformHistorySize - 1;
+                    if(worldSpace) {
+                        _transformHistorySize = unsigned(maxParticleLifeTime / _frameTime) + 1;
+                        _transformHistoryData = new math::m4x4[_transformHistorySize];
+                        _transformHistoryIndex = _transformHistorySize - 1;
+                    }
                 }
 
                 return true;

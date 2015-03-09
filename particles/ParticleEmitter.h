@@ -31,6 +31,8 @@ namespace fg {
             struct Frame {
                 math::p3d  position; 
                 fg::color  color;
+                float      stretch;
+                float      angle;
                 float      size;
             };
 
@@ -40,9 +42,11 @@ namespace fg {
             unsigned   _frameCount;
             
             float      _dynamicParams[ParticleParamType::_count];
+            float      _angle;
 
             math::p3d  _startPos;
             math::p3d  _dir;
+            math::m4x4 _baseTransform;
                         
             Frame      *_animationFrames;
 
@@ -63,7 +67,7 @@ namespace fg {
             Emitter();
             ~Emitter() override;
 
-            void  build() override;
+            void  build();
             void  setTimeStamp(float timeMs) override;
             bool  getNextParticleData(math::m4x4 &outTransform, fg::color &outColor, float &outLifeTimeMs) const override;
 
@@ -77,6 +81,7 @@ namespace fg {
             void  addTextureBind(const fg::string &texturePath) override;
             void  clearTextureBinds() override;
 
+            void  setType(ParticleType type) override;
             void  setTorsionAxis(const math::p3d &axis) override;
             void  setParam(EmitterParamType param, float value) override;
             void  setFps(float framesPerSecond) override;
@@ -88,6 +93,8 @@ namespace fg {
             float getFps() const override;
             float getLifeTime() const override;
             float getMaxParticleLifeTime() const override;
+
+            ParticleType getType() const override;
 
             const fg::string &getShader() const override;
             const fg::string &getTextureBind(unsigned index) const override;
@@ -117,6 +124,7 @@ namespace fg {
             math::p3d         _torsionAxis;
             std::vector       <ParticleAnimation *> _particles;
 
+            ParticleType      _type;
             fg::string        _shaderPath;
             fg::string        _textureBinds[resources::FG_MATERIAL_TEXTURE_MAX];
             unsigned          _textureBindCount;

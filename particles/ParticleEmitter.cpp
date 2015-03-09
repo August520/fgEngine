@@ -21,67 +21,79 @@ namespace fg {
             _dynamicParams[unsigned(ParticleParamType::VELOCITY)] = bornParams.velocity;
             _dynamicParams[unsigned(ParticleParamType::ANGLE_VELOCITY)] = bornParams.avelocity;
             _dynamicParams[unsigned(ParticleParamType::SIZE)] = bornParams.size;
-            _dynamicParams[unsigned(ParticleParamType::ANGLE)] = bornParams.angle;
             _dynamicParams[unsigned(ParticleParamType::TORSION)] = bornParams.torsion;
             _dynamicParams[unsigned(ParticleParamType::STRETCH)] = 1.0f;
             _dynamicParams[unsigned(ParticleParamType::COLOR_R)] = 1.0f;
             _dynamicParams[unsigned(ParticleParamType::COLOR_G)] = 1.0f;
             _dynamicParams[unsigned(ParticleParamType::COLOR_B)] = 1.0f;
             _dynamicParams[unsigned(ParticleParamType::COLOR_A)] = 1.0f;
+
+            _angle = bornParams.angle;
+            float dp = dir.dot(math::p3d(0, 1, 0));
+
+            if(dp < 1.0f) {
+                math::p3d rotAxis;
+                rotAxis.cross(math::p3d(0, 1, 0), dir);
+                _baseTransform.rotationAxis(acosf(dp), rotAxis);
+            }
         }
 
         void ParticleAnimation::initFrames(const std::unordered_map <ParticleParamType, Modifier *> &modifiers, const math::p3d &torsionAxis) {
             math::quat torsionRotate;
             math::p3d  position;
+            float      angle = _angle;
 
             for(unsigned i = 0; i < _frameCount; i++) {
                 float timeKoeff = float(i) / float(_frameCount);
                 float localTime = timeKoeff * _lifeTimeMs * 0.001f;
-
                 float trs = _getModifiedParticleParam(modifiers, ParticleParamType::TORSION, timeKoeff);
-
+                
+                angle += _getModifiedParticleParam(modifiers, ParticleParamType::ANGLE_VELOCITY, timeKoeff);
                 position += _dir * _frameTime * _getModifiedParticleParam(modifiers, ParticleParamType::VELOCITY, timeKoeff);
                 torsionRotate.rotationAxis((trs * _frameTime) / 180.0f * M_PI, torsionAxis);
                 position.transform(torsionRotate);
-
+                
                 _animationFrames[i].position = _startPos + position;
                 _animationFrames[i].color.r = _getModifiedParticleParam(modifiers, ParticleParamType::COLOR_R, timeKoeff);
                 _animationFrames[i].color.g = _getModifiedParticleParam(modifiers, ParticleParamType::COLOR_G, timeKoeff);
                 _animationFrames[i].color.b = _getModifiedParticleParam(modifiers, ParticleParamType::COLOR_B, timeKoeff);
                 _animationFrames[i].color.a = _getModifiedParticleParam(modifiers, ParticleParamType::COLOR_A, timeKoeff);
                 _animationFrames[i].size = _getModifiedParticleParam(modifiers, ParticleParamType::SIZE, timeKoeff);
+                _animationFrames[i].stretch = _getModifiedParticleParam(modifiers, ParticleParamType::STRETCH, timeKoeff);
+                _animationFrames[i].angle = angle;
             }
         }
-
+        
+        // TODO: angle param to outTransform
+        //
         void ParticleAnimation::getData(float animKoeff, math::m4x4 &outTransform, fg::color &outColor) const {
             float    frameIndex = animKoeff * float(_frameCount);
             unsigned firstFrameIndex = unsigned(frameIndex);
             
-            const math::p3d &pos = _animationFrames[firstFrameIndex].position;
+            math::p3d pos = _animationFrames[firstFrameIndex].position;
             fg::color rgba = _animationFrames[firstFrameIndex].color;
             float scl = _animationFrames[firstFrameIndex].size;
             
+
             if(FG_PARTICLE_INTERPOLATION) {
                 unsigned nextFrameIndex = firstFrameIndex + 1 < _frameCount ? firstFrameIndex + 1 : firstFrameIndex;
                 float    betweenKoeff = frameIndex - float(firstFrameIndex);
 
-                math::p3d lerpPos = pos + (_animationFrames[nextFrameIndex].position - pos) * betweenKoeff;
-                fg::color lerpRGBA = rgba + (_animationFrames[nextFrameIndex].color - rgba) * betweenKoeff;                
-                float lerpScl = math::flerp(scl, _animationFrames[nextFrameIndex].size, betweenKoeff);
-                
-                outTransform.setScaling(lerpScl, lerpScl, lerpScl);
-                outTransform._41 = lerpPos.x;
-                outTransform._42 = lerpPos.y;
-                outTransform._43 = lerpPos.z;
-                outColor = lerpRGBA;
+                pos = pos + (_animationFrames[nextFrameIndex].position - pos) * betweenKoeff;
+                rgba = rgba + (_animationFrames[nextFrameIndex].color - rgba) * betweenKoeff;                
+                scl = math::flerp(scl, _animationFrames[nextFrameIndex].size, betweenKoeff);
             }
-            else {
-                outTransform.setScaling(scl, scl, scl);
-                outTransform._41 = pos.x;
-                outTransform._42 = pos.y;
-                outTransform._43 = pos.z;
-                outColor = rgba;
-            }
+
+            outTransform = _baseTransform;
+            (*(math::p3d *)&outTransform._11).toLength(scl);
+            (*(math::p3d *)&outTransform._21).toLength(scl);
+            (*(math::p3d *)&outTransform._31).toLength(scl);
+            
+            outTransform._41 = pos.x;
+            outTransform._42 = pos.y;
+            outTransform._43 = pos.z;
+
+            outColor = rgba;
         }
 
         unsigned ParticleAnimation::getFrameCount() const {
@@ -130,6 +142,7 @@ namespace fg {
             _dynamicParams[unsigned(EmitterParamType::TORSION_MIN)] = 0.0f;
             _dynamicParams[unsigned(EmitterParamType::TORSION_MAX)] = 0.0f;
 
+            _type = ParticleType::BILL;
             _cycled = true;
             _worldSpace = true;
             _torsionAxis = math::p3d(0, 1, 0);
@@ -341,6 +354,10 @@ namespace fg {
             _textureBindCount = 0;
         }
 
+        void Emitter::setType(ParticleType type) {
+            _type = type;
+        }
+
         void Emitter::setTorsionAxis(const math::p3d &axis) {
             float tlen = axis.length();
 
@@ -386,6 +403,10 @@ namespace fg {
 
         float Emitter::getMaxParticleLifeTime() const {
             return _maxParticleLifeTimeMs;
+        }
+
+        ParticleType Emitter::getType() const {
+            return _type;
         }
 
         const fg::string &Emitter::getShader() const {

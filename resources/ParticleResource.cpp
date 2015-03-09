@@ -5,6 +5,7 @@ namespace fg {
             StaticHash <unsigned(particles::EmitterParamType::_count), particles::EmitterParamType> emitterParamConstants;
             StaticHash <unsigned(particles::ParticleParamType::_count), particles::ParticleParamType> particleParamConstants;
             StaticHash <unsigned(particles::ModifierFunction::_count), particles::ModifierFunction> modifierFunctionConstants;
+            StaticHash <unsigned(particles::ParticleType::_count), particles::ParticleType> particleTypeConstants;
 
             ParamTypeConstTable() {
                 emitterParamConstants.add("PARTICLES_PER_SEC", particles::EmitterParamType::PARTICLES_PER_SEC);
@@ -31,7 +32,6 @@ namespace fg {
                 particleParamConstants.add("ANGLE_VELOCITY", particles::ParticleParamType::ANGLE_VELOCITY);
                 particleParamConstants.add("SIZE", particles::ParticleParamType::SIZE);
                 particleParamConstants.add("STRETCH", particles::ParticleParamType::STRETCH);
-                particleParamConstants.add("ANGLE", particles::ParticleParamType::ANGLE);
                 particleParamConstants.add("TORSION", particles::ParticleParamType::TORSION);
 
                 modifierFunctionConstants.add("CONSTANT", particles::ModifierFunction::CONSTANT);
@@ -42,6 +42,10 @@ namespace fg {
                 modifierFunctionConstants.add("LOGUP", particles::ModifierFunction::LOGUP);
                 modifierFunctionConstants.add("LOGDOWN", particles::ModifierFunction::LOGDOWN);
                 modifierFunctionConstants.add("DIAGRAM", particles::ModifierFunction::DIAGRAM);
+
+                particleTypeConstants.add("BILL", particles::ParticleType::BILL);
+                particleTypeConstants.add("AXISBILL", particles::ParticleType::AXISBILL);
+                particleTypeConstants.add("PPVELOCITY", particles::ParticleType::PPVELOCITY);
             }
 
             bool getConstant(const char *name, particles::EmitterParamType &out) {
@@ -54,6 +58,10 @@ namespace fg {
 
             bool getConstant(const char *name, particles::ModifierFunction &out) {
                 return modifierFunctionConstants.tryGet(name, out);
+            }
+
+            bool getConstant(const char *name, particles::ParticleType &out) {
+                return particleTypeConstants.tryGet(name, out);
             }
 
         } __paramTypeConstTable;
@@ -83,6 +91,12 @@ namespace fg {
                         emitter->setCycled(emitterTable.get("isCycled"));
                         emitter->setWorldSpace(emitterTable.get("isWorldSpace"));
                         emitter->setShader(shaderPath);
+
+                        particles::ParticleType emitterType;
+
+                        if(__paramTypeConstTable.getConstant(emitterTable.get("type"), emitterType)) {
+                            emitter->setType(emitterType);
+                        }
 
                         emitterTable.get("textureBinds").foreach([emitter](const luaObj &, const luaObj &textureBind){
                             const char *texturePath = textureBind;

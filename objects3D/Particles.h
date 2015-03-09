@@ -43,6 +43,7 @@ namespace fg {
             ComponentInterface *getComponentInterface(unsigned index) override;
 
         protected:
+            float        _frameTime;
             float        _timeElapsed;
             fg::string   _particlesResourcePath;
             std::vector  <EmitterData *> _emitters;

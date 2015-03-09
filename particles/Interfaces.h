@@ -29,8 +29,7 @@ namespace fg {
             ANGLE_VELOCITY      = 5,
             SIZE                = 6,
             STRETCH             = 7,
-            ANGLE               = 8,
-            TORSION             = 9, 
+            TORSION             = 8, 
             _count,
         };
 
@@ -78,7 +77,6 @@ namespace fg {
         public:
             virtual ~EmitterInterface() {}
 
-            virtual void  build() = 0;
             virtual void  setTimeStamp(float timeMs) = 0;
             virtual bool  getNextParticleData(math::m4x4 &outTransform, fg::color &outColor, float &outLifeTimeMs) const = 0;
 
@@ -92,6 +90,7 @@ namespace fg {
             virtual void  addTextureBind(const fg::string &texturePath) = 0;
             virtual void  clearTextureBinds() = 0;
             
+            virtual void  setType(ParticleType type) = 0;
             virtual void  setTorsionAxis(const math::p3d &axis) = 0;
             virtual void  setParam(EmitterParamType param, float value) = 0;
             virtual void  setFps(float framesPerSecond) = 0;
@@ -104,6 +103,8 @@ namespace fg {
             virtual float getLifeTime() const = 0;
             virtual float getMaxParticleLifeTime() const = 0;
             
+            virtual ParticleType getType() const = 0;
+
             virtual const fg::string &getShader() const = 0;
             virtual const fg::string &getTextureBind(unsigned index) const = 0;
 
