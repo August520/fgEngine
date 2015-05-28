@@ -91,8 +91,7 @@ protected:
 //--- TODO: 
 
 struct byteform {
-    byteform(void *itarget, unsigned int isize) : _target((char *)itarget), _offset(0), _size(isize) {
-    }
+    byteform(void *itarget, unsigned int isize) : _target((char *)itarget), _offset(0), _size(isize) {}
 
     byteform &startOff(unsigned int startOffset) {
         _offset = startOffset;
@@ -310,4 +309,11 @@ protected:
     mutable unsigned int  _offset;
     unsigned int  _size;
 };
+
+struct uncopyable {
+    uncopyable() {}
+    uncopyable(const uncopyable &) = delete;
+    uncopyable &operator =(const uncopyable &) = delete;
+};
+
 

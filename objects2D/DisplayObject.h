@@ -21,9 +21,11 @@ namespace fg {
             DisplayObjectInterface *&getBack() override;
 
             void  setAddHandler(const callback <void ()> &cb) override;
+            void  setUpdateHandler(const callback <void (float)> &cb) override;
             void  setRemoveHandler(const callback <void ()> &cb) override;
 
             void  callAddHandler() override;
+            void  callUpdateHandler(float frameTimeMs) override;
             void  callRemoveHandler() override;
             
             void  setPosition(float x, float y) override;
@@ -76,6 +78,7 @@ namespace fg {
             bool         _visible;
 
             callback     <void ()> _addHandler;
+            callback     <void (float)> _updateHandler;
             callback     <void ()> _removeHandler;
                         
         private:

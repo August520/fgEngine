@@ -29,9 +29,11 @@ namespace fg {
             virtual DisplayObjectInterface *&getBack() = 0;
             
             virtual void  setAddHandler(const callback <void ()> &cb) = 0;
+            virtual void  setUpdateHandler(const callback <void (float)> &cb) = 0;
             virtual void  setRemoveHandler(const callback <void ()> &cb) = 0;
             
             virtual void  callAddHandler() = 0;
+            virtual void  callUpdateHandler(float frameTimeMs) = 0;
             virtual void  callRemoveHandler() = 0;
             
             virtual void  setPosition(float x, float y) = 0;

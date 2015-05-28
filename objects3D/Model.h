@@ -69,7 +69,7 @@ namespace fg {
                 bool      _skinned;
                 bool      _visible;
                 bool      _addtrfm;
-                MeshData  *_childs;
+                MeshData  **_childs;
                 
                 unsigned  _childCount;
                 unsigned  _skinMatrixCount;
@@ -117,15 +117,15 @@ namespace fg {
             const resources::MaterialResourceInterface  *_material;
 
             fg::string  _modelResourcePath;
-            fg::string  _materialResourcePath;            
-            
+            fg::string  _materialResourcePath;      
             unsigned    _meshCount;
             MeshData    *_root;
             MeshData    **_meshes;
+            bool        _modelReady;
 
-            StaticHash  <resources::FG_MESH_MAX, MeshData *> _meshesByName;
-
-            bool _modelReady;
+            mutable StaticHash  <resources::FG_MESH_MAX, MeshData *> _meshesByName;
+            
+            MeshData *_getOrCreateMeshByName(const fg::string &meshName) const;
         };
     }
 }

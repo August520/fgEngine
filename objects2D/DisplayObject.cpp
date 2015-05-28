@@ -129,6 +129,10 @@ namespace fg {
             _addHandler = cb;
         }
 
+        void DisplayObject::setUpdateHandler(const callback <void(float)> &cb) {
+            _updateHandler = cb;
+        }
+
         void DisplayObject::setRemoveHandler(const callback <void()> &cb) {
             _removeHandler = cb;
         }
@@ -136,6 +140,12 @@ namespace fg {
         void DisplayObject::callAddHandler() {
             if(_addHandler.isBinded()) {
                 _addHandler();
+            }
+        }
+
+        void DisplayObject::callUpdateHandler(float frameTimeMs) {
+            if(_updateHandler.isBinded()) {
+                _updateHandler(frameTimeMs);
             }
         }
 
@@ -260,6 +270,10 @@ namespace fg {
         }
 
         void DisplayObject::updateCoordinates(float frameTimeMs) {
+            if(_updateHandler.isBinded()) {
+                _updateHandler(frameTimeMs);
+            }
+
             math::m3x3 fullLocalTransform = math::m3x3(_localScale.x, 0.0f, 0.0f, 0.0f, _localScale.y, 0.0f, 0.0f, 0.0f, 1.0f) * _localTransform;
 
             if(_parent) {

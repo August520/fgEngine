@@ -125,6 +125,10 @@ namespace fg {
         void RenderObject::setAddHandler(const callback <void()> &cb) {
             _addHandler = cb;
         }
+        
+        void RenderObject::setUpdateHandler(const callback <void (float)> &cb) {
+            _updateHandler = cb;
+        }
 
         void RenderObject::setRemoveHandler(const callback <void()> &cb) {
             _removeHandler = cb;
@@ -133,6 +137,12 @@ namespace fg {
         void RenderObject::callAddHandler() {
             if(_addHandler.isBinded()) {
                 _addHandler();
+            }
+        }
+
+        void RenderObject::callUpdateHandler(float frameTimeMs) {
+            if(_updateHandler.isBinded()) {
+                _updateHandler(frameTimeMs);
             }
         }
 
@@ -288,6 +298,10 @@ namespace fg {
         }
 
         void RenderObject::updateCoordinates(float frameTimeMs) {
+            if(_updateHandler.isBinded()) {
+                _updateHandler(frameTimeMs);
+            }
+
             if(_parent) {
                 _fullTransform = _localTransform * _parent->getFullTransform();
             }

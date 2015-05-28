@@ -131,7 +131,7 @@ namespace fg {
         Model3D::MeshData::MeshData() :
             _addtrfm(false),
             _skinned(false),
-            _visible(false),
+            _visible(true),
             _childs(nullptr),
             _childCount(0),
             _mesh(nullptr),
@@ -146,6 +146,10 @@ namespace fg {
         }
 
         Model3D::MeshData::~MeshData() {
+            for(unsigned i = 0; i < _childCount; i++) {
+                delete _childs[i];
+            }
+
             delete [] _childs;
             delete [] _skinMatrixes;
 		}
@@ -242,44 +246,34 @@ namespace fg {
 		}
 
         void Model3D::setMeshVisible(const fg::string &meshName, bool visible) {
-            MeshData *mesh = _meshesByName.get(meshName);
-
-            if(mesh) {
-                mesh->_visible = visible;
-            }
+            MeshData *mesh = _getOrCreateMeshByName(meshName);
+            mesh->_visible = visible;
 		}
 
         void Model3D::setMeshAdditionalTransform(const fg::string &meshName, const math::m4x4 &transform) {
-            MeshData *mesh = _meshesByName.get(meshName);
-
-            if(mesh) {
-                mesh->_additionalTransform = transform;
-                mesh->_addtrfm = true;
-            }
+            MeshData *mesh = _getOrCreateMeshByName(meshName);
+            mesh->_additionalTransform = transform;
+            mesh->_addtrfm = true;
 		}
         
         const math::m4x4 *Model3D::getMeshTransform(const fg::string &meshName) const {
             MeshData *mesh = _meshesByName.get(meshName);
 
-            if(mesh) {
+            if(mesh && mesh->_mesh) {
                 return &mesh->_fullTransform;
             }
             return nullptr;
 		}
 
         const math::m4x4 *Model3D::getMeshAdditionalTransform(const fg::string &meshName) const {
-            MeshData *mesh = _meshesByName.get(meshName);
-
-            if(mesh) {
-                return &mesh->_additionalTransform;
-            }
-            return nullptr;
+            MeshData *mesh = _getOrCreateMeshByName(meshName);
+            return &mesh->_additionalTransform;
 		}
 
         const math::m4x4 *Model3D::getHelperTransform(const fg::string &helperName) const {
             MeshData *mesh = _meshesByName.get(helperName);
 
-            if(mesh) {
+            if(mesh && mesh->_mesh) {
                 return &mesh->_fullTransform;
             }
             return nullptr;
@@ -304,12 +298,8 @@ namespace fg {
 		}
         
         bool Model3D::isMeshVisible(const fg::string &meshName) {
-            MeshData *mesh = _meshesByName.get(meshName);
-
-            if(mesh) {
-                return mesh->_visible;
-            }
-            return false;
+            MeshData *mesh = _getOrCreateMeshByName(meshName);
+            return mesh->_visible;
 		}
         
         void Model3D::playAnim(const fg::string &animResourcePath, float animLenMs, float animOffsetMs, float smoothTimeMs, AnimationLayer layer) {
@@ -329,56 +319,56 @@ namespace fg {
             _animator.updateAnimation(frameTimeMs);
 
             struct fn {
-                static void recursiveMeshUpdate(MeshData &curMesh, const math::m4x4 &parentFullTransform) {
-                    const resources::MeshInterface *rmesh = curMesh._mesh;
+                static void recursiveMeshUpdate(MeshData *curMesh, const math::m4x4 &parentFullTransform) {
+                    const resources::MeshInterface *rmesh = curMesh->_mesh;
 
                     math::m4x4 localTransform = rmesh->getLocalTransform();
-                    curMesh._fullTransform = localTransform * parentFullTransform;
+                    curMesh->_fullTransform = localTransform * parentFullTransform;
 
-                    if(curMesh._addtrfm) {
-                        curMesh._fullTransform = curMesh._additionalTransform * curMesh._fullTransform;
+                    if(curMesh->_addtrfm) {
+                        curMesh->_fullTransform = curMesh->_additionalTransform * curMesh->_fullTransform;
                     }
 
-                    rmesh->tempMatrix = rmesh->getInvStartTransform() * curMesh._fullTransform;
+                    rmesh->tempMatrix = rmesh->getInvStartTransform() * curMesh->_fullTransform;
 
-                    for(unsigned i = 0; i < curMesh._childCount; i++) {
-                        recursiveMeshUpdate(curMesh._childs[i], curMesh._fullTransform);
+                    for(unsigned i = 0; i < curMesh->_childCount; i++) {
+                        recursiveMeshUpdate(curMesh->_childs[i], curMesh->_fullTransform);
                     }
                 }
 
-                static void recursiveMeshAnimationUpdate(Animator &animator, MeshData &curMesh, const math::m4x4 &parentFullTransform) {
-                    const resources::MeshInterface *rmesh = curMesh._mesh;
+                static void recursiveMeshAnimationUpdate(Animator &animator, MeshData *curMesh, const math::m4x4 &parentFullTransform) {
+                    const resources::MeshInterface *rmesh = curMesh->_mesh;
 
                     math::m4x4 localTransform = rmesh->getLocalTransform();
                     animator.getMatrix(rmesh->getName(), localTransform);
-                    curMesh._fullTransform = localTransform * parentFullTransform;
+                    curMesh->_fullTransform = localTransform * parentFullTransform;
 
-                    if(curMesh._addtrfm) {
-                        curMesh._fullTransform = curMesh._additionalTransform * curMesh._fullTransform;
+                    if(curMesh->_addtrfm) {
+                        curMesh->_fullTransform = curMesh->_additionalTransform * curMesh->_fullTransform;
                     }
 
-                    rmesh->tempMatrix = rmesh->getInvStartTransform() * curMesh._fullTransform;
+                    rmesh->tempMatrix = rmesh->getInvStartTransform() * curMesh->_fullTransform;
 
-                    for(unsigned i = 0; i < curMesh._childCount; i++) {
-                        recursiveMeshAnimationUpdate(animator, curMesh._childs[i], curMesh._fullTransform);
+                    for(unsigned i = 0; i < curMesh->_childCount; i++) {
+                        recursiveMeshAnimationUpdate(animator, curMesh->_childs[i], curMesh->_fullTransform);
                     }
                 }
             };
 
             if(_modelReady) {
                 if(_animator.getActiveLayersCount()) {
-                    fn::recursiveMeshAnimationUpdate(_animator, *_root, _fullTransform);
+                    fn::recursiveMeshAnimationUpdate(_animator, _root, _fullTransform);
                 }
                 else {
-                    fn::recursiveMeshUpdate(*_root, _fullTransform);
+                    fn::recursiveMeshUpdate(_root, _fullTransform);
                 }
                 
                 for(unsigned i = 0; i < _meshCount; i++) {
-                    MeshData &cur = *_meshes[i];
+                    MeshData *cur = _meshes[i];
 
-                    if(cur._skinned) {
-                        for(unsigned c = 0; c < cur._mesh->getSkinnedBoneCount(); c++) {
-                            cur._skinMatrixes[c] = cur._mesh->getSkinnedBone(c)->tempMatrix;
+                    if(cur->_skinned) {
+                        for(unsigned c = 0; c < cur->_mesh->getSkinnedBoneCount(); c++) {
+                            cur->_skinMatrixes[c] = cur->_mesh->getSkinnedBone(c)->tempMatrix;
                         }
                     }
                 }
@@ -390,27 +380,29 @@ namespace fg {
             _modelReady = false;
 
             struct fn { 
-                static void createMeshesRecursive(Model3D &mdl, MeshData &current, const resources::MeshInterface *mesh, const resources::MaterialResourceInterface *material) {
+                static void createMeshesRecursive(Model3D &mdl, MeshData *current, const resources::MeshInterface *mesh, const resources::MaterialResourceInterface *material) {
                     if(mesh->isVisible()) {
-                        current._visible = true;
-                        mdl._meshes[mdl._meshCount++] = &current;
+                        mdl._meshes[mdl._meshCount++] = current;
                     }
                     
-                    mdl._meshesByName.add(mesh->getName(), &current);
-                    
-                    current._mesh = mesh;
-                    current._materialParams = material->getMeshParams(mesh->getName());
+                    current->_mesh = mesh;
+                    current->_materialParams = material->getMeshParams(mesh->getName());
 
-                    if(current._materialParams == nullptr) {
-                        current._materialParams = material->getMeshParams("any");
+                    if(current->_materialParams == nullptr) {
+                        current->_materialParams = material->getMeshParams("any");
                     }
 
-                    current._childCount = mesh->getChildCount();
-                    current._childs = new MeshData [current._childCount];
-                    
-                    for(unsigned i = 0; i < current._childCount; i++) {
-                        createMeshesRecursive(mdl, current._childs[i], mesh->getChild(i), material);
-                    }
+                    current->_childCount = mesh->getChildCount();
+
+                    if(current->_childCount) {
+                        current->_childs = new MeshData *[current->_childCount];
+
+                        for(unsigned i = 0; i < current->_childCount; i++) {
+                            const resources::MeshInterface *child = mesh->getChild(i);
+                            current->_childs[i] = mdl._getOrCreateMeshByName(child->getName());
+                            createMeshesRecursive(mdl, current->_childs[i], child, material);
+                        }
+                    }                    
                 }
             };
             
@@ -427,16 +419,16 @@ namespace fg {
             
             if(_model->valid() && _material->valid()) {
                 if(_root == nullptr) {
-                    _root = new MeshData ();
+                    _root = _getOrCreateMeshByName(_model->getRoot()->getName());
                     _meshes = new MeshData * [_model->getTotalMeshCount()];
                     
-                    fn::createMeshesRecursive(*this, *_root, _model->getRoot(), _material);
+                    fn::createMeshesRecursive(*this, _root, _model->getRoot(), _material);
 
                     for(unsigned i = 0; i < _model->getSkinMeshCount(); i++) {
                         const resources::MeshInterface *rmesh = _model->getSkinMesh(i);
 
                         if(rmesh->isVisible()) {
-                            MeshData *current = new MeshData ();                            
+                            MeshData *current = _getOrCreateMeshByName(rmesh->getName());
                             _meshes[_meshCount++] = current;
                             
                             current->_skinMatrixCount = rmesh->getSkinnedBoneCount();
@@ -459,6 +451,12 @@ namespace fg {
             }
 
             if(_root) {
+                for(unsigned i = 0; i < _meshCount; i++) {
+                    if(_meshes[i]->_skinned) {
+                        delete _meshes[i];
+                    }
+                }
+
                 delete[] _meshes;
                 delete _root;
 
@@ -478,6 +476,18 @@ namespace fg {
         RenderObjectInterface::ComponentInterface *Model3D::getComponentInterface(unsigned index) {
             return _meshes[index];
 		}
+
+        Model3D::MeshData *Model3D::_getOrCreateMeshByName(const fg::string &meshName) const {
+            MeshData *mesh = _meshesByName.get(meshName);
+
+            if(mesh == nullptr) {
+                mesh = new MeshData ();
+                _meshesByName.add(meshName, mesh);
+                return mesh;
+            }
+
+            return mesh;
+        }
 
     }
 }
