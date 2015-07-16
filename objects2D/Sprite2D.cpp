@@ -23,6 +23,8 @@ namespace fg {
             _textureResourcePath = texResourcePath;
             _texture = nullptr;
             _frameCount = 1;
+            _frameCounter = 0;
+            _timeCounter = 0;
             _cycleCallback.set(nullptr);
         }
 
@@ -31,6 +33,8 @@ namespace fg {
             _clipName = clipName;
             _clipset = nullptr;
             _clip = nullptr;
+            _frameCounter = 0;
+            _timeCounter = 0;
             _frameCount = 1;
             _cycleCallback.set(nullptr);
         }
@@ -106,6 +110,45 @@ namespace fg {
         }
         
         bool Sprite2D::hitTestPoint(const math::p2d &point) const {
+            math::m3x3 invFullTransform;
+            math::p2d  tp = point;
+
+            invFullTransform.inverse(_fullTransform);
+            tp.transform(invFullTransform, true);
+
+            if(_clip) {
+                tp.x += _clip->centerX;
+                tp.y += _clip->centerY;
+
+                if(_clip->boundingCoords) {
+                    math::p2d rightInf(tp.x + 10000.0f, tp.y);
+                    int intersects = 0;
+
+                    for(unsigned int i = 0; i < _clip->boundingCount - 1; i++) {
+                        const math::p2d &p0 = _clip->boundingCoords[i];
+                        const math::p2d &p1 = _clip->boundingCoords[i + 1];
+
+                        float dpx = p1.x - p0.x;
+                        float dpy = p1.y - p0.y;
+
+                        float z2 = (tp.x - p0.x) * dpy - (tp.y - p0.y) * dpx;
+                        float z3 = (rightInf.x - p0.x) * dpy - (rightInf.y - p0.y) * dpx;
+
+                        if((tp.y - p0.y) * (tp.y - p1.y) < 0 && z2 * z3 < 0) {
+                            intersects++;
+                        }
+                    }
+
+                    if(intersects & 0x1) return true;
+                }
+                else {
+                    if(tp.x >= 0 && tp.x <= _clip->width) {
+                        if(tp.y >= 0 && tp.y <= _clip->height) {
+                            return true;
+                        }
+                    }
+                }
+            }
             return false;
         }
 
@@ -116,7 +159,7 @@ namespace fg {
         void Sprite2D::updateCoordinates(float frameTimeMs) {
             DisplayObject::updateCoordinates(frameTimeMs);
 
-            if(_stopped == false) {
+            if(_stopped == false && _clip) {
                 _timeCounter += unsigned(frameTimeMs);
                 unsigned tframe = _timeCounter * _frameRate / 1000;
 

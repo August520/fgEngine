@@ -6,6 +6,7 @@
 
 #include <new>
 #include <type_traits>
+#include <unordered_map>
 
 template <typename F> struct callback final {
 
@@ -310,10 +311,97 @@ protected:
     unsigned int  _size;
 };
 
+//---
+
 struct uncopyable {
     uncopyable() {}
+    virtual ~uncopyable() {}
     uncopyable(const uncopyable &) = delete;
     uncopyable &operator =(const uncopyable &) = delete;
 };
 
+//---
 
+template <class USER_OBJ, typename EVENT_TYPE, typename NAME_TYPE> class StateMachine {
+public:
+    struct StateNode : public USER_OBJ {
+        std::unordered_map  <EVENT_TYPE, NAME_TYPE> nexts;
+        
+        callback  <void ()> entryHandler;
+        callback  <void ()> leaveHandler;
+        callback  <void (float)> updateHandler;
+    };
+
+    StateMachine() : _cur(nullptr), _curName((NAME_TYPE)-1) {}
+    ~StateMachine() {
+        for(auto index = _nodes.begin(); index != _nodes.end(); index++) {
+            StateNode *t = index->second;
+            delete t;
+        }
+    }
+
+    StateNode &addStateNode(const NAME_TYPE &name) {
+        auto index = _nodes.find(name);
+        StateNode *tnode;
+
+        if(index == _nodes.end()) {
+            tnode = new StateNode();
+            _nodes[name] = tnode;
+
+            if(_cur == nullptr) {
+                _cur = tnode;
+                _curName = name;
+            }
+            return *tnode;
+        }
+        else {
+            return *index->second;
+        }
+    }
+
+    void setStateNode(const NAME_TYPE &name) {
+        _cur = _nodes[name];
+        _curName = name;
+    }
+
+    bool stateEvent(const EVENT_TYPE &genEvent) {
+        auto index = _cur->nexts.find(genEvent);
+
+        if(index != _cur->nexts.end()) {
+            StateNode *nst = _nodes[index->second];
+            StateNode *lst = _cur;
+
+            _curName = index->second;
+            _cur = nst;
+
+            if(lst->leaveHandler.isBinded()) {
+                lst->leaveHandler();
+            }
+
+            if(nst->entryHandler.isBinded()) {
+                nst->entryHandler();
+            }
+            return true;
+        }
+        return false;
+    }
+
+    const NAME_TYPE &getCurrentStateName() const {
+        return _curName;
+    }
+    const StateNode &getCurrentStateNode() const {
+        return *_cur;
+    }
+
+    void update(float frameTimeMs) {
+        if(_cur && _cur->updateHandler.isBinded()) {
+            _cur->updateHandler(frameTimeMs);
+        }
+    }
+
+protected:
+    std::unordered_map  <NAME_TYPE, StateNode *> _nodes;
+
+    NAME_TYPE  _curName;
+    StateNode  *_cur;
+};
