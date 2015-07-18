@@ -77,7 +77,7 @@ namespace fg {
         public:
             virtual void init(platform::EnginePlatformInterface &iplatform, resources::ResourceManagerInterface &iresMan) = 0;
             virtual void frameInit3D(float frameTimeMs) = 0;
-            virtual void frameInit2D(float frameTimeMs) = 0;
+            virtual void frameInit2D(float frameTimeMs, float scaleX, float scaleY) = 0;
             virtual void destroy() = 0;
         };
 

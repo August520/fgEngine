@@ -69,7 +69,10 @@ namespace fg {
             _platform->rdSetShader(_simpleShader->getPlatformObject());
         }
 
-        void RenderSupport::frameInit2D(float frameTimeMs) {
+        void RenderSupport::frameInit2D(float frameTimeMs, float scaleX, float scaleY) {
+            _logicalScreenScaleX = scaleX;
+            _logicalScreenScaleY = scaleY;
+
             _frameConstants->data.camViewProj.identity();
             _frameConstants->updateAndApply();
             
@@ -174,15 +177,15 @@ namespace fg {
             rt.transform(trfm, true);
             rb.transform(trfm, true);
 
-            lt.x = 2.0f * lt.x / _platform->getScreenWidth() - 1.0f;
-            lb.x = 2.0f * lb.x / _platform->getScreenWidth() - 1.0f;
-            rt.x = 2.0f * rt.x / _platform->getScreenWidth() - 1.0f;
-            rb.x = 2.0f * rb.x / _platform->getScreenWidth() - 1.0f;
+            lt.x = (2.0f * lt.x / _platform->getScreenWidth() * fabs(_logicalScreenScaleX) - 1.0f) * math::fsign(_logicalScreenScaleX);
+            lb.x = (2.0f * lb.x / _platform->getScreenWidth() * fabs(_logicalScreenScaleX) - 1.0f) * math::fsign(_logicalScreenScaleX);
+            rt.x = (2.0f * rt.x / _platform->getScreenWidth() * fabs(_logicalScreenScaleX) - 1.0f) * math::fsign(_logicalScreenScaleX);
+            rb.x = (2.0f * rb.x / _platform->getScreenWidth() * fabs(_logicalScreenScaleX) - 1.0f) * math::fsign(_logicalScreenScaleX);
 
-            lt.y = 1.0f - 2.0f * lt.y / _platform->getScreenHeight();
-            lb.y = 1.0f - 2.0f * lb.y / _platform->getScreenHeight();
-            rt.y = 1.0f - 2.0f * rt.y / _platform->getScreenHeight();
-            rb.y = 1.0f - 2.0f * rb.y / _platform->getScreenHeight();
+            lt.y = (1.0f - 2.0f * lt.y / _platform->getScreenHeight() * fabs(_logicalScreenScaleY)) * math::fsign(_logicalScreenScaleY);
+            lb.y = (1.0f - 2.0f * lb.y / _platform->getScreenHeight() * fabs(_logicalScreenScaleY)) * math::fsign(_logicalScreenScaleY);
+            rt.y = (1.0f - 2.0f * rt.y / _platform->getScreenHeight() * fabs(_logicalScreenScaleY)) * math::fsign(_logicalScreenScaleY);
+            rb.y = (1.0f - 2.0f * rb.y / _platform->getScreenHeight() * fabs(_logicalScreenScaleY)) * math::fsign(_logicalScreenScaleY);
 
             float sz = 0.0f;
             float tx = clip->frames[frame].tu;
@@ -241,12 +244,14 @@ namespace fg {
             rightDir.transform(trfm, false);
             downDir.transform(trfm, false);
 
-            rightDir.x = 2.0f * rightDir.x / _platform->getScreenWidth();
-            rightDir.y = -2.0f * rightDir.y / _platform->getScreenHeight();
-            downDir.x = 2.0f * downDir.x / _platform->getScreenWidth();
-            downDir.y = -2.0f * downDir.y / _platform->getScreenHeight();
+            rightDir.x = (2.0f * rightDir.x / _platform->getScreenWidth()) * fabs(_logicalScreenScaleX);
+            rightDir.y = (-2.0f * rightDir.y / _platform->getScreenHeight()) * fabs(_logicalScreenScaleY);
+            downDir.x = (2.0f * downDir.x / _platform->getScreenWidth()) * fabs(_logicalScreenScaleX);
+            downDir.y = (-2.0f * downDir.y / _platform->getScreenHeight()) * fabs(_logicalScreenScaleY);
 
-            math::p2d lt (2.0f * int(trfm._31) / _platform->getScreenWidth() - 1.0f, 1.0f - 2.0f * int(trfm._32) / _platform->getScreenHeight());
+            float ltx = (2.0f * int(trfm._31) / _platform->getScreenWidth() * fabs(_logicalScreenScaleX) - 1.0f) * math::fsign(_logicalScreenScaleX);
+            float lty = (1.0f - 2.0f * int(trfm._32) / _platform->getScreenHeight() * fabs(_logicalScreenScaleY)) * math::fsign(_logicalScreenScaleY);
+            math::p2d lt (ltx, lty);
             math::p2d ltOrigin = lt;
 
             unsigned i = 0;
@@ -348,16 +353,16 @@ namespace fg {
             math::p2d lb (x, y + height);
             math::p2d rt (x + width, y);
             math::p2d rb (x + width, y + height);
-            
-            lt.x = 2.0f * lt.x / _platform->getScreenWidth() - 1.0f;
-            lb.x = 2.0f * lb.x / _platform->getScreenWidth() - 1.0f;
-            rt.x = 2.0f * rt.x / _platform->getScreenWidth() - 1.0f;
-            rb.x = 2.0f * rb.x / _platform->getScreenWidth() - 1.0f;
 
-            lt.y = 1.0f - 2.0f * lt.y / _platform->getScreenHeight();
-            lb.y = 1.0f - 2.0f * lb.y / _platform->getScreenHeight();
-            rt.y = 1.0f - 2.0f * rt.y / _platform->getScreenHeight();
-            rb.y = 1.0f - 2.0f * rb.y / _platform->getScreenHeight();
+            lt.x = (2.0f * lt.x / _platform->getScreenWidth() * fabs(_logicalScreenScaleX) - 1.0f) * math::fsign(_logicalScreenScaleX);
+            lb.x = (2.0f * lb.x / _platform->getScreenWidth() * fabs(_logicalScreenScaleX) - 1.0f) * math::fsign(_logicalScreenScaleX);
+            rt.x = (2.0f * rt.x / _platform->getScreenWidth() * fabs(_logicalScreenScaleX) - 1.0f) * math::fsign(_logicalScreenScaleX);
+            rb.x = (2.0f * rb.x / _platform->getScreenWidth() * fabs(_logicalScreenScaleX) - 1.0f) * math::fsign(_logicalScreenScaleX);
+
+            lt.y = (1.0f - 2.0f * lt.y / _platform->getScreenHeight() * fabs(_logicalScreenScaleY)) * math::fsign(_logicalScreenScaleY);
+            lb.y = (1.0f - 2.0f * lb.y / _platform->getScreenHeight() * fabs(_logicalScreenScaleY)) * math::fsign(_logicalScreenScaleY);
+            rt.y = (1.0f - 2.0f * rt.y / _platform->getScreenHeight() * fabs(_logicalScreenScaleY)) * math::fsign(_logicalScreenScaleY);
+            rb.y = (1.0f - 2.0f * rb.y / _platform->getScreenHeight() * fabs(_logicalScreenScaleY)) * math::fsign(_logicalScreenScaleY);
 
             VertexTextured *tmem = (VertexTextured *)_oddVertexBufferTextured->lockVertices();
             unsigned short *tind = (unsigned short *)_oddVertexBufferTextured->lockIndices();

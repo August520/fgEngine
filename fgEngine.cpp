@@ -116,11 +116,14 @@ namespace fg {
 
     }
     
-    bool Engine::init(platform::InitParams &initParams, render::RenderInterface &render) {
+    bool Engine::init(const platform::InitParams &initParams, render::RenderInterface &render, const Logical2DCoordSystem &coordSystem) {
         _log.msgInfo("init..");
         _appWidth = initParams.scrWidth;
         _appHeight = initParams.scrHeight;
 
+
+        _logicalScreenScaleFactorX = _appWidth / coordSystem.width * (coordSystem.coordStartX == HorizontalAnchor::RIGHT ? -1.0f : 1.0f);
+        _logicalScreenScaleFactorY = _appHeight / coordSystem.height * (coordSystem.coordStartY == VerticalAnchor::TOP ? 1.0f : -1.0f);
         _render = &render;
 
         if(_platform.init(initParams) == false) {
@@ -184,8 +187,8 @@ namespace fg {
 
             _renderSupport.frameInit3D(frameTimeMs);            
             _render->draw3D(object3d::RenderObjectIterator(_root3D, _platform, _resMan, frameTimeMs), render::RenderAPI(_platform, _resMan, _renderSupport, *_gameCamera));
-
-            _renderSupport.frameInit2D(frameTimeMs);
+            
+            _renderSupport.frameInit2D(frameTimeMs, _logicalScreenScaleFactorX, _logicalScreenScaleFactorY);
             _render->draw2D(object2d::DisplayObjectIterator(_root2D, _platform, _resMan, frameTimeMs), render::RenderAPI(_platform, _resMan, _renderSupport, *_gameCamera));
         }
 
@@ -212,18 +215,33 @@ namespace fg {
 
     //---
 
+    void Engine::_scalePos(math::p2d &target) {
+        if(_logicalScreenScaleFactorX < 0.0f) {
+            target.x = _appWidth - target.x;
+        }
+        if(_logicalScreenScaleFactorY < 0.0f) {
+            target.y = _appWidth - target.y;
+        }
+
+        target.x = 1.0f / fabs(_logicalScreenScaleFactorX) * target.x;
+        target.y = 1.0f / fabs(_logicalScreenScaleFactorY) * target.y;
+    }
+
     void Engine::pointerPressed(unsigned pointID, float pointX, float pointY) {
         math::p2d pos = math::p2d(pointX, pointY).transform(_platform.getInputTransform(), true);
+        _scalePos(pos);
         _input.genPointerEvent(input::PointerEvent::PRESS, input::PointerEventArgs(pointID, pos.x, pos.y));
     }
 
     void Engine::pointerMoved(unsigned pointID, float pointX, float pointY) {
         math::p2d pos = math::p2d(pointX, pointY).transform(_platform.getInputTransform(), true);
+        _scalePos(pos);
         _input.genPointerEvent(input::PointerEvent::MOVE, input::PointerEventArgs(pointID, pos.x, pos.y));
     }
 
     void Engine::pointerReleased(unsigned pointID, float pointX, float pointY) {
         math::p2d pos = math::p2d(pointX, pointY).transform(_platform.getInputTransform(), true);
+        _scalePos(pos);
         _input.genPointerEvent(input::PointerEvent::RELEASE, input::PointerEventArgs(pointID, pos.x, pos.y));
     }
 

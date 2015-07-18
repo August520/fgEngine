@@ -17,6 +17,10 @@ namespace fg {
             return v1 + (v2 - v1) * koeff;
         }
 
+        static inline float fsign(float value) {
+            return ((unsigned &)value) & 0x80000000 ? -1.0f : 1.0f;
+        }
+
         namespace utility {
             static bool getLinesIntersect2D(const p2d &lineA0, const p2d &lineA1, const p2d &lineB0, const p2d &lineB1, p2d &out);
             static bool getCurvePoint(const p2d &p0, const p2d &p1, const p2d &p2, float koeff, p2d &pOut);

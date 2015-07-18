@@ -23,14 +23,6 @@ namespace fg {
         return nullptr;
     }
 
-    float GameAPI::getScreenWidth() const {
-        return _engine._platform.getScreenWidth();
-    }
-
-    float GameAPI::getScreenHeight() const {
-        return _engine._platform.getScreenHeight();    
-    }
-
     render::CameraInterface &GameAPI::getCamera() {
         return *_engine._gameCamera;
     }

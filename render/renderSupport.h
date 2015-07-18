@@ -8,7 +8,7 @@ namespace fg {
             
             void init(platform::EnginePlatformInterface &iplatform, resources::ResourceManagerInterface &iresMan) override;
             void frameInit3D(float frameTimeMs) override;
-            void frameInit2D(float frameTimeMs) override;
+            void frameInit2D(float frameTimeMs, float scaleX, float scaleY) override;
             void destroy() override;
 
             CameraInterface &getCamera() override;
@@ -64,6 +64,9 @@ namespace fg {
             
             const resources::ShaderResourceInterface *_simpleShader;
             const resources::ShaderResourceInterface *_ifaceShader;
+
+            float _logicalScreenScaleX = 0;
+            float _logicalScreenScaleY = 0;
 
         private:
             RenderSupport(const RenderSupport &);

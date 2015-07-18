@@ -48,6 +48,25 @@ typedef long long int64;
 #endif
 
 namespace fg {
+    enum class HorizontalAnchor {
+        LEFT,
+        CENTER,
+        RIGHT,
+    };
+
+    enum class VerticalAnchor {
+        TOP,
+        MIDDLE,
+        BOTTOM,
+    };
+
+    struct Logical2DCoordSystem {
+        float width;
+        float height;
+        HorizontalAnchor coordStartX;
+        VerticalAnchor coordStartY;
+    };
+
     class Engine {
         friend struct GameAPI;
 
@@ -56,7 +75,7 @@ namespace fg {
         virtual ~Engine();
         
         // loading/resuming
-        bool init(platform::InitParams &initParams, render::RenderInterface &render);
+        bool init(const platform::InitParams &initParams, render::RenderInterface &render, const Logical2DCoordSystem &coordSystem);
 
         // unloading/uninitialize
         void destroy();
@@ -91,7 +110,7 @@ namespace fg {
         object2d::DisplayObjectInterface            *_root2D;
         object3d::RenderObjectInterface             *_root3D;
         render::CameraInterface                     *_gameCamera;
-
+        
         callback  <void ()> _initHandler;
         callback  <void (float)> _updateHandler;
         callback  <void ()> _destroyHandler;
@@ -100,7 +119,11 @@ namespace fg {
         float  _appHeight;
         int64  _lastFrameTimeStamp;
         bool   _isBaseResourcesLoaded;
+        float  _logicalScreenScaleFactorX = 1;
+        float  _logicalScreenScaleFactorY = 1;
+
         void   _binaryResourcesLoadedCallback();
+        void   _scalePos(math::p2d &target);
         
     private:
         Engine(const Engine &);

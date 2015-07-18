@@ -10,10 +10,7 @@ namespace fg {
         
         object2d::DisplayObjectPtr create(object2d::DisplayObjectType type);
         object3d::RenderObjectPtr  create(object3d::RenderObjectType type);
-
-        float getScreenWidth() const;
-        float getScreenHeight() const;
-
+        
         render::CameraInterface &getCamera();
 
         object2d::DisplayObjectInterface *&root2D;
