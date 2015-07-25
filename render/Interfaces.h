@@ -60,8 +60,8 @@ namespace fg {
             virtual void setShader(const resources::ShaderResourceInterface *shader) = 0;
             virtual void setTexture(platform::TextureSlot slot, const resources::Texture2DResourceInterface *texture) = 0;
 
-            virtual void drawQuad2D(const math::m3x3 &trfm, const resources::ClipData *clip, unsigned frame, const fg::color &c) = 0;
-            virtual void drawText2D(const fg::string &utf8text, const math::m3x3 &trfm, const resources::FontResourceInterface *font, unsigned size, const fg::color &c) = 0;
+            virtual void drawQuad2D(const math::m3x3 &trfm, const resources::ClipData *clip, unsigned frame, const fg::color &c, bool resolutionDepended = false) = 0;
+            virtual void drawText2D(const fg::string &utf8text, const math::m3x3 &trfm, const resources::FontResourceInterface *font, unsigned size, const fg::color &c, bool resolutionDepended = false) = 0;
             virtual void drawScreenQuad(float x, float y, float width, float height) = 0;
             virtual void drawMesh(const resources::MeshInterface *mesh, const platform::InstanceDataInterface *instanceData = nullptr) = 0;
             
@@ -77,7 +77,7 @@ namespace fg {
         public:
             virtual void init(platform::EnginePlatformInterface &iplatform, resources::ResourceManagerInterface &iresMan) = 0;
             virtual void frameInit3D(float frameTimeMs) = 0;
-            virtual void frameInit2D(float frameTimeMs, float scaleX, float scaleY) = 0;
+            virtual void frameInit2D(float frameTimeMs, float scaleX, float scaleY, float dpiFactor) = 0;
             virtual void destroy() = 0;
         };
 

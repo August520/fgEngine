@@ -1522,7 +1522,7 @@ namespace fg {
             }
         }
 
-        bool DesktopPlatform::isInited() {
+        bool DesktopPlatform::isInited() const {
             return _device != nullptr;
         }
     }

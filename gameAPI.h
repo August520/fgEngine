@@ -11,6 +11,11 @@ namespace fg {
         object2d::DisplayObjectPtr create(object2d::DisplayObjectType type);
         object3d::RenderObjectPtr  create(object3d::RenderObjectType type);
         
+        float getCoordSystemWidth() const;
+        float getCoordSystemHeight() const;
+        float getDPIFactorX() const;
+        float getDPIFactorY() const;
+
         render::CameraInterface &getCamera();
 
         object2d::DisplayObjectInterface *&root2D;

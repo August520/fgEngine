@@ -91,6 +91,7 @@ namespace fg {
 
         class InitParams {
         public:
+            float         dpi;
             float         scrWidth;
             float         scrHeight;
             unsigned      syncInterval;
@@ -269,7 +270,7 @@ namespace fg {
             virtual bool  fsSaveFile(const char *path, void *iBinaryDataPtr, unsigned iSize) = 0;
 
             virtual void  rdPresent() = 0;
-            virtual bool  isInited() = 0;
+            virtual bool  isInited() const = 0;
 
         };
     }

@@ -23,6 +23,22 @@ namespace fg {
         return nullptr;
     }
 
+    float GameAPI::getCoordSystemWidth() const {
+        return _engine.getCoordSystemWidth();
+    }
+
+    float GameAPI::getCoordSystemHeight() const {
+        return _engine.getCoordSystemHeight();
+    }
+
+    float GameAPI::getDPIFactorX() const {
+        return _engine.getCoordSystemDPIFactorX();
+    }
+
+    float GameAPI::getDPIFactorY() const {
+        return _engine.getCoordSystemDPIFactorY();    
+    }
+
     render::CameraInterface &GameAPI::getCamera() {
         return *_engine._gameCamera;
     }

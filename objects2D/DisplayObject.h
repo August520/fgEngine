@@ -41,6 +41,7 @@ namespace fg {
 
             void  setTransform(const math::m3x3 &trasformMatrix) override;
             void  setVisible(bool visible) override;
+            void  setResolutionDependency(bool value) override;
 
             const math::m3x3 &getFullTransform() const override;
             const math::m3x3 &getLocalTransform() const override;
@@ -54,6 +55,7 @@ namespace fg {
             float getAlpha() const override;
             float getRotation() const override;
 
+            bool  isResolutionDepended() const override;
             bool  isVisible() const override;
             bool  hitTestPoint(const math::p2d &point) const override;
             bool  hitTestLine(const math::p2d &point) const override;
@@ -76,6 +78,7 @@ namespace fg {
             float        _zCoord;
             float        _alpha;
             bool         _visible;
+            bool         _resolutionDependent;
 
             callback     <void ()> _addHandler;
             callback     <void (float)> _updateHandler;

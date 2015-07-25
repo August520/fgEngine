@@ -69,9 +69,10 @@ namespace fg {
             _platform->rdSetShader(_simpleShader->getPlatformObject());
         }
 
-        void RenderSupport::frameInit2D(float frameTimeMs, float scaleX, float scaleY) {
+        void RenderSupport::frameInit2D(float frameTimeMs, float scaleX, float scaleY, float dpiFactor) {
             _logicalScreenScaleX = scaleX;
             _logicalScreenScaleY = scaleY;
+            _dpiFactor = dpiFactor;
 
             _frameConstants->data.camViewProj.identity();
             _frameConstants->updateAndApply();
@@ -166,26 +167,38 @@ namespace fg {
             _platform->rdSetTexture2D(slot, texture->getPlatformObject());
         }
         
-        void RenderSupport::drawQuad2D(const math::m3x3 &trfm, const resources::ClipData *clip, unsigned frame, const fg::color &c) {
-            math::p2d lt (-clip->centerX, -clip->centerY);
-            math::p2d lb (-clip->centerX, clip->height - clip->centerY);
-            math::p2d rt (clip->width - clip->centerX, -clip->centerY);
-            math::p2d rb (clip->width - clip->centerX, clip->height - clip->centerY);
+        void RenderSupport::drawQuad2D(const math::m3x3 &trfm, const resources::ClipData *clip, unsigned frame, const fg::color &c, bool resolutionDepended) {
+            float dpiKoeffX = 1.0f;
+            float dpiKoeffY = 1.0f;
+            float scaleX = 1.0f;
+            float scaleY = 1.0f;
+
+            if(resolutionDepended) {
+                dpiKoeffX = fabs(_dpiFactor / _logicalScreenScaleX);
+                dpiKoeffY = fabs(_dpiFactor / _logicalScreenScaleY);
+                scaleX = _logicalScreenScaleX;
+                scaleY = _logicalScreenScaleY;
+            }
+
+            math::p2d lt = math::p2d(-clip->centerX * dpiKoeffX, -clip->centerY * dpiKoeffY);
+            math::p2d lb = math::p2d(-clip->centerX * dpiKoeffX, (clip->height - clip->centerY) * dpiKoeffY);
+            math::p2d rt = math::p2d((clip->width - clip->centerX) * dpiKoeffX, -clip->centerY * dpiKoeffY);
+            math::p2d rb = math::p2d((clip->width - clip->centerX) * dpiKoeffX, (clip->height - clip->centerY) * dpiKoeffY);
 
             lt.transform(trfm, true);
             lb.transform(trfm, true);
             rt.transform(trfm, true);
             rb.transform(trfm, true);
 
-            lt.x = (2.0f * lt.x / _platform->getScreenWidth() * fabs(_logicalScreenScaleX) - 1.0f) * math::fsign(_logicalScreenScaleX);
-            lb.x = (2.0f * lb.x / _platform->getScreenWidth() * fabs(_logicalScreenScaleX) - 1.0f) * math::fsign(_logicalScreenScaleX);
-            rt.x = (2.0f * rt.x / _platform->getScreenWidth() * fabs(_logicalScreenScaleX) - 1.0f) * math::fsign(_logicalScreenScaleX);
-            rb.x = (2.0f * rb.x / _platform->getScreenWidth() * fabs(_logicalScreenScaleX) - 1.0f) * math::fsign(_logicalScreenScaleX);
+            lt.x = (2.0f * lt.x / _platform->getScreenWidth() * fabs(scaleX) - 1.0f) * math::fsign(scaleX);
+            lb.x = (2.0f * lb.x / _platform->getScreenWidth() * fabs(scaleX) - 1.0f) * math::fsign(scaleX);
+            rt.x = (2.0f * rt.x / _platform->getScreenWidth() * fabs(scaleX) - 1.0f) * math::fsign(scaleX);
+            rb.x = (2.0f * rb.x / _platform->getScreenWidth() * fabs(scaleX) - 1.0f) * math::fsign(scaleX);
 
-            lt.y = (1.0f - 2.0f * lt.y / _platform->getScreenHeight() * fabs(_logicalScreenScaleY)) * math::fsign(_logicalScreenScaleY);
-            lb.y = (1.0f - 2.0f * lb.y / _platform->getScreenHeight() * fabs(_logicalScreenScaleY)) * math::fsign(_logicalScreenScaleY);
-            rt.y = (1.0f - 2.0f * rt.y / _platform->getScreenHeight() * fabs(_logicalScreenScaleY)) * math::fsign(_logicalScreenScaleY);
-            rb.y = (1.0f - 2.0f * rb.y / _platform->getScreenHeight() * fabs(_logicalScreenScaleY)) * math::fsign(_logicalScreenScaleY);
+            lt.y = (1.0f - 2.0f * lt.y / _platform->getScreenHeight() * fabs(scaleY)) * math::fsign(scaleY);
+            lb.y = (1.0f - 2.0f * lb.y / _platform->getScreenHeight() * fabs(scaleY)) * math::fsign(scaleY);
+            rt.y = (1.0f - 2.0f * rt.y / _platform->getScreenHeight() * fabs(scaleY)) * math::fsign(scaleY);
+            rb.y = (1.0f - 2.0f * rb.y / _platform->getScreenHeight() * fabs(scaleY)) * math::fsign(scaleY);
 
             float sz = 0.0f;
             float tx = clip->frames[frame].tu;
@@ -237,20 +250,32 @@ namespace fg {
             _platform->rdDrawIndexedGeometry(_oddVertexBufferTextured, _defDisplayObjectInstanceData, platform::PrimitiveTopology::TRIANGLE_STRIP, 4);
         }
 
-        void RenderSupport::drawText2D(const fg::string &utf8text, const math::m3x3 &trfm, const resources::FontResourceInterface *font, unsigned size, const fg::color &c) {
-            math::p2d rightDir (1.0f, 0.0f);
-            math::p2d downDir (0.0f, 1.0f);
+        void RenderSupport::drawText2D(const fg::string &utf8text, const math::m3x3 &trfm, const resources::FontResourceInterface *font, unsigned size, const fg::color &c, bool resolutionDepended) {
+            float dpiKoeffX = 1.0f;
+            float dpiKoeffY = 1.0f;
+            float scaleX = 1.0f;
+            float scaleY = 1.0f;
+
+            if(resolutionDepended) {
+                dpiKoeffX = _dpiFactor * _logicalScreenScaleX;
+                dpiKoeffY = _dpiFactor * _logicalScreenScaleY;
+                scaleX = _logicalScreenScaleX;
+                scaleY = _logicalScreenScaleY;
+            }
+
+            math::p2d rightDir(1.0f * dpiKoeffX, 0.0f);
+            math::p2d downDir(0.0f, 1.0f * dpiKoeffY);
 
             rightDir.transform(trfm, false);
             downDir.transform(trfm, false);
 
-            rightDir.x = (2.0f * rightDir.x / _platform->getScreenWidth()) * fabs(_logicalScreenScaleX);
-            rightDir.y = (-2.0f * rightDir.y / _platform->getScreenHeight()) * fabs(_logicalScreenScaleY);
-            downDir.x = (2.0f * downDir.x / _platform->getScreenWidth()) * fabs(_logicalScreenScaleX);
-            downDir.y = (-2.0f * downDir.y / _platform->getScreenHeight()) * fabs(_logicalScreenScaleY);
+            rightDir.x = (2.0f * rightDir.x / _platform->getScreenWidth()) * fabs(scaleX);
+            rightDir.y = (-2.0f * rightDir.y / _platform->getScreenHeight()) * fabs(scaleY);
+            downDir.x = (2.0f * downDir.x / _platform->getScreenWidth()) * fabs(scaleX);
+            downDir.y = (-2.0f * downDir.y / _platform->getScreenHeight()) * fabs(scaleY);
 
-            float ltx = (2.0f * int(trfm._31) / _platform->getScreenWidth() * fabs(_logicalScreenScaleX) - 1.0f) * math::fsign(_logicalScreenScaleX);
-            float lty = (1.0f - 2.0f * int(trfm._32) / _platform->getScreenHeight() * fabs(_logicalScreenScaleY)) * math::fsign(_logicalScreenScaleY);
+            float ltx = (2.0f * int(trfm._31) / _platform->getScreenWidth() * fabs(scaleX) - 1.0f) * math::fsign(scaleX);
+            float lty = (1.0f - 2.0f * int(trfm._32) / _platform->getScreenHeight() * fabs(scaleY)) * math::fsign(scaleY);
             math::p2d lt (ltx, lty);
             math::p2d ltOrigin = lt;
 
@@ -354,15 +379,15 @@ namespace fg {
             math::p2d rt (x + width, y);
             math::p2d rb (x + width, y + height);
 
-            lt.x = (2.0f * lt.x / _platform->getScreenWidth() * fabs(_logicalScreenScaleX) - 1.0f) * math::fsign(_logicalScreenScaleX);
-            lb.x = (2.0f * lb.x / _platform->getScreenWidth() * fabs(_logicalScreenScaleX) - 1.0f) * math::fsign(_logicalScreenScaleX);
-            rt.x = (2.0f * rt.x / _platform->getScreenWidth() * fabs(_logicalScreenScaleX) - 1.0f) * math::fsign(_logicalScreenScaleX);
-            rb.x = (2.0f * rb.x / _platform->getScreenWidth() * fabs(_logicalScreenScaleX) - 1.0f) * math::fsign(_logicalScreenScaleX);
+            lt.x = (2.0f * lt.x / _platform->getScreenWidth()) - 1.0f;
+            lb.x = (2.0f * lb.x / _platform->getScreenWidth()) - 1.0f;
+            rt.x = (2.0f * rt.x / _platform->getScreenWidth()) - 1.0f;
+            rb.x = (2.0f * rb.x / _platform->getScreenWidth()) - 1.0f;
 
-            lt.y = (1.0f - 2.0f * lt.y / _platform->getScreenHeight() * fabs(_logicalScreenScaleY)) * math::fsign(_logicalScreenScaleY);
-            lb.y = (1.0f - 2.0f * lb.y / _platform->getScreenHeight() * fabs(_logicalScreenScaleY)) * math::fsign(_logicalScreenScaleY);
-            rt.y = (1.0f - 2.0f * rt.y / _platform->getScreenHeight() * fabs(_logicalScreenScaleY)) * math::fsign(_logicalScreenScaleY);
-            rb.y = (1.0f - 2.0f * rb.y / _platform->getScreenHeight() * fabs(_logicalScreenScaleY)) * math::fsign(_logicalScreenScaleY);
+            lt.y = (1.0f - 2.0f * lt.y / _platform->getScreenHeight());
+            lb.y = (1.0f - 2.0f * lb.y / _platform->getScreenHeight());
+            rt.y = (1.0f - 2.0f * rt.y / _platform->getScreenHeight());
+            rb.y = (1.0f - 2.0f * rb.y / _platform->getScreenHeight());
 
             VertexTextured *tmem = (VertexTextured *)_oddVertexBufferTextured->lockVertices();
             unsigned short *tind = (unsigned short *)_oddVertexBufferTextured->lockIndices();

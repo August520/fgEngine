@@ -116,14 +116,8 @@ namespace fg {
 
     }
     
-    bool Engine::init(const platform::InitParams &initParams, render::RenderInterface &render, const Logical2DCoordSystem &coordSystem) {
+    bool Engine::init(const platform::InitParams &initParams, render::RenderInterface &render, const LogicalCoordSystem &coordSystem) {
         _log.msgInfo("init..");
-        _appWidth = initParams.scrWidth;
-        _appHeight = initParams.scrHeight;
-
-
-        _logicalScreenScaleFactorX = _appWidth / coordSystem.width * (coordSystem.coordStartX == HorizontalAnchor::RIGHT ? -1.0f : 1.0f);
-        _logicalScreenScaleFactorY = _appHeight / coordSystem.height * (coordSystem.coordStartY == VerticalAnchor::TOP ? 1.0f : -1.0f);
         _render = &render;
 
         if(_platform.init(initParams) == false) {
@@ -131,6 +125,13 @@ namespace fg {
             return false;
         }
 
+        _coordSystemWidth = coordSystem.width;
+        _coordSystemHeight = coordSystem.height;
+
+        _logicalScreenScaleFactorX = _platform.getScreenWidth() / coordSystem.width * (coordSystem.coordStartX == HorizontalAnchor::RIGHT ? -1.0f : 1.0f);
+        _logicalScreenScaleFactorY = _platform.getScreenHeight() / coordSystem.height * (coordSystem.coordStartY == VerticalAnchor::TOP ? 1.0f : -1.0f);
+        _dpiFactor = initParams.dpi / coordSystem.dpi;
+        
         const char *renderResourceList = _render->getRenderResourceList();
         
         _log.msgInfo("loading resources..");
@@ -172,7 +173,7 @@ namespace fg {
     void Engine::updateAndDraw() {
         int64 curTime = _platform.getTimeMs();
         int64 curDelta = curTime - _lastFrameTimeStamp;
-        float frameTimeMs = float(curDelta);
+        float frameTimeMs = std::min(float(curDelta), 40.0f);
 
         _lastFrameTimeStamp = curTime;
         _resMan.update(frameTimeMs);
@@ -188,7 +189,7 @@ namespace fg {
             _renderSupport.frameInit3D(frameTimeMs);            
             _render->draw3D(object3d::RenderObjectIterator(_root3D, _platform, _resMan, frameTimeMs), render::RenderAPI(_platform, _resMan, _renderSupport, *_gameCamera));
             
-            _renderSupport.frameInit2D(frameTimeMs, _logicalScreenScaleFactorX, _logicalScreenScaleFactorY);
+            _renderSupport.frameInit2D(frameTimeMs, _logicalScreenScaleFactorX, _logicalScreenScaleFactorY, _dpiFactor);
             _render->draw2D(object2d::DisplayObjectIterator(_root2D, _platform, _resMan, frameTimeMs), render::RenderAPI(_platform, _resMan, _renderSupport, *_gameCamera));
         }
 
@@ -217,10 +218,10 @@ namespace fg {
 
     void Engine::_scalePos(math::p2d &target) {
         if(_logicalScreenScaleFactorX < 0.0f) {
-            target.x = _appWidth - target.x;
+            target.x = _platform.getScreenWidth() - target.x;
         }
         if(_logicalScreenScaleFactorY < 0.0f) {
-            target.y = _appWidth - target.y;
+            target.y = _platform.getScreenHeight() - target.y;
         }
 
         target.x = 1.0f / fabs(_logicalScreenScaleFactorX) * target.x;
@@ -267,6 +268,22 @@ namespace fg {
 
     void Engine::setDestroyHandler(const callback <void()> &cb) {
         _destroyHandler = cb;
+    }
+    
+    float Engine::getCoordSystemWidth() const {
+        return _coordSystemWidth;
+    }
+
+    float Engine::getCoordSystemHeight() const {
+        return _coordSystemHeight;
+    }
+
+    float Engine::getCoordSystemDPIFactorX() const {
+        return _dpiFactor / _logicalScreenScaleFactorX;
+    }
+
+    float Engine::getCoordSystemDPIFactorY() const {
+        return _dpiFactor / _logicalScreenScaleFactorY;
     }
 }
 

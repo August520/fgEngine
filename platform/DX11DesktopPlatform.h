@@ -366,8 +366,8 @@ namespace fg {
             void  rdDrawIndexedGeometry(const platform::IndexedVertexBufferInterface *ivbuffer, const platform::InstanceDataInterface *instanceData, platform::PrimitiveTopology topology, unsigned indexCount, unsigned instanceCount) override;
             void  rdPresent() override;
 
-            bool  isInited() override;
-
+            bool  isInited() const override;
+            
         protected:
             const diag::LogInterface &_log;
 

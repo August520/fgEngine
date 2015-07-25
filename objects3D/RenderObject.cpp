@@ -84,10 +84,9 @@ namespace fg {
 
                 last->getNext() = nullptr;
                 obj->getBack() = nullptr;
-
-                _childs[index] = _childs.back();
-                _childs.pop_back();
-
+                
+                // TODO: optimize
+                _childs.erase(_childs.begin() + index);
                 obj->callRemoveHandler();
             }
 

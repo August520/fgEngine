@@ -49,6 +49,7 @@ namespace fg {
 
             virtual void  setTransform(const math::m3x3 &trasformMatrix) = 0;
             virtual void  setVisible(bool visible) = 0;
+            virtual void  setResolutionDependency(bool value) = 0;
 
             virtual const math::m3x3 &getFullTransform() const = 0;
             virtual const math::m3x3 &getLocalTransform() const = 0;
@@ -62,6 +63,7 @@ namespace fg {
             virtual float getAlpha() const = 0;
             virtual float getRotation() const = 0;
 
+            virtual bool  isResolutionDepended() const = 0;
             virtual bool  isVisible() const = 0;
             virtual bool  hitTestPoint(const math::p2d &point) const = 0;
             virtual bool  hitTestLine(const math::p2d &point) const = 0;

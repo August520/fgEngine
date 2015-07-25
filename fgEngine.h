@@ -60,7 +60,8 @@ namespace fg {
         BOTTOM,
     };
 
-    struct Logical2DCoordSystem {
+    struct LogicalCoordSystem {
+        float dpi;
         float width;
         float height;
         HorizontalAnchor coordStartX;
@@ -75,31 +76,36 @@ namespace fg {
         virtual ~Engine();
         
         // loading/resuming
-        bool init(const platform::InitParams &initParams, render::RenderInterface &render, const Logical2DCoordSystem &coordSystem);
+        bool  init(const platform::InitParams &initParams, render::RenderInterface &render, const LogicalCoordSystem &coordSystem);
 
         // unloading/uninitialize
-        void destroy();
+        void  destroy();
 
         // call updates and render
-        void updateAndDraw();
+        void  updateAndDraw();
 
         // device orientation update
-        void orientationChanged();
+        void  orientationChanged();
 
         // user input
-        void pointerPressed(unsigned pointID, float pointX, float pointY);
-        void pointerMoved(unsigned pointID, float pointX, float pointY);
-        void pointerReleased(unsigned pointID, float pointX, float pointY);
+        void  pointerPressed(unsigned pointID, float pointX, float pointY);
+        void  pointerMoved(unsigned pointID, float pointX, float pointY);
+        void  pointerReleased(unsigned pointID, float pointX, float pointY);
 
-        void keyDown(unsigned vkeyCode);
-        void keyUp(unsigned vkeyCode);
-        void wheelRoll(int sign);
+        void  keyDown(unsigned vkeyCode);
+        void  keyUp(unsigned vkeyCode);
+        void  wheelRoll(int sign);
 
         // user handlers
-        void setInitHandler(const callback <void ()> &cb);
-        void setUpdateHandler(const callback <void (float)> &cb);
-        void setDestroyHandler(const callback <void ()> &cb);
+        void  setInitHandler(const callback <void ()> &cb);
+        void  setUpdateHandler(const callback <void (float)> &cb);
+        void  setDestroyHandler(const callback <void ()> &cb);
         
+        float getCoordSystemWidth() const;
+        float getCoordSystemHeight() const;
+        float getCoordSystemDPIFactorX() const;
+        float getCoordSystemDPIFactorY() const;
+
     protected:
         fg::diag::LogInterface                      &_log;
         platform::EnginePlatformInterface           &_platform;
@@ -115,12 +121,13 @@ namespace fg {
         callback  <void (float)> _updateHandler;
         callback  <void ()> _destroyHandler;
 
-        float  _appWidth;
-        float  _appHeight;
+        float  _coordSystemWidth;
+        float  _coordSystemHeight;
         int64  _lastFrameTimeStamp;
         bool   _isBaseResourcesLoaded;
         float  _logicalScreenScaleFactorX = 1;
         float  _logicalScreenScaleFactorY = 1;
+        float  _dpiFactor = 1;
 
         void   _binaryResourcesLoadedCallback();
         void   _scalePos(math::p2d &target);

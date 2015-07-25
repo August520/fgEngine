@@ -10,7 +10,8 @@ namespace fg {
             _rotationInDegrees(0.0f),
             _zCoord(0.0f), 
             _alpha(1.0f),
-            _visible(true) 
+            _visible(true),
+            _resolutionDependent(false)
         {
         
         }
@@ -88,9 +89,8 @@ namespace fg {
                 last->getNext() = nullptr;
                 obj->getBack() = nullptr;
 
-                _childs[index] = _childs.back();
-                _childs.pop_back();
-
+                // TODO: optimize
+                _childs.erase(_childs.begin() + index);
                 obj->callRemoveHandler();
             }
 
@@ -221,6 +221,10 @@ namespace fg {
             _visible = visible;
         }
 
+        void DisplayObject::setResolutionDependency(bool value) {
+            _resolutionDependent = value;
+        }
+
         const math::m3x3 &DisplayObject::getFullTransform() const {
             return _fullTransform;
         }
@@ -259,6 +263,10 @@ namespace fg {
 
         bool DisplayObject::isVisible() const {
             return _visible;
+        }
+
+        bool DisplayObject::isResolutionDepended() const {
+            return _resolutionDependent;
         }
 
         bool DisplayObject::hitTestPoint(const math::p2d &point) const {        

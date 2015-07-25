@@ -1683,7 +1683,7 @@ namespace fg {
             }            
         }
 
-        bool PhonePlatform::isInited() {
+        bool PhonePlatform::isInited() const {
             return _device != nullptr;
         }
     }
