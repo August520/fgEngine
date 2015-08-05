@@ -16,6 +16,10 @@ namespace fg {
         float getDPIFactorX() const;
         float getDPIFactorY() const;
 
+        template <typename F, typename ...ARGS> void postponedDispatch(F func, ARGS... args) {
+            _engine.postponedDispatch(func, args...);
+        }
+
         render::CameraInterface &getCamera();
 
         object2d::DisplayObjectInterface *&root2D;

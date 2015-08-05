@@ -100,6 +100,10 @@ namespace fg {
         void  setInitHandler(const callback <void ()> &cb);
         void  setUpdateHandler(const callback <void (float)> &cb);
         void  setDestroyHandler(const callback <void ()> &cb);
+
+        template <typename F, typename ...ARGS> void postponedDispatch(F func, ARGS... args) {
+            _postponed.emplace_back(std::bind(func, args...));
+        }
         
         float getCoordSystemWidth() const;
         float getCoordSystemHeight() const;
@@ -128,6 +132,8 @@ namespace fg {
         float  _logicalScreenScaleFactorX = 1;
         float  _logicalScreenScaleFactorY = 1;
         float  _dpiFactor = 1;
+
+        std::list <std::function<void()>> _postponed;
 
         void   _binaryResourcesLoadedCallback();
         void   _scalePos(math::p2d &target);

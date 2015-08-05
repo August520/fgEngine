@@ -89,6 +89,10 @@ protected:
 
 #pragma pop_macro("new")
 
+template <class C, typename RET, typename... ARG> callback <RET(ARG...)> make_callback(C *obj, RET(C::*method)(ARG...)) {
+    return callback<RET(ARG...)>(obj, method);
+}
+
 //--- TODO: 
 
 struct byteform {

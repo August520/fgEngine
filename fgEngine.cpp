@@ -179,6 +179,11 @@ namespace fg {
         _resMan.update(frameTimeMs);
 
         if(_isBaseResourcesLoaded) {
+            while(_postponed.empty() == false) {
+                _postponed.front()();
+                _postponed.pop_front();
+            }
+            
             if(_updateHandler.isBinded() && curDelta > 0) {
                 _updateHandler(frameTimeMs);
             }
