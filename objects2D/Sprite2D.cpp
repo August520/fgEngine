@@ -64,12 +64,12 @@ namespace fg {
         }
 
         void Sprite2D::gotoAndPlay(unsigned frame) { 
-            _curFrame = frame >= _frameCount ? _frameCount - 1 : frame;
+            _curFrame = frame;
             _stopped = false;
         }
 
         void Sprite2D::gotoAndStop(unsigned frame) {
-            _curFrame = frame >= _frameCount ? _frameCount - 1 : frame;
+            _curFrame = frame;
             _stopped = true;
         }
 

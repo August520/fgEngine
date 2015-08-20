@@ -15,8 +15,8 @@
 
 static const unsigned FG_UNLOAD_TIME      = 1000;
 static const unsigned FG_RESOURCES_MAX    = 64;
-static const unsigned FG_RES_LOADING_MAX  = 3;
-static const unsigned FG_RES_UPDATING_MAX = 16;
+static const unsigned FG_RES_LOADING_MAX  = 4;
+static const unsigned FG_RES_UPDATING_MAX = 4;
 
 
 namespace fg {

@@ -336,7 +336,7 @@ public:
         callback  <void (float)> updateHandler;
     };
 
-    StateMachine() : _cur(nullptr), _curName((NAME_TYPE)-1) {}
+    StateMachine() : _cur(nullptr), _curName((NAME_TYPE)-1), _prevName((NAME_TYPE)-1) {}
     ~StateMachine() {
         for(auto index = _nodes.begin(); index != _nodes.end(); index++) {
             StateNode *t = index->second;
@@ -365,6 +365,7 @@ public:
 
     void setStateNode(const NAME_TYPE &name) {
         _cur = _nodes[name];
+        _prevName = _curName;
         _curName = name;
     }
 
@@ -375,6 +376,7 @@ public:
             StateNode *nst = _nodes[index->second];
             StateNode *lst = _cur;
 
+            _prevName = _curName;
             _curName = index->second;
             _cur = nst;
 
@@ -393,6 +395,9 @@ public:
     const NAME_TYPE &getCurrentStateName() const {
         return _curName;
     }
+    const NAME_TYPE &getPreviousStateName() const {
+        return _prevName;
+    }
     const StateNode &getCurrentStateNode() const {
         return *_cur;
     }
@@ -407,5 +412,6 @@ protected:
     std::unordered_map  <NAME_TYPE, StateNode *> _nodes;
 
     NAME_TYPE  _curName;
+    NAME_TYPE  _prevName;
     StateNode  *_cur;
 };
