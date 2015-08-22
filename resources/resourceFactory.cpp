@@ -3,6 +3,9 @@
 
 namespace fg {
     namespace resources {
+        template <typename IFACE> struct ResourceInterfaceTable {
+            typedef void type;
+        };
         template <> struct ResourceInterfaceTable <TextResourceInterface> {
             typedef TextResource type;
         };
@@ -84,6 +87,33 @@ namespace fg {
             }
             return nullptr;
         }
+
+        template <typename DOWNTYPE> DOWNTYPE *ResourcePtr::_to() const {
+            return static_cast <DOWNTYPE *> (static_cast <ResourceInterfaceTable <std::remove_const <DOWNTYPE>::type> ::type *> (_resource));
+        }
+
+        template TextResourceInterface *ResourcePtr::_to <TextResourceInterface>() const;
+        template ShaderResourceInterface *ResourcePtr::_to <ShaderResourceInterface>() const;
+        template ModelResourceInterface *ResourcePtr::_to <ModelResourceInterface>() const;
+        template Texture2DResourceInterface *ResourcePtr::_to <Texture2DResourceInterface>() const;
+        template FontResourceInterface *ResourcePtr::_to <FontResourceInterface>() const;
+        template MaterialResourceInterface *ResourcePtr::_to <MaterialResourceInterface>() const;
+        template ClipSetResourceInterface *ResourcePtr::_to <ClipSetResourceInterface>() const;
+        template AnimationResourceInterface *ResourcePtr::_to <AnimationResourceInterface>() const;
+        template SoundResourceInterface *ResourcePtr::_to <SoundResourceInterface>() const;
+        template ParticleResourceInterface *ResourcePtr::_to <ParticleResourceInterface>() const;
+
+        template const TextResourceInterface *ResourcePtr::_to <const TextResourceInterface>() const;
+        template const ShaderResourceInterface *ResourcePtr::_to <const ShaderResourceInterface>() const;
+        template const ModelResourceInterface *ResourcePtr::_to <const ModelResourceInterface>() const;
+        template const Texture2DResourceInterface *ResourcePtr::_to <const Texture2DResourceInterface>() const;
+        template const FontResourceInterface *ResourcePtr::_to <const FontResourceInterface>() const;
+        template const MaterialResourceInterface *ResourcePtr::_to <const MaterialResourceInterface>() const;
+        template const ClipSetResourceInterface *ResourcePtr::_to <const ClipSetResourceInterface>() const;
+        template const AnimationResourceInterface *ResourcePtr::_to <const AnimationResourceInterface>() const;
+        template const SoundResourceInterface *ResourcePtr::_to <const SoundResourceInterface>() const;
+        template const ParticleResourceInterface *ResourcePtr::_to <const ParticleResourceInterface>() const;
+
     }
 }
 
