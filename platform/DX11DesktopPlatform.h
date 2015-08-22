@@ -326,6 +326,7 @@ namespace fg {
             unsigned  long long getTimeMs() const override;
             
             void  updateOrientation() override;
+            void  resize(float width, float height) override {}
             
             const math::m3x3  &getInputTransform() const override;
 

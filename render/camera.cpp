@@ -33,7 +33,7 @@ namespace fg {
             _target = target;
             _upVector = upVector;
             _upVector.normalize();
-            _updateMatrix();
+            updateMatrix();
         }
 
         void Camera::setLookAtByRight(const math::p3d &pos, const math::p3d &target, const math::p3d &rightVector) {
@@ -46,7 +46,7 @@ namespace fg {
             right.normalize();
 
             _upVector.cross(right, look);
-            _updateMatrix();
+            updateMatrix();
         }
 
         void Camera::setOrientation(const math::quat &q) {
@@ -58,7 +58,7 @@ namespace fg {
 
             _target = _position + look;
             _upVector = up;
-            _updateMatrix();
+            updateMatrix();
         }
 
         void Camera::setTransform(const math::m4x4 &transform) {
@@ -73,14 +73,14 @@ namespace fg {
             _target = _position + look;
             _upVector = up;
             _position = pos;
-            _updateMatrix();
+            updateMatrix();
         }
         
         void Camera::setPerspectiveProj(float fov, float zNear, float zFar) {
             _fov = fov;
             _zNear = zNear;
             _zFar = zFar;
-            _updateMatrix();
+            updateMatrix();
         }
 
         const math::p3d &Camera::getPosition() const {
@@ -143,14 +143,14 @@ namespace fg {
             return math::p2d(tpos.x, tpos.y);
         }
 
-        void Camera::_updateMatrix() {
+        void Camera::updateMatrix() {
             float aspect = _platform.getCurrentRTWidth() / _platform.getCurrentRTHeight();
             _viewMatrix.lookAt(_position, _target, _upVector);
             _projMatrix.perspectiveFov(_fov / 180.0f * float(M_PI) * 0.5f, aspect, _zNear, _zFar);
 
-            _upVector = math::p3d(-_viewMatrix._12, -_viewMatrix._22, -_viewMatrix._32);
-            _rightVector = math::p3d(-_viewMatrix._11, -_viewMatrix._21, -_viewMatrix._31);
-            _forwardVector = math::p3d(-_viewMatrix._13, -_viewMatrix._23, -_viewMatrix._33);
+            _upVector = math::p3d(_viewMatrix._12, _viewMatrix._22, _viewMatrix._32);
+            _rightVector = math::p3d(_viewMatrix._11, _viewMatrix._21, _viewMatrix._31);
+            _forwardVector = math::p3d(_viewMatrix._13, _viewMatrix._23, _viewMatrix._33);
         }
     }
 }

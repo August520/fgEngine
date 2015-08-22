@@ -24,7 +24,7 @@ namespace fg {
             _rehash();
         }
         template <unsigned short SZ> string(char (&utf8str)[SZ]) : _size(SZ) {
-            _size = strlen(utf8str);
+            _size = unsigned short(strlen(utf8str));
             _allocate();
             _initmem(utf8str);
             _rehash();

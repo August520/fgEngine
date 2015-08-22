@@ -77,7 +77,6 @@
 #include "objects3D/Particles.cpp"
 #include "objects3D/Billboard.cpp"
 
-#include "Iterators.cpp"
 #include "GameAPI.cpp"
 
 const char *_binaryResources = "\
@@ -125,12 +124,10 @@ namespace fg {
             return false;
         }
 
-        _coordSystemWidth = coordSystem.width;
-        _coordSystemHeight = coordSystem.height;
-
-        _logicalScreenScaleFactorX = _platform.getScreenWidth() / coordSystem.width * (coordSystem.coordStartX == HorizontalAnchor::RIGHT ? -1.0f : 1.0f);
-        _logicalScreenScaleFactorY = _platform.getScreenHeight() / coordSystem.height * (coordSystem.coordStartY == VerticalAnchor::TOP ? 1.0f : -1.0f);
+        _gameCamera = new render::Camera(_platform);
+        _coordSystem = coordSystem;
         _dpiFactor = initParams.dpi / coordSystem.dpi;
+        _updateCoordSystem();
         
         const char *renderResourceList = _render->getRenderResourceList();
         
@@ -144,8 +141,6 @@ namespace fg {
 
         _root2D = new object2d::DisplayObject ();
         _root3D = new object3d::RenderObject();
-        _gameCamera = new render::Camera (_platform);
-
         return true;
     }
 
@@ -205,6 +200,10 @@ namespace fg {
         _platform.updateOrientation();
     }
 
+    void Engine::sizeChanged(float width, float height) {
+        _platform.resize(width, height);
+    }
+
     //---
 
     void Engine::_binaryResourcesLoadedCallback() {
@@ -231,6 +230,12 @@ namespace fg {
 
         target.x = 1.0f / fabs(_logicalScreenScaleFactorX) * target.x;
         target.y = 1.0f / fabs(_logicalScreenScaleFactorY) * target.y;
+    }
+
+    void Engine::_updateCoordSystem() {
+        _logicalScreenScaleFactorX = _platform.getScreenWidth() / _coordSystem.width * (_coordSystem.coordStartX == HorizontalAnchor::RIGHT ? -1.0f : 1.0f);
+        _logicalScreenScaleFactorY = _platform.getScreenHeight() / _coordSystem.height * (_coordSystem.coordStartY == VerticalAnchor::TOP ? 1.0f : -1.0f);
+        _gameCamera->updateMatrix();
     }
 
     void Engine::pointerPressed(unsigned pointID, float pointX, float pointY) {
@@ -276,11 +281,11 @@ namespace fg {
     }
     
     float Engine::getCoordSystemWidth() const {
-        return _coordSystemWidth;
+        return _coordSystem.width;
     }
 
     float Engine::getCoordSystemHeight() const {
-        return _coordSystemHeight;
+        return _coordSystem.height;
     }
 
     float Engine::getCoordSystemDPIFactorX() const {

@@ -22,6 +22,7 @@ namespace fg {
         }
 
         void DefaultRender::draw3D(object3d::RenderObjectIteratorInterface &iterator, RenderAPI &api) {
+            api.platform.rdSetRenderTarget(api.platform.rdGetDefaultRenderTarget());
             api.platform.rdClearCurrentDepthBuffer();
             api.platform.rdClearCurrentColorBuffer();
             api.rendering.debugDrawAxis();

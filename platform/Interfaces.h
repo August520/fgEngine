@@ -259,7 +259,8 @@ namespace fg {
             virtual bool  init(const InitParams &initParams) = 0;
             virtual void  destroy() = 0;
             virtual void  updateOrientation() = 0;
-            
+            virtual void  resize(float width, float height) = 0;
+
             virtual float getTextureWidth(TextureSlot slot) const = 0;
             virtual float getTextureHeight(TextureSlot slot) const = 0;
 

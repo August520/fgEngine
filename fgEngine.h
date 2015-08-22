@@ -61,11 +61,11 @@ namespace fg {
     };
 
     struct LogicalCoordSystem {
-        float dpi;
-        float width;
-        float height;
-        HorizontalAnchor coordStartX;
-        VerticalAnchor coordStartY;
+        float dpi = 1;
+        float width = 0;
+        float height = 0;
+        HorizontalAnchor coordStartX = HorizontalAnchor::LEFT;
+        VerticalAnchor coordStartY = VerticalAnchor::TOP;
     };
 
     class Engine {
@@ -86,6 +86,9 @@ namespace fg {
 
         // device orientation update
         void  orientationChanged();
+
+        // uwp window size changed
+        void  sizeChanged(float width, float height);
 
         // user input
         void  pointerPressed(unsigned pointID, float pointX, float pointY);
@@ -124,19 +127,19 @@ namespace fg {
         callback  <void ()> _initHandler;
         callback  <void (float)> _updateHandler;
         callback  <void ()> _destroyHandler;
-
-        float  _coordSystemWidth;
-        float  _coordSystemHeight;
+        
         int64  _lastFrameTimeStamp;
         bool   _isBaseResourcesLoaded;
         float  _logicalScreenScaleFactorX = 1;
         float  _logicalScreenScaleFactorY = 1;
-        float  _dpiFactor = 1;
-
+        float  _dpiFactor;
+        
+        LogicalCoordSystem _coordSystem;
         std::list <std::function<void()>> _postponed;
 
         void   _binaryResourcesLoadedCallback();
         void   _scalePos(math::p2d &target);
+        void   _updateCoordSystem();
         
     private:
         Engine(const Engine &);

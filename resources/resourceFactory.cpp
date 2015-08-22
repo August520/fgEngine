@@ -3,8 +3,6 @@
 
 namespace fg {
     namespace resources {
-        template <typename IFACE> struct ResourceInterfaceTable {
-        };
         template <> struct ResourceInterfaceTable <TextResourceInterface> {
             typedef TextResource type;
         };
@@ -86,32 +84,6 @@ namespace fg {
             }
             return nullptr;
         }
-
-        template <typename DOWNTYPE> ResourcePtr::operator DOWNTYPE *() const {
-            return static_cast <DOWNTYPE *> (static_cast <ResourceInterfaceTable <std::remove_const <DOWNTYPE>::type> ::type *> (_resource));
-        }
-
-        template ResourcePtr::operator const TextResourceInterface *() const;
-        template ResourcePtr::operator const ShaderResourceInterface *() const;
-        template ResourcePtr::operator const ModelResourceInterface *() const;
-        template ResourcePtr::operator const Texture2DResourceInterface *() const;
-        template ResourcePtr::operator const FontResourceInterface *() const;
-        template ResourcePtr::operator const MaterialResourceInterface *() const;
-        template ResourcePtr::operator const ClipSetResourceInterface *() const;
-        template ResourcePtr::operator const AnimationResourceInterface *() const;
-        template ResourcePtr::operator const SoundResourceInterface *() const;
-        template ResourcePtr::operator const ParticleResourceInterface *() const;
-        
-        template ResourcePtr::operator TextResourceInterface *() const;
-        template ResourcePtr::operator ShaderResourceInterface *() const;
-        template ResourcePtr::operator ModelResourceInterface *() const;
-        template ResourcePtr::operator Texture2DResourceInterface *() const;
-        template ResourcePtr::operator FontResourceInterface *() const;
-        template ResourcePtr::operator MaterialResourceInterface *() const;
-        template ResourcePtr::operator ClipSetResourceInterface *() const;
-        template ResourcePtr::operator AnimationResourceInterface *() const;
-        template ResourcePtr::operator SoundResourceInterface *() const;
-        template ResourcePtr::operator ParticleResourceInterface *() const;
     }
 }
 

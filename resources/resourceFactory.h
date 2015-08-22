@@ -3,6 +3,10 @@ namespace fg {
     namespace resources {
         static const unsigned FG_RESTYPE_MAX = 16;
 
+        template <typename IFACE> struct ResourceInterfaceTable {
+            typedef void type;
+        };
+
         class ResourceFactory final {
         public:
             ResourceFactory();

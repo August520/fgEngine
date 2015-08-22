@@ -37,6 +37,8 @@ namespace fg {
             virtual math::m4x4  getVPMatrix() const = 0;
             virtual math::p3d   screenToWorld(const math::p2d &screenCoord) const = 0;
             virtual math::p2d   worldToScreen(const math::p3d &pointInWorld) const = 0;
+
+            virtual void updateMatrix() = 0;
         };
         
         class RenderSupportInterface {

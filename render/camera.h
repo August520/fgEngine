@@ -27,6 +27,8 @@ namespace fg {
             math::p3d   screenToWorld(const math::p2d &screenCoord) const override;
             math::p2d   worldToScreen(const math::p3d &pointInWorld) const override;
 
+            void updateMatrix() override;
+
         protected:
             const platform::EnginePlatformInterface  &_platform;
 
@@ -42,8 +44,6 @@ namespace fg {
             float       _zFar;
             math::m4x4  _viewMatrix;
             math::m4x4  _projMatrix;
-
-            void _updateMatrix();
                         
         private:
             Camera(const Camera &);

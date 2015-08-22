@@ -246,8 +246,10 @@ namespace fg {
         struct ResourcePtr {
             ManagedResourceInterface *_resource;
             ResourcePtr(ManagedResourceInterface *mres) : _resource(mres) {}
-
-            template <typename DOWNTYPE> operator DOWNTYPE *() const;
+            
+            template <typename DOWNTYPE> operator DOWNTYPE *() const {
+                return static_cast <DOWNTYPE *> (static_cast <ResourceInterfaceTable <std::remove_const <DOWNTYPE>::type> ::type *> (_resource));
+            }
         };
 
         class ResourceManagerInterface {

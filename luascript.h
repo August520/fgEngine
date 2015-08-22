@@ -7,7 +7,7 @@
 #include "lua-5.1.4/lualib.h"
 #include "lua-5.1.4/lauxlib.h"
 
-#include <hash_map>
+#include <unordered_map>
 
 enum LUATYPE {
     LUATYPE_NULL = LUA_TNIL,
@@ -28,7 +28,7 @@ struct luaObj;
 extern luaObj _luaObj_empty;
 
 struct luaObj{
-    typedef stdext::hash_map <luaObj, luaObj*> hashMap;
+    typedef std::unordered_map <luaObj, luaObj*> hashMap;
     LUATYPE _type;
 
     struct _stdtypes{
@@ -665,16 +665,17 @@ struct luaScript{                                                          //---
     template <typename T, class C, typename P1, typename P2, typename P3, typename P4> bool regMethod(const char *meta, const char *mName, T(C::*pf)(P1, P2, P3, P4));
 };
 
-
-namespace stdext{
-    template <>
-    inline size_t hash_value <luaObj>(const luaObj &t){
-        if(t._type == LUATYPE_STRING){
-            size_t h = hash_value((const char *)(t._str.sz < LUAOBJ_STRMAX ? t._str.buf : t._str.farptr));
-            return h;
+namespace std {
+    template <> struct hash<luaObj> {
+        std::size_t operator()(const luaObj& t) const {
+            if (t._type == LUATYPE_STRING) {
+                size_t h = hash_value((const char *)(t._str.sz < LUAOBJ_STRMAX ? t._str.buf : t._str.farptr));
+                return h;
+            }
+            else if (t._type == LUATYPE_NUMBER) return hash_value(t._std.num);
+            else if (t._type == LUATYPE_BOOL) return hash_value(t._std.boolean);
+            else return hash_value(&t);
         }
-        else if(t._type == LUATYPE_NUMBER) return hash_value(t._std.num);
-        else if(t._type == LUATYPE_BOOL) return hash_value(t._std.boolean);
-        else return hash_value(&t);
-    }
+    };
+
 }

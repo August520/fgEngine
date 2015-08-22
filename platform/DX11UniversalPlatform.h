@@ -18,15 +18,15 @@ using namespace concurrency;
 
 namespace fg {
     namespace dx11 {
-        class PhonePlatform;
+        class UniversalPlatform;
         class PlatformObject {
         public:
-            PlatformObject(PhonePlatform *owner) : _owner(owner) {}
+            PlatformObject(UniversalPlatform *owner) : _owner(owner) {}
             virtual ~PlatformObject() {}
             virtual bool valid() const = 0;
 
         protected:
-            PhonePlatform *_owner;
+            UniversalPlatform *_owner;
 
         private:
             PlatformObject(const PlatformObject &);
@@ -35,10 +35,10 @@ namespace fg {
 
         //---
 
-        class PhoneSoundEmitter : public PlatformObject, public platform::SoundEmitterInterface {
+        class UniversalSoundEmitter : public PlatformObject, public platform::SoundEmitterInterface {
         public:
-            PhoneSoundEmitter(PhonePlatform *owner, unsigned sampleRate, unsigned channels);
-            ~PhoneSoundEmitter() override;
+            UniversalSoundEmitter(UniversalPlatform *owner, unsigned sampleRate, unsigned channels);
+            ~UniversalSoundEmitter() override;
 
             void pushBuffer(const char *data, unsigned samples) override;
             void setBufferEndCallback(void (*cb)(void *), void *userPtr) override;
@@ -52,8 +52,8 @@ namespace fg {
 
         protected:
             struct SoundCallback : public IXAudio2VoiceCallback {
-                PhoneSoundEmitter *emitter;
-                SoundCallback(PhoneSoundEmitter *iemitter) : emitter(iemitter) {}
+                UniversalSoundEmitter *emitter;
+                SoundCallback(UniversalSoundEmitter *iemitter) : emitter(iemitter) {}
 
                 void __stdcall OnVoiceProcessingPassStart(UINT32 BytesRequired) {}
                 void __stdcall OnVoiceProcessingPassEnd() {}
@@ -74,10 +74,10 @@ namespace fg {
 
         //---
 
-        class PhoneVertexBuffer : public PlatformObject, public platform::VertexBufferInterface {
+        class UniversalVertexBuffer : public PlatformObject, public platform::VertexBufferInterface {
         public:
-            PhoneVertexBuffer(PhonePlatform *owner, platform::VertexType type, unsigned vcount, bool isDynamic, const void *data);
-            ~PhoneVertexBuffer() override;
+            UniversalVertexBuffer(UniversalPlatform *owner, platform::VertexType type, unsigned vcount, bool isDynamic, const void *data);
+            ~UniversalVertexBuffer() override;
 
             void *lock() override;
             void unlock() override;
@@ -97,10 +97,10 @@ namespace fg {
 
         //--- 
 
-        class PhoneIndexedVertexBuffer : public PlatformObject, public platform::IndexedVertexBufferInterface {
+        class UniversalIndexedVertexBuffer : public PlatformObject, public platform::IndexedVertexBufferInterface {
         public:
-            PhoneIndexedVertexBuffer(PhonePlatform *owner, platform::VertexType type, unsigned vcount, unsigned icount, bool isDynamic, const void *vdata, const void *idata);
-            ~PhoneIndexedVertexBuffer() override;
+            UniversalIndexedVertexBuffer(UniversalPlatform *owner, platform::VertexType type, unsigned vcount, unsigned icount, bool isDynamic, const void *vdata, const void *idata);
+            ~UniversalIndexedVertexBuffer() override;
 
             void *lockVertices() override;
             void *lockIndices() override;
@@ -126,10 +126,10 @@ namespace fg {
 
         //---
 
-        class PhoneInstanceData : public PlatformObject, public platform::InstanceDataInterface {
+        class UniversalInstanceData : public PlatformObject, public platform::InstanceDataInterface {
         public:
-            PhoneInstanceData(PhonePlatform *owner, platform::InstanceDataType type, unsigned instanceCount);
-            ~PhoneInstanceData() override;
+            UniversalInstanceData(UniversalPlatform *owner, platform::InstanceDataType type, unsigned instanceCount);
+            ~UniversalInstanceData() override;
 
             void *lock() override;
             void unlock() override;
@@ -149,10 +149,10 @@ namespace fg {
 
         //--- 
 
-        class PhoneRasterizerParams : public PlatformObject, public platform::RasterizerParamsInterface {
+        class UniversalRasterizerParams : public PlatformObject, public platform::RasterizerParamsInterface {
         public:
-            PhoneRasterizerParams(PhonePlatform *owner, platform::CullMode cull);
-            ~PhoneRasterizerParams() override;
+            UniversalRasterizerParams(UniversalPlatform *owner, platform::CullMode cull);
+            ~UniversalRasterizerParams() override;
 
             void release() override;
             void set();
@@ -164,10 +164,10 @@ namespace fg {
 
         //--- 
 
-        class PhoneBlenderParams : public PlatformObject, public platform::BlenderParamsInterface {
+        class UniversalBlenderParams : public PlatformObject, public platform::BlenderParamsInterface {
         public:
-            PhoneBlenderParams(PhonePlatform *owner, const platform::BlendMode blendMode);
-            ~PhoneBlenderParams() override;
+            UniversalBlenderParams(UniversalPlatform *owner, const platform::BlendMode blendMode);
+            ~UniversalBlenderParams() override;
 
             void release() override;
             void set();
@@ -179,10 +179,10 @@ namespace fg {
 
         //--- 
 
-        class PhoneDepthParams : public PlatformObject, public platform::DepthParamsInterface {
+        class UniversalDepthParams : public PlatformObject, public platform::DepthParamsInterface {
         public:
-            PhoneDepthParams(PhonePlatform *owner, bool depthEnabled, platform::DepthFunc compareFunc, bool depthWriteEnabled);
-            ~PhoneDepthParams() override;
+            UniversalDepthParams(UniversalPlatform *owner, bool depthEnabled, platform::DepthFunc compareFunc, bool depthWriteEnabled);
+            ~UniversalDepthParams() override;
 
             void release() override;
             void set();
@@ -194,10 +194,10 @@ namespace fg {
 
         //--- 
 
-        class PhoneSampler : public PlatformObject, public platform::SamplerInterface {
+        class UniversalSampler : public PlatformObject, public platform::SamplerInterface {
         public:
-            PhoneSampler(PhonePlatform *owner, platform::TextureFilter filter, platform::TextureAddressMode addrMode);
-            ~PhoneSampler() override;
+            UniversalSampler(UniversalPlatform *owner, platform::TextureFilter filter, platform::TextureAddressMode addrMode);
+            ~UniversalSampler() override;
 
             void release() override;
             void set(platform::TextureSlot slot);
@@ -209,10 +209,10 @@ namespace fg {
 
         //--- 
 
-        class PhoneShader : public PlatformObject, public platform::ShaderInterface {
+        class UniversalShader : public PlatformObject, public platform::ShaderInterface {
         public:
-            PhoneShader(PhonePlatform *owner, const byteform &binary);
-            ~PhoneShader() override;
+            UniversalShader(UniversalPlatform *owner, const byteform &binary);
+            ~UniversalShader() override;
 
             void release() override;
             void set();
@@ -226,10 +226,10 @@ namespace fg {
         
         //---
 
-        class PhoneShaderConstantBuffer : public PlatformObject, public platform::ShaderConstantBufferInterface {
+        class UniversalShaderConstantBuffer : public PlatformObject, public platform::ShaderConstantBufferInterface {
         public:
-            PhoneShaderConstantBuffer(PhonePlatform *owner, platform::ShaderConstBufferUsing appoint, unsigned byteWidth);
-            ~PhoneShaderConstantBuffer() override;
+            UniversalShaderConstantBuffer(UniversalPlatform *owner, platform::ShaderConstBufferUsing appoint, unsigned byteWidth);
+            ~UniversalShaderConstantBuffer() override;
 
             void update(const void *data, unsigned byteWidth) override;
 
@@ -245,15 +245,15 @@ namespace fg {
 
         //--- 
 
-        class PhoneTexture2D : public PlatformObject, public platform::Texture2DInterface {
-            friend class PhoneRenderTarget;
-            friend class PhonePlatform;
+        class UniversalTexture2D : public PlatformObject, public platform::Texture2DInterface {
+            friend class UniversalRenderTarget;
+            friend class UniversalPlatform;
 
         public:
-            PhoneTexture2D();
-            PhoneTexture2D(PhonePlatform *owner, unsigned char * const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount);
-            PhoneTexture2D(PhonePlatform *owner, platform::TextureFormat fmt, unsigned originWidth, unsigned originHeight, unsigned mipCount);
-            ~PhoneTexture2D() override;
+            UniversalTexture2D();
+            UniversalTexture2D(UniversalPlatform *owner, unsigned char * const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount);
+            UniversalTexture2D(UniversalPlatform *owner, platform::TextureFormat fmt, unsigned originWidth, unsigned originHeight, unsigned mipCount);
+            ~UniversalTexture2D() override;
 
             unsigned getWidth() const override;
             unsigned getHeight() const override;
@@ -278,13 +278,13 @@ namespace fg {
 
         //---
 
-        class PhoneRenderTarget : public PlatformObject, public platform::RenderTargetInterface {
-            friend class PhonePlatform;
+        class UniversalRenderTarget : public PlatformObject, public platform::RenderTargetInterface {
+            friend class UniversalPlatform;
 
         public:
-            PhoneRenderTarget(PhonePlatform *owner);
-            PhoneRenderTarget(PhonePlatform *owner, unsigned colorTargetCount, unsigned originWidth, unsigned originHeight);
-            ~PhoneRenderTarget() override;
+            UniversalRenderTarget(UniversalPlatform *owner);
+            UniversalRenderTarget(UniversalPlatform *owner, unsigned colorTargetCount, unsigned originWidth, unsigned originHeight);
+            ~UniversalRenderTarget() override;
 
             platform::Texture2DInterface *getDepthBuffer() override;
             platform::Texture2DInterface *getRenderBuffer(unsigned index) override;
@@ -296,8 +296,8 @@ namespace fg {
         protected:
             unsigned _colorTargetCount;
 
-            PhoneTexture2D  _renderTexture[platform::RENDERTARGETS_MAX];
-            PhoneTexture2D  _depthTexture;
+            UniversalTexture2D  _renderTexture[platform::RENDERTARGETS_MAX];
+            UniversalTexture2D  _depthTexture;
 
             ID3D11RenderTargetView  *_rtView[platform::RENDERTARGETS_MAX];
             ID3D11DepthStencilView  *_depthView;
@@ -305,19 +305,19 @@ namespace fg {
 
         //---
 
-        struct PhoneInitParams : public platform::InitParams {
+        struct UniversalInitParams : public platform::InitParams {
             platform::Orientation   orientation;
             Agile <CoreWindow ^>    window;           // may be null
         };
 
-        class PhonePlatform : public platform::EnginePlatformInterface {
+        class UniversalPlatform : public platform::EnginePlatformInterface {
         public:
-            ID3D11Device1         *_device;
-            ID3D11DeviceContext1  *_context;
-            IDXGISwapChain1       *_swapChain;
-            IXAudio2              *_audio;
+            ID3D11Device1         *_device = nullptr;
+            ID3D11DeviceContext1  *_context = nullptr;
+            IDXGISwapChain1       *_swapChain = nullptr;
+            IXAudio2              *_audio = nullptr;
 
-            PhonePlatform(const diag::LogInterface &log);
+            UniversalPlatform(const diag::LogInterface &log);
 
             bool  init(const platform::InitParams &initParams) override;
             void  destroy() override;
@@ -337,7 +337,8 @@ namespace fg {
             unsigned  long long getTimeMs() const override;
             
             void  updateOrientation() override;
-            
+            void  resize(float width, float height) override;
+                        
             void  fsFormFilesList(const char *path, std::string &out) override;
             bool  fsLoadFile(const char *path, void **oBinaryDataPtr, unsigned int *oSize) override;
             bool  fsSaveFile(const char *path, void *iBinaryDataPtr, unsigned iSize) override;
@@ -381,20 +382,22 @@ namespace fg {
         protected:
             const diag::LogInterface &_log;
 
-            IXAudio2MasteringVoice   *_mastering;
-            PhoneRenderTarget        *_curRenderTarget;
-            PhoneSampler             *_defSampler;
-            PhoneRenderTarget        _defRenderTarget;
+            IXAudio2MasteringVoice   *_mastering = nullptr;
+            UniversalRenderTarget    *_curRenderTarget = nullptr;
+            UniversalSampler         *_defSampler = nullptr;
+            UniversalRenderTarget    _defRenderTarget = nullptr;
             Agile                    <CoreWindow ^> _window;
-            platform::Orientation    _orientation;
+            platform::Orientation    _orientation = platform::Orientation::ALBUM;
             math::m3x3               _inputTransform;
             
             float      _nativeWidth;
             float      _nativeHeight;
             float      _lastTextureWidth[platform::TEXTURE_UNITS_MAX];
             float      _lastTextureHeight[platform::TEXTURE_UNITS_MAX];
-
             unsigned   _syncInterval;
+
+            void _initDevice();
+            void _initDefaultRenderTarget();
         };
     }
 }

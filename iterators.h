@@ -5,14 +5,18 @@ namespace fg {
             DisplayObjectInterface *_obj;
             DisplayObjectPtr(DisplayObjectInterface *obj) : _obj(obj) {}
 
-            template <typename DOWNTYPE> operator DOWNTYPE *();
+            template <typename DOWNTYPE> operator DOWNTYPE *() {
+                return static_cast <DOWNTYPE *> (_obj);
+            }
         };
 
         struct DisplayObjectConstPtr {
             const DisplayObjectInterface *_obj;
             DisplayObjectConstPtr(const DisplayObjectInterface *obj) : _obj(obj) {}
 
-            template <typename DOWNTYPE> operator const DOWNTYPE *();
+            template <typename DOWNTYPE> operator const DOWNTYPE *() {
+                return static_cast <const DOWNTYPE *> (_obj);
+            }
         };
 
         class DisplayObjectIteratorInterface {
@@ -31,21 +35,27 @@ namespace fg {
             RenderObjectInterface *_obj;
             RenderObjectPtr(RenderObjectInterface *obj) : _obj(obj) {}
 
-            template <typename DOWNTYPE> operator DOWNTYPE *();
+            template <typename DOWNTYPE> operator DOWNTYPE *() {
+                return static_cast <DOWNTYPE *> (_obj);
+            }
         };
 
         struct RenderObjectConstPtr {
             const RenderObjectInterface *_obj;
             RenderObjectConstPtr(const RenderObjectInterface *obj) : _obj(obj) {}
 
-            template <typename DOWNTYPE> operator const DOWNTYPE *();
+            template <typename DOWNTYPE> operator const DOWNTYPE *() {
+                return static_cast <const DOWNTYPE *> (_obj);
+            }
         };
 
         struct RenderObjectComponentPtr {
             const RenderObjectInterface::ComponentInterface *_component;
             RenderObjectComponentPtr(const RenderObjectInterface::ComponentInterface *component) : _component(component) {}
 
-            template <typename DOWNTYPE> operator const DOWNTYPE *();
+            template <typename DOWNTYPE> operator const DOWNTYPE *() {
+                return static_cast <const DOWNTYPE *> (_component);
+            }
         };
 
         class RenderObjectIteratorInterface {
