@@ -269,11 +269,11 @@ namespace fg {
             return _resolutionDependent;
         }
 
-        bool DisplayObject::hitTestPoint(const math::p2d &point) const {        
+        bool DisplayObject::hitTestPoint(const math::p2d &point, const math::p2d &dpiFactor) const {
             return false;
         }
 
-        bool DisplayObject::hitTestLine(const math::p2d &point) const {
+        bool DisplayObject::hitTestLine(const math::p2d &point, const math::p2d &dpiFactor) const {
             return false;
         }
 

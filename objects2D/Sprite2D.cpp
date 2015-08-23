@@ -109,24 +109,25 @@ namespace fg {
             return _clip;
         }
         
-        bool Sprite2D::hitTestPoint(const math::p2d &point) const {
+        bool Sprite2D::hitTestPoint(const math::p2d &point, const math::p2d &dpiFactor) const {
             math::m3x3 invFullTransform;
             math::p2d  tp = point;
+            math::p2d  dpi = _resolutionDependent ? dpiFactor : math::p2d(1, 1);
 
             invFullTransform.inverse(_fullTransform);
             tp.transform(invFullTransform, true);
 
             if(_clip) {
-                tp.x += _clip->centerX;
-                tp.y += _clip->centerY;
+                tp.x += _clip->centerX * dpi.x;
+                tp.y += _clip->centerY * dpi.y;
 
                 if(_clip->boundingCoords) {
                     math::p2d rightInf(tp.x + 10000.0f, tp.y);
                     int intersects = 0;
 
                     for(unsigned int i = 0; i < _clip->boundingCount - 1; i++) {
-                        const math::p2d &p0 = _clip->boundingCoords[i];
-                        const math::p2d &p1 = _clip->boundingCoords[i + 1];
+                        math::p2d p0 (_clip->boundingCoords[i].x * dpi.x, _clip->boundingCoords[i].y * dpi.y);
+                        math::p2d p1 (_clip->boundingCoords[i + 1].x * dpi.x, _clip->boundingCoords[i + 1].y * dpi.y);
 
                         float dpx = p1.x - p0.x;
                         float dpy = p1.y - p0.y;
@@ -142,8 +143,8 @@ namespace fg {
                     if(intersects & 0x1) return true;
                 }
                 else {
-                    if(tp.x >= 0 && tp.x <= _clip->width) {
-                        if(tp.y >= 0 && tp.y <= _clip->height) {
+                    if(tp.x >= 0 && tp.x <= _clip->width * dpi.x) {
+                        if(tp.y >= 0 && tp.y <= _clip->height * dpi.y) {
                             return true;
                         }
                     }
@@ -152,7 +153,7 @@ namespace fg {
             return false;
         }
 
-        bool Sprite2D::hitTestLine(const math::p2d &point) const {
+        bool Sprite2D::hitTestLine(const math::p2d &point, const math::p2d &dpiFactor) const {
             return false;
         }
 

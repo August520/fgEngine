@@ -130,9 +130,9 @@ namespace fg {
         
         int64  _lastFrameTimeStamp;
         bool   _isBaseResourcesLoaded;
-        float  _logicalScreenScaleFactorX = 1;
-        float  _logicalScreenScaleFactorY = 1;
-        float  _dpiFactor;
+        float  _screenPixelsPerCoordSystemPixelsX = 1;
+        float  _screenPixelsPerCoordSystemPixelsY = 1;
+        float  _systemDpiPerCoordSystemDpi;
         
         LogicalCoordSystem _coordSystem;
         std::list <std::function<void()>> _postponed;

@@ -969,31 +969,21 @@ namespace fg {
             _syncInterval = params.syncInterval;
             _window = params.window;
 
-            DXGI_MODE_ROTATION rotationMode = DXGI_MODE_ROTATION_IDENTITY;
             DisplayInformation ^curDisplayInfo = DisplayInformation::GetForCurrentView();
 
             if(params.orientation == platform::Orientation::ALBUM) {
-                if(curDisplayInfo->NativeOrientation == DisplayOrientations::Portrait || curDisplayInfo->NativeOrientation == DisplayOrientations::PortraitFlipped) {
+                if(curDisplayInfo->CurrentOrientation == DisplayOrientations::Portrait || curDisplayInfo->CurrentOrientation == DisplayOrientations::PortraitFlipped) {
                     _nativeWidth = params.scrHeight;
                     _nativeHeight = params.scrWidth;
-                    _inputTransform.setRotate(3.0f * M_PI / 2.0f);
-                    _inputTransform._32 = _nativeHeight;
-                    rotationMode = DXGI_MODE_ROTATION_ROTATE270;
-                }
-                if(curDisplayInfo->NativeOrientation == DisplayOrientations::LandscapeFlipped) {
-                    rotationMode = DXGI_MODE_ROTATION_ROTATE90;
                 }
             }
             else {
-                if(curDisplayInfo->NativeOrientation == DisplayOrientations::Landscape || curDisplayInfo->NativeOrientation == DisplayOrientations::LandscapeFlipped) {
+                if(curDisplayInfo->CurrentOrientation == DisplayOrientations::Landscape || curDisplayInfo->CurrentOrientation == DisplayOrientations::LandscapeFlipped) {
                     _nativeWidth = params.scrHeight;
                     _nativeHeight = params.scrWidth;
-                    _inputTransform.setRotate(3.0f * M_PI / 2.0f);
-                    _inputTransform._32 = _nativeHeight;
-                    rotationMode = DXGI_MODE_ROTATION_ROTATE270;
                 }
             }
-            
+
             IDXGIAdapter  *adapter;
             IDXGIDevice1  *dxgiDevice = 0;
             IDXGIFactory2 *dxgiFactory;
@@ -1003,36 +993,36 @@ namespace fg {
             adapter->GetParent(__uuidof(IDXGIFactory2), (void **)&dxgiFactory);
             adapter->Release();
 
-            if(_window != nullptr) {
-                DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {0};
-                swapChainDesc.Width = int(_nativeWidth);
-                swapChainDesc.Height = int(_nativeHeight);
-                swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;//DXGI_FORMAT_B8G8R8A8_UNORM;
-                swapChainDesc.Stereo = false;
-                swapChainDesc.SampleDesc.Count = 1;
-                swapChainDesc.SampleDesc.Quality = 0;
-                swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-                swapChainDesc.BufferCount = 2;
-                swapChainDesc.Scaling = DXGI_SCALING_NONE;
-                swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
-                swapChainDesc.Flags = 0;
+            DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {0};
+            swapChainDesc.Width = int(_nativeWidth);
+            swapChainDesc.Height = int(_nativeHeight);
+            swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+            swapChainDesc.Stereo = false;
+            swapChainDesc.SampleDesc.Count = 1;
+            swapChainDesc.SampleDesc.Quality = 0;
+            swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+            swapChainDesc.BufferCount = 2;
+            swapChainDesc.Scaling = DXGI_SCALING_NONE;
+            swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+            swapChainDesc.Flags = 0;
 
-                if(dxgiFactory->CreateSwapChainForCoreWindow(_device, (IUnknown *)params.window.Get(), &swapChainDesc, nullptr, &_swapChain) != S_OK) {
-                    _log.msgError("can't create hardware device");
-                    return false;
-                }
-
-                _swapChain->SetRotation(rotationMode);
+            if(dxgiFactory->CreateSwapChainForCoreWindow(_device, (IUnknown *)params.window.Get(), &swapChainDesc, nullptr, &_swapChain) != S_OK) {
+                _log.msgError("can't create hardware device");
+                return false;
             }
-
+            
             dxgiFactory->Release();
             dxgiDevice->SetMaximumFrameLatency(1);
             dxgiDevice->Release();
+
+            updateOrientation();
 
             //---
 
             _defRenderTarget._owner = this;
             _initDefaultRenderTarget();
+
+            _defSampler = new UniversalSampler(this, platform::TextureFilter::LINEAR, platform::TextureAddressMode::CLAMP);
 
             for (unsigned i = 0; i < platform::TEXTURE_UNITS_MAX; i++) {
                 _lastTextureWidth[i] = 0.0f;
@@ -1072,15 +1062,30 @@ namespace fg {
         }
 
         void UniversalPlatform::resize(float width, float height) {
+            DisplayInformation ^curDisplayInfo = DisplayInformation::GetForCurrentView();
+
+            _nativeWidth = width;
+            _nativeHeight = height;
+
+            if (_orientation == platform::Orientation::ALBUM) {
+                if (curDisplayInfo->CurrentOrientation == DisplayOrientations::Portrait || curDisplayInfo->CurrentOrientation == DisplayOrientations::PortraitFlipped) {
+                    _nativeWidth = height;
+                    _nativeHeight = width;
+                }
+            }
+            else {
+                if (curDisplayInfo->CurrentOrientation == DisplayOrientations::Landscape || curDisplayInfo->CurrentOrientation == DisplayOrientations::LandscapeFlipped) {
+                    _nativeWidth = height;
+                    _nativeHeight = width;
+                }
+            }
+            
+            _defRenderTarget._rtView[0]->Release();
             _defRenderTarget._depthTexture._view->Release();
             _defRenderTarget._depthView->Release();
             _context->OMSetRenderTargets(0, 0, 0);
 
-            _defRenderTarget._rtView[0]->Release();
-            _swapChain->ResizeBuffers(2, unsigned(width), unsigned(height), DXGI_FORMAT_R8G8B8A8_UNORM, 0);
-            _nativeWidth = width;
-            _nativeHeight = height;
-
+            _swapChain->ResizeBuffers(2, unsigned(_nativeWidth), unsigned(_nativeHeight), DXGI_FORMAT_R8G8B8A8_UNORM, 0);
             _initDefaultRenderTarget();
         }
 
@@ -1169,13 +1174,12 @@ namespace fg {
 
             D3D11_SHADER_RESOURCE_VIEW_DESC texViewDesc = { DXGI_FORMAT_R24_UNORM_X8_TYPELESS };
             texViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-            texViewDesc.Texture2D.MipLevels = -1;
+            texViewDesc.Texture2D.MipLevels = 1;
             texViewDesc.Texture2D.MostDetailedMip = 0;
 
             _device->CreateShaderResourceView(tmptex, &texViewDesc, &_defRenderTarget._depthTexture._view);
             tmptex->Release();
 
-            _defSampler = new UniversalSampler(this, platform::TextureFilter::LINEAR, platform::TextureAddressMode::CLAMP);
             _defRenderTarget._depthTexture._width = unsigned(_nativeWidth);
             _defRenderTarget._depthTexture._height = unsigned(_nativeHeight);
             _defRenderTarget._depthTexture._mipCount = 1;
@@ -1249,7 +1253,7 @@ namespace fg {
             DisplayInformation ^curDisplayInfo = DisplayInformation::GetForCurrentView();
 
             _swapChain->GetRotation(&rotationMode);
-            
+
             if(_orientation == platform::Orientation::ALBUM) {
                 if(curDisplayInfo->CurrentOrientation == DisplayOrientations::Portrait) {
                     _inputTransform.setRotate(3.0f * M_PI / 2.0f);
@@ -1257,22 +1261,38 @@ namespace fg {
                     rotationMode = DXGI_MODE_ROTATION_ROTATE270;
                 }
                 if(curDisplayInfo->CurrentOrientation == DisplayOrientations::PortraitFlipped) {
-                    _inputTransform.setRotate(3.0f * M_PI / 2.0f);
-                    _inputTransform._32 = _nativeHeight;
+                    _inputTransform.setRotate(M_PI / 2.0f);
+                    _inputTransform._31 = _nativeWidth;
                     rotationMode = DXGI_MODE_ROTATION_ROTATE90;
                 }
                 if(curDisplayInfo->CurrentOrientation == DisplayOrientations::Landscape) {
                     _inputTransform.identity();                    
-                    rotationMode = DXGI_MODE_ROTATION_ROTATE270;
+                    rotationMode = DXGI_MODE_ROTATION_IDENTITY;
                 }
                 if(curDisplayInfo->CurrentOrientation == DisplayOrientations::LandscapeFlipped) {
                     _inputTransform.identity();                    
-                    rotationMode = DXGI_MODE_ROTATION_ROTATE90;
+                    rotationMode = DXGI_MODE_ROTATION_IDENTITY;
                 }
             }
             else {
-                _inputTransform.identity();
-                rotationMode = DXGI_MODE_ROTATION_IDENTITY;                
+                if (curDisplayInfo->CurrentOrientation == DisplayOrientations::Portrait) {
+                    _inputTransform.identity();
+                    rotationMode = DXGI_MODE_ROTATION_IDENTITY;
+                }
+                if (curDisplayInfo->CurrentOrientation == DisplayOrientations::PortraitFlipped) {
+                    _inputTransform.identity();
+                    rotationMode = DXGI_MODE_ROTATION_IDENTITY;
+                }
+                if (curDisplayInfo->CurrentOrientation == DisplayOrientations::Landscape) {
+                    _inputTransform.setRotate(M_PI / 2.0f);
+                    _inputTransform._31 = _nativeWidth;
+                    rotationMode = DXGI_MODE_ROTATION_ROTATE90;
+                }
+                if (curDisplayInfo->CurrentOrientation == DisplayOrientations::LandscapeFlipped) {
+                    _inputTransform.setRotate(3.0f * M_PI / 2.0f);
+                    _inputTransform._32 = _nativeHeight;
+                    rotationMode = DXGI_MODE_ROTATION_ROTATE270;
+                }
             }
 
             _swapChain->SetRotation(rotationMode);

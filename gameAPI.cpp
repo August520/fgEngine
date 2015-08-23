@@ -39,6 +39,14 @@ namespace fg {
         return _engine.getCoordSystemDPIFactorY();    
     }
 
+    math::p2d GameAPI::getCoordSystemDimension() const {
+        return math::p2d(_engine.getCoordSystemWidth(), _engine.getCoordSystemHeight());
+    }
+
+    math::p2d GameAPI::getDPIFactor() const {
+        return math::p2d(_engine.getCoordSystemDPIFactorX(), _engine.getCoordSystemDPIFactorY());
+    }
+
     render::CameraInterface &GameAPI::getCamera() {
         return *_engine._gameCamera;
     }

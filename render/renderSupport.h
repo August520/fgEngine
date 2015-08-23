@@ -65,9 +65,9 @@ namespace fg {
             const resources::ShaderResourceInterface *_simpleShader;
             const resources::ShaderResourceInterface *_ifaceShader;
 
-            float _logicalScreenScaleX = 0;
-            float _logicalScreenScaleY = 0;
-            float _dpiFactor = 0;
+            float  _screenPixelsPerCoordSystemPixelsX;
+            float  _screenPixelsPerCoordSystemPixelsY;
+            float  _systemDpiPerCoordSystemDpi;
 
         private:
             RenderSupport(const RenderSupport &);

@@ -65,8 +65,8 @@ namespace fg {
 
             virtual bool  isResolutionDepended() const = 0;
             virtual bool  isVisible() const = 0;
-            virtual bool  hitTestPoint(const math::p2d &point) const = 0;
-            virtual bool  hitTestLine(const math::p2d &point) const = 0;
+            virtual bool  hitTestPoint(const math::p2d &point, const math::p2d &dpiFactor) const = 0;
+            virtual bool  hitTestLine(const math::p2d &point, const math::p2d &dpiFactor) const = 0;
             
             virtual void  updateCoordinates(float frameTimeMs) = 0;
             virtual bool  isResourcesReady(platform::PlatformInterface &platform, resources::ResourceManagerInterface &resMan) = 0;

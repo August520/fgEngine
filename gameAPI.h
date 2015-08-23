@@ -15,6 +15,9 @@ namespace fg {
         float getCoordSystemHeight() const;
         float getDPIFactorX() const;
         float getDPIFactorY() const;
+        
+        math::p2d getCoordSystemDimension() const;
+        math::p2d getDPIFactor() const;
 
         template <typename F, typename ...ARGS> void postponedDispatch(F func, ARGS... args) {
             _engine.postponedDispatch(func, args...);

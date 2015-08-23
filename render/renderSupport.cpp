@@ -70,9 +70,9 @@ namespace fg {
         }
 
         void RenderSupport::frameInit2D(float frameTimeMs, float scaleX, float scaleY, float dpiFactor) {
-            _logicalScreenScaleX = scaleX;
-            _logicalScreenScaleY = scaleY;
-            _dpiFactor = dpiFactor;
+            _screenPixelsPerCoordSystemPixelsX = scaleX;
+            _screenPixelsPerCoordSystemPixelsY = scaleY;
+            _systemDpiPerCoordSystemDpi = dpiFactor;
 
             _frameConstants->data.camViewProj.identity();
             _frameConstants->updateAndApply();
@@ -170,14 +170,12 @@ namespace fg {
         void RenderSupport::drawQuad2D(const math::m3x3 &trfm, const resources::ClipData *clip, unsigned frame, const fg::color &c, bool resolutionDepended) {
             float dpiKoeffX = 1.0f;
             float dpiKoeffY = 1.0f;
-            float scaleX = 1.0f;
-            float scaleY = 1.0f;
+            float scaleX = _screenPixelsPerCoordSystemPixelsX;
+            float scaleY = _screenPixelsPerCoordSystemPixelsY;
 
             if(resolutionDepended) {
-                dpiKoeffX = fabs(_dpiFactor / _logicalScreenScaleX);
-                dpiKoeffY = fabs(_dpiFactor / _logicalScreenScaleY);
-                scaleX = _logicalScreenScaleX;
-                scaleY = _logicalScreenScaleY;
+                dpiKoeffX = fabs(_systemDpiPerCoordSystemDpi / _screenPixelsPerCoordSystemPixelsX);
+                dpiKoeffY = fabs(_systemDpiPerCoordSystemDpi / _screenPixelsPerCoordSystemPixelsY);
             }
 
             math::p2d lt = math::p2d(-clip->centerX * dpiKoeffX, -clip->centerY * dpiKoeffY);
@@ -253,14 +251,12 @@ namespace fg {
         void RenderSupport::drawText2D(const fg::string &utf8text, const math::m3x3 &trfm, const resources::FontResourceInterface *font, unsigned size, const fg::color &c, bool resolutionDepended) {
             float dpiKoeffX = 1.0f;
             float dpiKoeffY = 1.0f;
-            float scaleX = 1.0f;
-            float scaleY = 1.0f;
+            float scaleX = _screenPixelsPerCoordSystemPixelsX;
+            float scaleY = _screenPixelsPerCoordSystemPixelsY;
 
             if(resolutionDepended) {
-                dpiKoeffX = _dpiFactor * _logicalScreenScaleX;
-                dpiKoeffY = _dpiFactor * _logicalScreenScaleY;
-                scaleX = _logicalScreenScaleX;
-                scaleY = _logicalScreenScaleY;
+                dpiKoeffX = fabs(_systemDpiPerCoordSystemDpi / _screenPixelsPerCoordSystemPixelsX);
+                dpiKoeffY = fabs(_systemDpiPerCoordSystemDpi / _screenPixelsPerCoordSystemPixelsY);
             }
 
             math::p2d rightDir(1.0f * dpiKoeffX, 0.0f);

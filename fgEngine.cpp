@@ -126,7 +126,7 @@ namespace fg {
 
         _gameCamera = new render::Camera(_platform);
         _coordSystem = coordSystem;
-        _dpiFactor = initParams.dpi / coordSystem.dpi;
+        _systemDpiPerCoordSystemDpi = initParams.dpi / coordSystem.dpi;
         _updateCoordSystem();
         
         const char *renderResourceList = _render->getRenderResourceList();
@@ -189,7 +189,7 @@ namespace fg {
             _renderSupport.frameInit3D(frameTimeMs);            
             _render->draw3D(object3d::RenderObjectIterator(_root3D, _platform, _resMan, frameTimeMs), render::RenderAPI(_platform, _resMan, _renderSupport, *_gameCamera));
             
-            _renderSupport.frameInit2D(frameTimeMs, _logicalScreenScaleFactorX, _logicalScreenScaleFactorY, _dpiFactor);
+            _renderSupport.frameInit2D(frameTimeMs, _screenPixelsPerCoordSystemPixelsX, _screenPixelsPerCoordSystemPixelsY, _systemDpiPerCoordSystemDpi);
             _render->draw2D(object2d::DisplayObjectIterator(_root2D, _platform, _resMan, frameTimeMs), render::RenderAPI(_platform, _resMan, _renderSupport, *_gameCamera));
         }
 
@@ -198,10 +198,12 @@ namespace fg {
 
     void Engine::orientationChanged() {
         _platform.updateOrientation();
+        _updateCoordSystem();
     }
 
     void Engine::sizeChanged(float width, float height) {
         _platform.resize(width, height);
+        _updateCoordSystem();
     }
 
     //---
@@ -221,20 +223,20 @@ namespace fg {
     //---
 
     void Engine::_scalePos(math::p2d &target) {
-        if(_logicalScreenScaleFactorX < 0.0f) {
+        if(_screenPixelsPerCoordSystemPixelsX < 0.0f) {
             target.x = _platform.getScreenWidth() - target.x;
         }
-        if(_logicalScreenScaleFactorY < 0.0f) {
+        if(_screenPixelsPerCoordSystemPixelsY < 0.0f) {
             target.y = _platform.getScreenHeight() - target.y;
         }
 
-        target.x = 1.0f / fabs(_logicalScreenScaleFactorX) * target.x;
-        target.y = 1.0f / fabs(_logicalScreenScaleFactorY) * target.y;
+        target.x = target.x / fabs(_screenPixelsPerCoordSystemPixelsX);
+        target.y = target.y / fabs(_screenPixelsPerCoordSystemPixelsY);
     }
 
     void Engine::_updateCoordSystem() {
-        _logicalScreenScaleFactorX = _platform.getScreenWidth() / _coordSystem.width * (_coordSystem.coordStartX == HorizontalAnchor::RIGHT ? -1.0f : 1.0f);
-        _logicalScreenScaleFactorY = _platform.getScreenHeight() / _coordSystem.height * (_coordSystem.coordStartY == VerticalAnchor::TOP ? 1.0f : -1.0f);
+        _screenPixelsPerCoordSystemPixelsX = _platform.getScreenWidth() / _coordSystem.width * (_coordSystem.coordStartX == HorizontalAnchor::RIGHT ? -1.0f : 1.0f);
+        _screenPixelsPerCoordSystemPixelsY = _platform.getScreenHeight() / _coordSystem.height * (_coordSystem.coordStartY == VerticalAnchor::TOP ? 1.0f : -1.0f);
         _gameCamera->updateMatrix();
     }
 
@@ -289,11 +291,11 @@ namespace fg {
     }
 
     float Engine::getCoordSystemDPIFactorX() const {
-        return _dpiFactor / _logicalScreenScaleFactorX;
+        return _systemDpiPerCoordSystemDpi / _screenPixelsPerCoordSystemPixelsX;
     }
 
     float Engine::getCoordSystemDPIFactorY() const {
-        return _dpiFactor / _logicalScreenScaleFactorY;
+        return _systemDpiPerCoordSystemDpi / _screenPixelsPerCoordSystemPixelsY;
     }
 }
 

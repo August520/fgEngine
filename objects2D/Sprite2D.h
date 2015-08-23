@@ -30,8 +30,8 @@ namespace fg {
             const resources::Texture2DResourceInterface *getTexture() const override;
             const resources::ClipData *getClipData() const override;
 
-            bool  hitTestPoint(const math::p2d &point) const override;
-            bool  hitTestLine(const math::p2d &point) const override;
+            bool  hitTestPoint(const math::p2d &point, const math::p2d &dpiFactor) const override;
+            bool  hitTestLine(const math::p2d &point, const math::p2d &dpiFactor) const override;
 
             void  updateCoordinates(float frameTimeMs) override;
             bool  isResourcesReady(platform::PlatformInterface &platform, resources::ResourceManagerInterface &resMan) override;

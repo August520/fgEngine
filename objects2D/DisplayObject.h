@@ -57,8 +57,8 @@ namespace fg {
 
             bool  isResolutionDepended() const override;
             bool  isVisible() const override;
-            bool  hitTestPoint(const math::p2d &point) const override;
-            bool  hitTestLine(const math::p2d &point) const override;
+            bool  hitTestPoint(const math::p2d &point, const math::p2d &dpiFactor) const override;
+            bool  hitTestLine(const math::p2d &point, const math::p2d &dpiFactor) const override;
 
             void  updateCoordinates(float frameTimeMs) override;
             bool  isResourcesReady(platform::PlatformInterface &platform, resources::ResourceManagerInterface &resMan) override;
