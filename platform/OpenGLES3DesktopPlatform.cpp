@@ -1,10 +1,13 @@
 
 namespace fg {
     namespace opengl {
-        const unsigned __VERTEX_PARAMS_MAX     = 5;
-        const unsigned __UBO_NAMES_MAX         = 5;
-        const unsigned __VERTEX_COMPONENT_MAX  = 7;
-        const unsigned __BUFFER_MAX            = 4096;
+        const unsigned __VERTEX_PARAMS_MAX        = 4;
+        const unsigned __INSTANCE_PARAMS_MAX      = 2;
+        const unsigned __UBO_NAMES_MAX            = 4;
+        const unsigned __VERTEX_COMPONENT_MAX     = 7;
+        const unsigned __INSTANCE_COMPONENT_START = 8;
+        const unsigned __INSTANCE_COMPONENT_MAX   = 8;
+        const unsigned __BUFFER_MAX               = 4096;
         
         struct VertexParams {
             unsigned size;
@@ -15,15 +18,23 @@ namespace fg {
             {3 * sizeof(float), 1, {3}},
             {5 * sizeof(float), 2, {3, 2}},
             {14 * sizeof(float), 5, {3, 2, 3, 3, 3}},
-            {13 * sizeof(float), 4, {3, 2, 4, 4}},
             {22 * sizeof(float), 7, {3, 2, 3, 3, 3, 4, 4}},
+        };
+
+        struct InstanceParams {
+            unsigned size;
+            unsigned layoutCount;
+            unsigned floatCounts[16];
+        }
+        __instanceParams[__INSTANCE_PARAMS_MAX] = {
+            {20 * sizeof(float), 5, {4, 4, 4, 4, 4}},
+            {8 * sizeof(float), 2, {4, 4}},
         };
 
         const char *__uboNames[__UBO_NAMES_MAX] = {
             "FrameData",
-            "DrawData",
-            "MaterialData",
             "SkinData",
+            "MaterialData",
             "AdditionalData",
         };
 
@@ -35,6 +46,17 @@ namespace fg {
             "tangent",
             "bIndexes",
             "bWeights",
+        };
+
+        const char *__instanceComp[__INSTANCE_COMPONENT_MAX] = {
+            "instance_data0",
+            "instance_data1",
+            "instance_data2",
+            "instance_data3",
+            "instance_data4",
+            "instance_data5",
+            "instance_data6",
+            "instance_data7",
         };
 
         const char *__textureSamplerNames[platform::TEXTURE_UNITS_MAX] = {
@@ -49,8 +71,8 @@ namespace fg {
         };
 
         char   __buffer[__BUFFER_MAX];
-        GLenum __nativeTextureFormat[] = {GL_RGBA, GL_RED, GL_RED};
-        GLenum __nativeTextureInternalFormat[] = {GL_RGBA8, GL_R8, GL_R8};
+        GLenum __nativeTextureFormat[] = {GL_RGBA, GL_RED};
+        GLenum __nativeTextureInternalFormat[] = {GL_RGBA8, GL_R8};
         GLenum __nativeTopology[] = {GL_LINES, GL_LINE_STRIP, GL_TRIANGLES, GL_TRIANGLE_STRIP};
         GLenum __nativeCmpFunc[] = {GL_NEVER, GL_LESS, GL_EQUAL, GL_LEQUAL, GL_GREATER, GL_NOTEQUAL, GL_GEQUAL, GL_ALWAYS};
 
@@ -63,13 +85,14 @@ namespace fg {
             _vao = 0;
             _vbo = 0;
             _usage = usage;
+            _attribsCount = __vertexParams[index].layoutCount;
 
             glGenVertexArrays(1, &_vao);
             glBindVertexArray(_vao);       
             glGenBuffers(1, &_vbo);
             glBindBuffer(GL_ARRAY_BUFFER, _vbo);
             
-            for(unsigned i = 0; i < __vertexParams[index].layoutCount; i++) {
+            for(unsigned i = 0; i < _attribsCount; i++) {
                 glVertexAttribPointer(i, __vertexParams[index].floatCounts[i], GL_FLOAT, GL_FALSE, __vertexParams[index].size, (const GLvoid *)offset);
                 glEnableVertexAttribArray(i);
 
@@ -79,6 +102,7 @@ namespace fg {
             _length = offset * vcount;
             glBufferData(GL_ARRAY_BUFFER, _length, nullptr, _usage);
             glBindVertexArray(0);
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
         }
 
         ES3DesktopVertexBuffer::~ES3DesktopVertexBuffer() {
@@ -91,23 +115,25 @@ namespace fg {
 
         void *ES3DesktopVertexBuffer::lock() {
             glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-            return glMapBufferRange(GL_ARRAY_BUFFER, 0, _length, GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
+            auto ptr = glMapBufferRange(GL_ARRAY_BUFFER, 0, _length, GL_MAP_WRITE_BIT);
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+            return ptr;
         }
 
         void ES3DesktopVertexBuffer::unlock() {
             glBindBuffer(GL_ARRAY_BUFFER, _vbo);
             glUnmapBuffer(GL_ARRAY_BUFFER);
-        }
-
-        void ES3DesktopVertexBuffer::update(void *data) {            
-            glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-            glBufferData(GL_ARRAY_BUFFER, _length, data, _usage);
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
         }
        
         void ES3DesktopVertexBuffer::release() {
             glDeleteBuffers(1, &_vbo);
             glDeleteVertexArrays(1, &_vao);
             delete this;
+        }
+
+        unsigned ES3DesktopVertexBuffer::getLength() const {
+            return _length;
         }
 
         //---
@@ -120,6 +146,7 @@ namespace fg {
             _ibo = 0;
             _vbo = 0;
             _usage = usage;
+            _attribsCount = __vertexParams[index].layoutCount;
 
             glGenVertexArrays(1, &_vao);
             glBindVertexArray(_vao);
@@ -129,7 +156,7 @@ namespace fg {
             glGenBuffers(1, &_ibo);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ibo);
 
-            for(unsigned i = 0; i < __vertexParams[index].layoutCount; i++) {
+            for(unsigned i = 0; i < _attribsCount; i++) {
                 glVertexAttribPointer(i, __vertexParams[index].floatCounts[i], GL_FLOAT, GL_FALSE, __vertexParams[index].size, (const GLvoid *)offset);
                 glEnableVertexAttribArray(i);
 
@@ -142,6 +169,8 @@ namespace fg {
             glBufferData(GL_ARRAY_BUFFER, _vlength, nullptr, _usage);
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, _ilength, nullptr, _usage);
             glBindVertexArray(0);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
         }
 
         ES3DesktopIndexedVertexBuffer::~ES3DesktopIndexedVertexBuffer() {
@@ -154,32 +183,28 @@ namespace fg {
         
         void *ES3DesktopIndexedVertexBuffer::lockVertices() {
             glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-            return glMapBufferRange(GL_ARRAY_BUFFER, 0, _vlength, GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
+            auto ptr = glMapBufferRange(GL_ARRAY_BUFFER, 0, _vlength, GL_MAP_WRITE_BIT);
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+            return ptr;
         }
 
         void *ES3DesktopIndexedVertexBuffer::lockIndices() {
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ibo);
-            return glMapBufferRange(GL_ELEMENT_ARRAY_BUFFER, 0, _ilength, GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
+            auto ptr = glMapBufferRange(GL_ELEMENT_ARRAY_BUFFER, 0, _ilength, GL_MAP_WRITE_BIT);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+            return ptr;
         }
 
         void ES3DesktopIndexedVertexBuffer::unlockVertices() {
             glBindBuffer(GL_ARRAY_BUFFER, _vbo);
             glUnmapBuffer(GL_ARRAY_BUFFER);
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
         }
 
         void ES3DesktopIndexedVertexBuffer::unlockIndices() {
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ibo);
             glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
-        }
-
-        void ES3DesktopIndexedVertexBuffer::updateVertices(void *data) {
-            glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-            glBufferData(GL_ARRAY_BUFFER, _vlength, data, _usage);
-        }
-
-        void ES3DesktopIndexedVertexBuffer::updateIndices(void *data) {
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ibo);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, _ilength, data, _usage);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         }
 
         void ES3DesktopIndexedVertexBuffer::release() {
@@ -187,6 +212,67 @@ namespace fg {
             glDeleteBuffers(1, &_ibo);
             glDeleteVertexArrays(1, &_vao);
             delete this;
+        }
+
+        unsigned ES3DesktopIndexedVertexBuffer::getVertexDataLength() const {
+            return _vlength;
+        }
+
+        unsigned ES3DesktopIndexedVertexBuffer::getIndexDataLength() const {
+            return _ilength;
+        }
+
+        //---
+
+        ES3DesktopInstanceData::ES3DesktopInstanceData(platform::InstanceDataType type, unsigned instanceCount) {
+            unsigned index = unsigned(type);
+            
+            _length = instanceCount * __instanceParams[unsigned(type)].size;
+            _type = type;
+            _vbo = 0;
+            
+            glGenBuffers(1, &_vbo);
+            glBindBuffer(GL_ARRAY_BUFFER, _vbo);
+            glBufferData(GL_ARRAY_BUFFER, _length, nullptr, GL_DYNAMIC_DRAW);
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+        }
+
+        ES3DesktopInstanceData::~ES3DesktopInstanceData() {
+
+        }
+
+        GLuint ES3DesktopInstanceData::getVBO() const {
+            return _vbo;
+        }
+
+        void *ES3DesktopInstanceData::lock() {
+            glBindBuffer(GL_ARRAY_BUFFER, _vbo);
+            auto ptr = glMapBufferRange(GL_ARRAY_BUFFER, 0, _length, GL_MAP_WRITE_BIT);
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+            return ptr;
+        }
+
+        void ES3DesktopInstanceData::unlock() {
+            glBindBuffer(GL_ARRAY_BUFFER, _vbo);
+            glUnmapBuffer(GL_ARRAY_BUFFER);
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+        }
+
+        void ES3DesktopInstanceData::update(const void *data, unsigned instanceCount) {
+            glBindBuffer(GL_ARRAY_BUFFER, _vbo);
+            auto ptr = glMapBufferRange(GL_ARRAY_BUFFER, 0, _length, GL_MAP_WRITE_BIT);
+            memcpy(ptr, data, instanceCount * __instanceParams[unsigned(_type)].size); 
+            glUnmapBuffer(GL_ARRAY_BUFFER);
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+        }
+
+        void ES3DesktopInstanceData::release() {
+            glDeleteBuffers(1, &_vbo);
+            delete this;
+        }
+
+        platform::InstanceDataType ES3DesktopInstanceData::getType() const {
+            return _type;
         }
 
         //---
@@ -265,7 +351,7 @@ namespace fg {
             _self = 0;
             glGenSamplers(1, &_self);
 
-            glSamplerParameteri(_self, GL_TEXTURE_MIN_FILTER, filter == platform::TextureFilter::POINT ? GL_NEAREST : GL_LINEAR);
+            glSamplerParameteri(_self, GL_TEXTURE_MIN_FILTER, filter == platform::TextureFilter::POINT ? GL_NEAREST : GL_LINEAR_MIPMAP_LINEAR);
             glSamplerParameteri(_self, GL_TEXTURE_MAG_FILTER, filter == platform::TextureFilter::POINT ? GL_NEAREST : GL_LINEAR);
             glSamplerParameteri(_self, GL_TEXTURE_WRAP_S, addrMode == platform::TextureAddressMode::CLAMP ? GL_CLAMP_TO_EDGE : GL_REPEAT);
             glSamplerParameteri(_self, GL_TEXTURE_WRAP_T, addrMode == platform::TextureAddressMode::CLAMP ? GL_CLAMP_TO_EDGE : GL_REPEAT);
@@ -331,6 +417,10 @@ namespace fg {
             for(unsigned i = 0; i < __VERTEX_COMPONENT_MAX; i++) {
                 glBindAttribLocation(_program, i, __vertexComp[i]);
             }
+
+            for (unsigned i = 0; i < __INSTANCE_COMPONENT_MAX; i++) {
+                glBindAttribLocation(_program, __INSTANCE_COMPONENT_START + i, __instanceComp[i]);
+            }
             
             glLinkProgram(_program);
             glGetProgramiv(_program, GL_LINK_STATUS, &status);
@@ -356,6 +446,9 @@ namespace fg {
 
                 if(_textureLocations[i] != -1) {
                     glUniform1i(_textureLocations[i], i);
+                }
+                else {
+                    _textureLocations[i] = 0;
                 }
             }
         }
@@ -391,9 +484,10 @@ namespace fg {
             glBindBufferBase(GL_UNIFORM_BUFFER, _index, _ubo);
         }
 
-        void ES3DesktopShaderConstantBuffer::update(const void *data) const {
+        void ES3DesktopShaderConstantBuffer::update(const void *data, unsigned byteWidth) {
             glBindBuffer(GL_UNIFORM_BUFFER, _ubo);
             glBufferData(GL_UNIFORM_BUFFER, _length, data, GL_DYNAMIC_DRAW);
+            glBindBuffer(GL_UNIFORM_BUFFER, 0);
         }
 
         void ES3DesktopShaderConstantBuffer::release() {
@@ -418,14 +512,40 @@ namespace fg {
             _mipCount = mipCount;
 
             glGenTextures(1, &_texture);
-            glBindTexture(GL_TEXTURE_2D, _texture);            
-            glTexStorage2D(GL_TEXTURE_2D, mipCount, __nativeTextureInternalFormat[unsigned(fmt)], originWidth, originHeight);
+            glBindTexture(GL_TEXTURE_2D, _texture);
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexStorage2D(GL_TEXTURE_2D, mipCount, __nativeTextureInternalFormat[unsigned(fmt)], originWidth, originHeight);
+            
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        
+            glBindTexture(GL_TEXTURE_2D, 0);
+        }
+        
+        ES3DesktopTexture2D::ES3DesktopTexture2D(unsigned char *const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount) {
+            _format = fg::platform::TextureFormat::RGBA8;
+            _width = originWidth;
+            _height = originHeight;
+            _mipCount = mipCount;
+
+            glGenTextures(1, &_texture);
+            glBindTexture(GL_TEXTURE_2D, _texture);
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+            glTexStorage2D(GL_TEXTURE_2D, mipCount, __nativeTextureInternalFormat[unsigned(_format)], originWidth, originHeight);
 
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            
+            for(unsigned i = 0; i < mipCount; i++) {
+                unsigned curWidth = originWidth >> i;
+                unsigned curHeight = originHeight >> i;
+
+                glTexSubImage2D(GL_TEXTURE_2D, i, 0, 0, curWidth, curHeight, __nativeTextureFormat[unsigned(_format)], GL_UNSIGNED_BYTE, imgMipsBinaryData[i]);
+            }
+
+            glBindTexture(GL_TEXTURE_2D, 0);
         }
 
         ES3DesktopTexture2D::~ES3DesktopTexture2D() {
@@ -446,17 +566,18 @@ namespace fg {
 
         void ES3DesktopTexture2D::update(unsigned mip, unsigned x, unsigned y, unsigned w, unsigned h, void *src) {
             glBindTexture(GL_TEXTURE_2D, _texture);
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
             glTexSubImage2D(GL_TEXTURE_2D, mip, x, y, w, h, __nativeTextureFormat[unsigned(_format)], GL_UNSIGNED_BYTE, src);
+            glBindTexture(GL_TEXTURE_2D, 0);
         }
         
         void *ES3DesktopTexture2D::getNativeHandle() const {
             return (void *)_texture;
         }
 
-        void ES3DesktopTexture2D::set(platform::TextureSlot slot) {
-            glActiveTexture(GL_TEXTURE0 + unsigned(slot));
-            glBindTexture(GL_TEXTURE_2D, _texture);
-            
+        void ES3DesktopTexture2D::set(platform::TextureSlot slot) {            
+            glActiveTexture(GL_TEXTURE0 + unsigned(slot)); //
+            glBindTexture(GL_TEXTURE_2D, _texture);            
         }
 
         void ES3DesktopTexture2D::release() {
@@ -504,6 +625,7 @@ namespace fg {
             //status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glBindTexture(GL_TEXTURE_2D, 0);
         }
 
         ES3DesktopRenderTarget::~ES3DesktopRenderTarget() {
@@ -691,6 +813,10 @@ namespace fg {
         
         }
 
+        void ES3DesktopPlatform::resize(float width, float height) {
+            glViewport(0, 0, GLsizei(width), GLsizei(height));
+        }
+
         const math::m3x3 &ES3DesktopPlatform::getInputTransform() const {
             static math::m3x3 _idmat;
             return _idmat;
@@ -779,27 +905,34 @@ namespace fg {
             return nullptr;
         }
 
-        platform::VertexBufferInterface *ES3DesktopPlatform::rdCreateVertexBuffer(platform::VertexType vtype, unsigned vcount, bool isDynamic, void *data) {
+        platform::VertexBufferInterface *ES3DesktopPlatform::rdCreateVertexBuffer(platform::VertexType vtype, unsigned vcount, bool isDynamic, const void *data) {
             auto ptr = new ES3DesktopVertexBuffer (vtype, vcount, isDynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
 
             if(data) {
-                ptr->update(data);
+                memcpy(ptr->lock(), data, ptr->getLength());
+                ptr->unlock();
             }
 
             return ptr; 
         }
 
-        platform::IndexedVertexBufferInterface *ES3DesktopPlatform::rdCreateIndexedVertexBuffer(platform::VertexType vtype, unsigned vcount, unsigned ushortIndexCount, bool isDynamic, void *vdata, void *idata) {
+        platform::IndexedVertexBufferInterface *ES3DesktopPlatform::rdCreateIndexedVertexBuffer(platform::VertexType vtype, unsigned vcount, unsigned ushortIndexCount, bool isDynamic, const void *vdata, const void *idata) {
             auto ptr = new ES3DesktopIndexedVertexBuffer(vtype, vcount, ushortIndexCount, isDynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
 
             if(vdata) {
-                ptr->updateVertices(vdata);
+                memcpy(ptr->lockVertices(), vdata, ptr->getVertexDataLength());
+                ptr->unlockVertices();
             }
             if(idata) {
-                ptr->updateIndices(idata);
+                memcpy(ptr->lockIndices(), idata, ptr->getIndexDataLength());
+                ptr->unlockIndices();
             }
 
             return ptr;
+        }
+
+        platform::InstanceDataInterface *ES3DesktopPlatform::rdCreateInstanceData(platform::InstanceDataType type, unsigned instanceCount) {
+            return new ES3DesktopInstanceData (type, instanceCount);
         }
 
         platform::ShaderInterface *ES3DesktopPlatform::rdCreateShader(const byteform &binary) {
@@ -826,8 +959,8 @@ namespace fg {
             return new ES3DesktopShaderConstantBuffer (unsigned(appoint), byteWidth);
         }
 
-        platform::Texture2DInterface *ES3DesktopPlatform::rdCreateTexture2D(unsigned char **imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount) {
-            return nullptr;
+        platform::Texture2DInterface *ES3DesktopPlatform::rdCreateTexture2D(unsigned char *const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount) {
+            return new ES3DesktopTexture2D (imgMipsBinaryData, originWidth, originHeight, mipCount);
         }
 
         platform::Texture2DInterface *ES3DesktopPlatform::rdCreateTexture2D(platform::TextureFormat format, unsigned originWidth, unsigned originHeight, unsigned mipCount) {
@@ -847,7 +980,7 @@ namespace fg {
             glClear(GL_DEPTH_BUFFER_BIT);
         }
 
-        void ES3DesktopPlatform::rdClearCurrentColorBuffer(const platform::color &c) {
+        void ES3DesktopPlatform::rdClearCurrentColorBuffer(const fg::color &c) {
             glClearColor(c.r, c.g, c.b, c.a);
             glClear(GL_COLOR_BUFFER_BIT);
         }
@@ -900,17 +1033,49 @@ namespace fg {
             glScissor(int(topLeft.x), int(topLeft.y), int(bottomRight.x - topLeft.x), int(bottomRight.y - topLeft.y));
         }
         
-        void ES3DesktopPlatform::rdDrawGeometry(const platform::VertexBufferInterface *vbuffer, platform::PrimitiveTopology topology, unsigned vertexCount) {
+        void ES3DesktopPlatform::rdDrawGeometry(const platform::VertexBufferInterface *vbuffer, const platform::InstanceDataInterface *instanceData, platform::PrimitiveTopology topology, unsigned vertexCount, unsigned instanceCount) {
             ES3DesktopVertexBuffer *platfromObject = (ES3DesktopVertexBuffer *)vbuffer;
+            ES3DesktopInstanceData *platformInstanceData = (ES3DesktopInstanceData *)instanceData;
+            InstanceParams &curParams = __instanceParams[unsigned(platformInstanceData->getType())];
+
             glBindVertexArray(platfromObject->getVAO());
+            glBindBuffer(GL_ARRAY_BUFFER, platformInstanceData->getVBO());
+
+            unsigned offset = 0;
+            unsigned startIndex = __INSTANCE_COMPONENT_START;
+
+            for(unsigned i = startIndex; i < startIndex + curParams.layoutCount; i++) {
+                glVertexAttribPointer(i, curParams.floatCounts[i - startIndex], GL_FLOAT, GL_FALSE, 0, (const GLvoid *)offset);
+                glVertexAttribDivisor(i, 1);
+                glEnableVertexAttribArray(i);
+                offset += curParams.floatCounts[i - startIndex] * sizeof(float);
+            }
+
             glDrawArrays(__nativeTopology[unsigned(topology)], 0, vertexCount); //
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
             glBindVertexArray(0);
         }
 
-        void ES3DesktopPlatform::rdDrawIndexedGeometry(const platform::IndexedVertexBufferInterface *ivbuffer, platform::PrimitiveTopology topology, unsigned indexCount) {
+        void ES3DesktopPlatform::rdDrawIndexedGeometry(const platform::IndexedVertexBufferInterface *ivbuffer, const platform::InstanceDataInterface *instanceData, platform::PrimitiveTopology topology, unsigned indexCount, unsigned instanceCount) {
             ES3DesktopIndexedVertexBuffer *platfromObject = (ES3DesktopIndexedVertexBuffer *)ivbuffer;
+            ES3DesktopInstanceData *platformInstanceData = (ES3DesktopInstanceData *)instanceData;
+            InstanceParams &curParams = __instanceParams[unsigned(platformInstanceData->getType())];
+            
             glBindVertexArray(platfromObject->getVAO());
-            glDrawElements(__nativeTopology[unsigned(topology)], indexCount, GL_UNSIGNED_SHORT, nullptr); //
+            glBindBuffer(GL_ARRAY_BUFFER, platformInstanceData->getVBO());
+
+            unsigned offset = 0;
+            unsigned startIndex = __INSTANCE_COMPONENT_START;
+            
+            for (unsigned i = startIndex; i < startIndex + curParams.layoutCount; i++) {
+                glVertexAttribPointer(i, curParams.floatCounts[i - startIndex], GL_FLOAT, GL_FALSE, 0, (const GLvoid *)offset);
+                glVertexAttribDivisor(i, 1);
+                glEnableVertexAttribArray(i);
+                offset += curParams.floatCounts[i - startIndex] * sizeof(float);
+            }
+
+            glDrawElementsInstanced(__nativeTopology[unsigned(topology)], indexCount, GL_UNSIGNED_SHORT, nullptr, instanceCount); //
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
             glBindVertexArray(0);
         }
         
@@ -920,7 +1085,7 @@ namespace fg {
             }
         }
 
-        bool ES3DesktopPlatform::isInited() {
+        bool ES3DesktopPlatform::isInited() const {
             return _eglContext != nullptr;
         }
     }

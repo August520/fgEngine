@@ -28,15 +28,16 @@ namespace fg {
             
             void *lock() override;
             void unlock() override;
-
-            void update(void *data) override;
             void release() override;
 
-        public:
+            unsigned getLength() const;
+
+        protected:
             GLenum    _usage;
             GLuint    _vao;
             GLuint    _vbo;
             unsigned  _length;
+            unsigned  _attribsCount;
         };
 
         //---
@@ -52,10 +53,10 @@ namespace fg {
             void *lockIndices() override;
             void unlockVertices() override;
             void unlockIndices() override;
-
-            void updateVertices(void *data) override;
-            void updateIndices(void *data) override;
             void release() override;
+
+            unsigned getVertexDataLength() const;
+            unsigned getIndexDataLength() const;
 
         protected:
             GLenum    _usage;
@@ -64,6 +65,29 @@ namespace fg {
             GLuint    _ibo;
             unsigned  _ilength;
             unsigned  _vlength;
+            unsigned  _attribsCount;
+        };
+
+        //---
+
+        class ES3DesktopInstanceData : public PlatformObject, public platform::InstanceDataInterface {
+        public:
+            ES3DesktopInstanceData(platform::InstanceDataType type, unsigned instanceCount);
+            ~ES3DesktopInstanceData() override;
+
+            GLuint getVBO() const;
+
+            void *lock() override;
+            void unlock() override;
+            void update(const void *data, unsigned instanceCount) override;
+            void release() override;
+
+            platform::InstanceDataType getType() const;
+
+        protected:
+            GLuint    _vbo;
+            unsigned  _length;
+            platform::InstanceDataType _type;
         };
 
         //---
@@ -149,10 +173,10 @@ namespace fg {
             ~ES3DesktopShaderConstantBuffer() override;
 
             void set();
-            void update(const void *data) const override;
+            void update(const void *data, unsigned byteWidth) override;
             void release() override;
 
-        public:
+        protected:
             GLuint    _ubo;
             unsigned  _length;
             unsigned  _index;
@@ -167,6 +191,7 @@ namespace fg {
         public:
             ES3DesktopTexture2D();
             ES3DesktopTexture2D(platform::TextureFormat fmt, unsigned originWidth, unsigned originHeight, unsigned mipCount);
+            ES3DesktopTexture2D(unsigned char *const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount);
             ~ES3DesktopTexture2D() override;
 
             unsigned getWidth() const override;
@@ -239,6 +264,7 @@ namespace fg {
             unsigned  long long getTimeMs() const override;
 
             void  updateOrientation() override;
+            void  resize(float width, float height) override;
             
             const math::m3x3  &getInputTransform() const override;
 
@@ -248,21 +274,22 @@ namespace fg {
             void  sndSetGlobalVolume(float volume) override;
 
             platform::SoundEmitterInterface          *sndCreateEmitter(unsigned sampleRate, unsigned channels) override;
-            platform::VertexBufferInterface          *rdCreateVertexBuffer(platform::VertexType vtype, unsigned vcount, bool isDynamic, void *data) override;
-            platform::IndexedVertexBufferInterface   *rdCreateIndexedVertexBuffer(platform::VertexType vtype, unsigned vcount, unsigned ushortIndexCount, bool isDynamic, void *vdata, void *idata) override;
+            platform::VertexBufferInterface          *rdCreateVertexBuffer(platform::VertexType vtype, unsigned vcount, bool isDynamic, const void *data) override;
+            platform::IndexedVertexBufferInterface   *rdCreateIndexedVertexBuffer(platform::VertexType vtype, unsigned vcount, unsigned ushortIndexCount, bool isDynamic, const void *vdata, const void *idata) override;
+            platform::InstanceDataInterface          *rdCreateInstanceData(platform::InstanceDataType type, unsigned instanceCount) override;
             platform::ShaderInterface                *rdCreateShader(const byteform &binary) override;
             platform::RasterizerParamsInterface      *rdCreateRasterizerParams(platform::CullMode cull) override;
             platform::BlenderParamsInterface         *rdCreateBlenderParams(const platform::BlendMode blendMode) override;
             platform::DepthParamsInterface           *rdCreateDepthParams(bool depthEnabled, platform::DepthFunc compareFunc, bool depthWriteEnabled) override; 
             platform::SamplerInterface               *rdCreateSampler(platform::TextureFilter filter, platform::TextureAddressMode addrMode) override; 
             platform::ShaderConstantBufferInterface  *rdCreateShaderConstantBuffer(platform::ShaderConstBufferUsing appoint, unsigned byteWidth) override;
-            platform::Texture2DInterface             *rdCreateTexture2D(unsigned char **imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount) override;
+            platform::Texture2DInterface             *rdCreateTexture2D(unsigned char *const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount) override;
             platform::Texture2DInterface             *rdCreateTexture2D(platform::TextureFormat format, unsigned originWidth, unsigned originHeight, unsigned mipCount) override;
             platform::RenderTargetInterface          *rdCreateRenderTarget(unsigned colorTargetCount, unsigned originWidth, unsigned originHeight) override;
             platform::RenderTargetInterface          *rdGetDefaultRenderTarget() override;
 
             void  rdClearCurrentDepthBuffer(float depth = 1.0f) override;
-            void  rdClearCurrentColorBuffer(const platform::color &c = platform::color(0.0f, 0.0f, 0.0f, 0.0f)) override;
+            void  rdClearCurrentColorBuffer(const fg::color &c) override;
 
             void  rdSetRenderTarget(const platform::RenderTargetInterface *rt) override;
             void  rdSetShader(const platform::ShaderInterface *vshader) override;
@@ -274,11 +301,11 @@ namespace fg {
             void  rdSetTexture2D(platform::TextureSlot, const platform::Texture2DInterface *texture) override;
             void  rdSetScissorRect(math::p2d &topLeft, math::p2d &bottomRight) override;
 
-            void  rdDrawGeometry(const platform::VertexBufferInterface *vbuffer, platform::PrimitiveTopology topology, unsigned vertexCount) override;
-            void  rdDrawIndexedGeometry(const platform::IndexedVertexBufferInterface *ivbuffer, platform::PrimitiveTopology topology, unsigned indexCount) override;
+            void  rdDrawGeometry(const platform::VertexBufferInterface *vbuffer, const platform::InstanceDataInterface *instanceData, platform::PrimitiveTopology topology, unsigned vertexCount, unsigned instanceCount) override;
+            void  rdDrawIndexedGeometry(const platform::IndexedVertexBufferInterface *ivbuffer, const platform::InstanceDataInterface *instanceData, platform::PrimitiveTopology topology, unsigned indexCount, unsigned instanceCount) override;
             void  rdPresent() override;
 
-            bool  isInited() override;
+            bool  isInited() const override;
 
         protected:
             const diag::LogInterface  &_log;
