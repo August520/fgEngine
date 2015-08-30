@@ -131,8 +131,6 @@ namespace fg {
             UniversalInstanceData(UniversalPlatform *owner, platform::InstanceDataType type, unsigned instanceCount);
             ~UniversalInstanceData() override;
 
-            void *lock() override;
-            void unlock() override;
             void update(const void *data, unsigned instanceCount) override;
 
             void release() override;
@@ -261,7 +259,6 @@ namespace fg {
 
             void  update(unsigned mip, unsigned x, unsigned y, unsigned w, unsigned h, void *src) override;
             
-            void  *getNativeHandle() const override;
             void  release() override;
             bool  valid() const override;
             void  set(platform::TextureSlot slot);
