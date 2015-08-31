@@ -138,6 +138,9 @@ namespace fg {
         public:
             virtual ~InstanceDataInterface() {}
 
+            virtual void *lock() = 0;
+            virtual void unlock() = 0;
+            
             virtual void update(const void *data, unsigned instanceCount) = 0;
             virtual void release() = 0;
         };

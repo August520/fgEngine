@@ -245,6 +245,19 @@ namespace fg {
             return _vbo;
         }
 
+        void *ES3DesktopInstanceData::lock() {
+            glBindBuffer(GL_ARRAY_BUFFER, _vbo);
+            auto ptr = glMapBufferRange(GL_ARRAY_BUFFER, 0, _length, GL_MAP_WRITE_BIT);
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+            return ptr;
+        }
+
+        void ES3DesktopInstanceData::unlock() {
+            glBindBuffer(GL_ARRAY_BUFFER, _vbo);
+            glUnmapBuffer(GL_ARRAY_BUFFER);
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+        }
+
         void ES3DesktopInstanceData::update(const void *data, unsigned instanceCount) {
             glBindBuffer(GL_ARRAY_BUFFER, _vbo);
             auto ptr = glMapBufferRange(GL_ARRAY_BUFFER, 0, _length, GL_MAP_WRITE_BIT);

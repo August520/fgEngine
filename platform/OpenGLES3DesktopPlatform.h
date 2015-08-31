@@ -77,6 +77,9 @@ namespace fg {
 
             GLuint getVBO() const;
 
+            void *lock() override;
+            void unlock() override;
+            
             void update(const void *data, unsigned instanceCount) override;
             void release() override;
 

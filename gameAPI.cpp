@@ -46,7 +46,11 @@ namespace fg {
     math::p2d GameAPI::getDPIFactor() const {
         return math::p2d(_engine.getCoordSystemDPIFactorX(), _engine.getCoordSystemDPIFactorY());
     }
-
+    
+    template <typename F, typename ...ARGS> void GameAPI::postponedDispatch(F func, ARGS... args) {
+        _engine.postponedDispatch(func, args...);
+    }
+        
     render::CameraInterface &GameAPI::getCamera() {
         return *_engine._gameCamera;
     }

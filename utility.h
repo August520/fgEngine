@@ -153,13 +153,13 @@ struct byteform {
         _offset += sizeof(v);
         return *this;
     }
-    byteform &writeInt64(__int64 v) {
-        *((__int64 *)&_target[_offset]) = v;
+    byteform &writeInt64(int64 v) {
+        *((int64 *)&_target[_offset]) = v;
         _offset += sizeof(v);
         return *this;
     }
-    byteform &writeQword(unsigned __int64 v) {
-        *((unsigned __int64 *)&_target[_offset]) = v;
+    byteform &writeQword(unsigned long long v) {
+        *((unsigned long long *)&_target[_offset]) = v;
         _offset += sizeof(v);
         return *this;
     }
@@ -221,14 +221,14 @@ struct byteform {
         _offset += sizeof(unsigned int);
         return r;
     }
-    __int64 readInt64() const {
-        __int64 r = *((__int64 *)&_target[_offset]);
-        _offset += sizeof(__int64);
+    int64 readInt64() const {
+        int64 r = *((int64 *)&_target[_offset]);
+        _offset += sizeof(int64);
         return r;
     }
-    unsigned __int64 readQword() const {
-        unsigned __int64 r = *((unsigned __int64 *)&_target[_offset]);
-        _offset += sizeof(unsigned __int64);
+    unsigned long long readQword() const {
+        unsigned long long r = *((unsigned long long *)&_target[_offset]);
+        _offset += sizeof(unsigned long long);
         return r;
     }
     float readFloat() const {
@@ -288,14 +288,14 @@ struct byteform {
         _offset += sizeof(unsigned int);
         return *this;
     }
-    const byteform &readInt64(__int64 &out) const {
-        out = *((__int64 *)&_target[_offset]);
-        _offset += sizeof(__int64);
+    const byteform &readInt64(int64 &out) const {
+        out = *((int64 *)&_target[_offset]);
+        _offset += sizeof(int64);
         return *this;
     }
-    const byteform &readQword(unsigned __int64 &out) const {
-        out = *((unsigned __int64 *)&_target[_offset]);
-        _offset += sizeof(unsigned __int64);
+    const byteform &readQword(unsigned long long &out) const {
+        out = *((unsigned long long *)&_target[_offset]);
+        _offset += sizeof(unsigned long long);
         return *this;
     }
     const byteform &readFloat(float &out) const {
