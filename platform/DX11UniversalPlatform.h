@@ -131,6 +131,8 @@ namespace fg {
             UniversalInstanceData(UniversalPlatform *owner, platform::InstanceDataType type, unsigned instanceCount);
             ~UniversalInstanceData() override;
 
+            void *lock() override;
+            void unlock() override;
             void update(const void *data, unsigned instanceCount) override;
 
             void release() override;
