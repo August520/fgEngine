@@ -7,6 +7,7 @@
 #include "lua-5.1.4/lualib.h"
 #include "lua-5.1.4/lauxlib.h"
 
+#include <string.h>
 #include <unordered_map>
 
 enum LUATYPE {
@@ -23,12 +24,20 @@ enum LUATYPE {
 #define LUAOBJ_EPSILON 0.000001
 
 struct byteform;
+struct luaScript;
 
 struct luaObj;
 extern luaObj _luaObj_empty;
 
-struct luaObj{
-    typedef std::unordered_map <luaObj, luaObj*> hashMap;
+
+namespace std {
+    template <> struct hash<luaObj> {
+        std::size_t operator()(const luaObj& t) const;
+    };
+}
+
+struct luaObj {
+    typedef std::unordered_map <luaObj, luaObj *> hashMap;
     LUATYPE _type;
 
     struct _stdtypes{
@@ -94,7 +103,7 @@ struct luaObj{
     }
     luaObj(void *ptr, const char *meta) : _type(LUATYPE_USERDATA), _table(nullptr){
         _std.ptr = ptr;
-        strcpy_s(_std.meta, meta);
+        strcpy(_std.meta, meta);
     }
     luaObj(lua_State *luaState, int idx) : _type(LUATYPE_NULL), _table(nullptr){
         fromLuaStack(luaState, idx);
@@ -139,17 +148,17 @@ struct luaObj{
     luaObj &push(const luaObj &key, luaObj &&value);
     luaObj &push(luaObj &&key, const luaObj &value);
 
-    luaObj &luaObj::get(const luaObj &key) const;                            // return reference to table value or null obj
-    luaObj *luaObj::getptr(const luaObj &key);                               // return pointer to table value or nullptr
+    luaObj &get(const luaObj &key) const;                            // return reference to table value or null obj
+    luaObj *getptr(const luaObj &key);                               // return pointer to table value or nullptr
 
     unsigned int count() const;                                              // size of table
 
-    void luaObj::clear();
+    void clear();
     bool remove(const luaObj &key);
 
     template <typename F> void  foreach(F functor){                          // functor signature: bool functor(const luaObj &key, luaObj &value);
         if(_type == LUATYPE_TABLE){
-            for(auto index = _table->begin(); index != _table->end(); ++index){
+            for(hashMap::iterator index = _table->begin(); index != _table->end(); ++index){
                 if(functor(index->first, *(index->second)) == false) break;
             }
         }
@@ -157,7 +166,7 @@ struct luaObj{
 
     template <typename F> void  foreach(F functor) const{                    // functor signature: bool functor(const luaObj &key, luaObj &value);
         if(_type == LUATYPE_TABLE){
-            for(auto index = _table->begin(); index != _table->end(); ++index){
+            for(hashMap::iterator index = _table->begin(); index != _table->end(); ++index){
                 if(functor(index->first, *(index->second)) == false) break;
             }
         }
@@ -177,7 +186,7 @@ template <typename T> struct lsFunctionBinder {
     template <typename P1, typename P2, typename P3, typename P4> static int lsFunc(lua_State *L){
         luaObj param[4];
         int i, stackTop = lua_gettop(L);
-        int cnt = min(stackTop, 4);
+        int cnt = std::min(stackTop, 4);
         for(i = 0; i<cnt; i++) param[i].fromLuaStack(L, -stackTop + i);
 
         lua_pushvalue(L, lua_upvalueindex(1));
@@ -190,7 +199,7 @@ template <typename T> struct lsFunctionBinder {
     template <typename P1, typename P2, typename P3> static int lsFunc(lua_State *L){
         luaObj param[3];
         int i, stackTop = lua_gettop(L);
-        int cnt = min(stackTop, 3);
+        int cnt = std::min(stackTop, 3);
         for(i = 0; i<cnt; i++) param[i].fromLuaStack(L, -stackTop + i);
 
         lua_pushvalue(L, lua_upvalueindex(1));
@@ -203,7 +212,7 @@ template <typename T> struct lsFunctionBinder {
     template <typename P1, typename P2> static int lsFunc(lua_State *L){
         luaObj param[2];
         int i, stackTop = lua_gettop(L);
-        int cnt = min(stackTop, 2);
+        int cnt = std::min(stackTop, 2);
         for(i = 0; i<cnt; i++) param[i].fromLuaStack(L, -stackTop + i);
 
         lua_pushvalue(L, lua_upvalueindex(1));
@@ -239,7 +248,7 @@ template <> struct lsFunctionBinder <void> {
     template <typename P1, typename P2, typename P3, typename P4> static int lsFunc(lua_State *L){
         luaObj param[4];
         int i, stackTop = lua_gettop(L);
-        int cnt = min(stackTop, 4);
+        int cnt = std::min(stackTop, 4);
         for(i = 0; i<cnt; i++) param[i].fromLuaStack(L, -stackTop + i);
 
         lua_pushvalue(L, lua_upvalueindex(1));
@@ -251,7 +260,7 @@ template <> struct lsFunctionBinder <void> {
     template <typename P1, typename P2, typename P3> static int lsFunc(lua_State *L){
         luaObj param[3];
         int i, stackTop = lua_gettop(L);
-        int cnt = min(stackTop, 3);
+        int cnt = std::min(stackTop, 3);
         for(i = 0; i<cnt; i++) param[i].fromLuaStack(L, -stackTop + i);
 
         lua_pushvalue(L, lua_upvalueindex(1));
@@ -263,7 +272,7 @@ template <> struct lsFunctionBinder <void> {
     template <typename P1, typename P2> static int lsFunc(lua_State *L){
         luaObj param[2];
         int i, stackTop = lua_gettop(L);
-        int cnt = min(stackTop, 2);
+        int cnt = std::min(stackTop, 2);
         for(i = 0; i<cnt; i++) param[i].fromLuaStack(L, -stackTop + i);
 
         lua_pushvalue(L, lua_upvalueindex(1));
@@ -295,7 +304,6 @@ template <> struct lsFunctionBinder <void> {
 
 class lsClassBinder{
 public:
-
     template <class C> static int stdMethod(lua_State *L){
         int stackTop = lua_gettop(L);
         luaObj pObj;
@@ -362,7 +370,7 @@ public:
         }
         template <class C, typename P1, typename P2> static int lsFunc(lua_State *L){
             int i, stackTop = lua_gettop(L);
-            int cnt = min(stackTop - 1, 2);
+            int cnt = std::min(stackTop - 1, 2);
             luaObj pObj, param[2];
 
             pObj.fromLuaStack(L, -stackTop);
@@ -379,7 +387,7 @@ public:
         }
         template <class C, typename P1, typename P2, typename P3> static int lsFunc(lua_State *L){
             int i, stackTop = lua_gettop(L);
-            int cnt = min(stackTop - 1, 3);
+            int cnt = std::min(stackTop - 1, 3);
             luaObj pObj, param[3];
 
             pObj.fromLuaStack(L, -stackTop);
@@ -396,7 +404,7 @@ public:
         }
         template <class C, typename P1, typename P2, typename P3, typename P4> static int lsFunc(lua_State *L){
             int i, stackTop = lua_gettop(L);
-            int cnt = min(stackTop - 1, 4);
+            int cnt = std::min(stackTop - 1, 4);
             luaObj pObj, param[4];
 
             pObj.fromLuaStack(L, -stackTop);
@@ -410,85 +418,6 @@ public:
             luaObj ret((p->*F)(std::move(param[0]), std::move(param[1]), std::move(param[2]), std::move(param[3])));
             ret.toLuaStack(L);
             return 1;
-        }
-    };
-    template <> struct MethodBinder <void> {
-        template <class C> static int lsFunc(lua_State *L){
-            int stackTop = lua_gettop(L);
-            luaObj pObj;
-
-            pObj.fromLuaStack(L, -stackTop);
-            C *p = (C *)(void *)pObj;
-
-            lua_pushvalue(L, lua_upvalueindex(1));
-            void (C::*F)() = *(void (C::**)())lua_touserdata(L, -1);
-
-            lua_settop(L, 0);
-            (p->*F)();
-            return 0;
-        }
-        template <class C, typename P1> static int lsFunc(lua_State *L){
-            int stackTop = lua_gettop(L);
-            luaObj pObj, param;
-
-            pObj.fromLuaStack(L, -stackTop);
-            param.fromLuaStack(L, -stackTop + 1);
-            C *p = (C *)(void *)pObj;
-
-            lua_pushvalue(L, lua_upvalueindex(1));
-            void (C::*F)(P1) = *(void (C::**)(P1))lua_touserdata(L, -1);
-
-            lua_settop(L, 0);
-            (p->*F)(std::move(param));
-            return 0;
-        }
-        template <class C, typename P1, typename P2> static int lsFunc(lua_State *L){
-            int i, stackTop = lua_gettop(L);
-            int cnt = min(stackTop - 1, 2);
-            luaObj pObj, param[2];
-
-            pObj.fromLuaStack(L, -stackTop);
-            for(i = 0; i<cnt; i++) param[i].fromLuaStack(L, -stackTop + i + 1);
-            C *p = (C *)(void *)pObj;
-
-            lua_pushvalue(L, lua_upvalueindex(1));
-            void (C::*F)(P1, P2) = *(void (C::**)(P1, P2))lua_touserdata(L, -1);
-
-            lua_settop(L, 0);
-            (p->*F)(std::move(param[0]), std::move(param[1]));
-            return 0;
-        }
-        template <class C, typename P1, typename P2, typename P3> static int lsFunc(lua_State *L){
-            int i, stackTop = lua_gettop(L);
-            int cnt = min(stackTop - 1, 3);
-            luaObj pObj, param[3];
-
-            pObj.fromLuaStack(L, -stackTop);
-            for(i = 0; i<cnt; i++) param[i].fromLuaStack(L, -stackTop + i + 1);
-            C *p = (C *)(void *)pObj;
-
-            lua_pushvalue(L, lua_upvalueindex(1));
-            void (C::*F)(P1, P2, P3) = *(void (C::**)(P1, P2, P3))lua_touserdata(L, -1);
-
-            lua_settop(L, 0);
-            (p->*F)(std::move(param[0]), std::move(param[1]), std::move(param[2]));
-            return 0;
-        }
-        template <class C, typename P1, typename P2, typename P3, typename P4> static int lsFunc(lua_State *L){
-            int i, stackTop = lua_gettop(L);
-            int cnt = min(stackTop - 1, 4);
-            luaObj pObj, param[4];
-
-            pObj.fromLuaStack(L, -stackTop);
-            for(i = 0; i<cnt; i++) param[i].fromLuaStack(L, -stackTop + i + 1);
-            C *p = (C *)(void *)pObj;
-
-            lua_pushvalue(L, lua_upvalueindex(1));
-            void (C::*F)(P1, P2, P3, P4) = *(void (C::**)(P1, P2, P3, P4))lua_touserdata(L, -1);
-
-            lua_settop(L, 0);
-            (p->*F)(std::move(param[0]), std::move(param[1]), std::move(param[2]), std::move(param[3]));
-            return 0;
         }
     };
 
@@ -505,7 +434,7 @@ public:
     template <class C> static int constructor(lua_State *L){
         char bufMeta[256];
 
-        strcpy_s(bufMeta, lua_tostring(L, lua_upvalueindex(1)));
+        strcpy(bufMeta, lua_tostring(L, lua_upvalueindex(1)));
         C **ppObj = (C **)lua_newuserdata(L, sizeof(C *));
         *ppObj = new C();
 
@@ -520,7 +449,7 @@ public:
     template <class C, typename P1> static int constructor(lua_State *L){
         char bufMeta[256];
         int  stackTop = lua_gettop(L);
-        strcpy_s(bufMeta, lua_tostring(L, lua_upvalueindex(1)));
+        strcpy(bufMeta, lua_tostring(L, lua_upvalueindex(1)));
 
         luaObj param;
         param.fromLuaStack(L, -stackTop);
@@ -539,8 +468,8 @@ public:
     template <class C, typename P1, typename P2> static int constructor(lua_State *L){
         char bufMeta[256];
         int  i, stackTop = lua_gettop(L);
-        int  cnt = min(stackTop, 2);
-        strcpy_s(bufMeta, lua_tostring(L, lua_upvalueindex(1)));
+        int  cnt = std::min(stackTop, 2);
+        strcpy(bufMeta, lua_tostring(L, lua_upvalueindex(1)));
 
         luaObj param[2];
         for(i = 0; i<cnt; i++) param[i].fromLuaStack(L, -stackTop + i);
@@ -559,8 +488,8 @@ public:
     template <class C, typename P1, typename P2, typename P3> static int constructor(lua_State *L){
         char bufMeta[256];
         int  i, stackTop = lua_gettop(L);
-        int  cnt = min(stackTop, 3);
-        strcpy_s(bufMeta, lua_tostring(L, lua_upvalueindex(1)));
+        int  cnt = std::min(stackTop, 3);
+        strcpy(bufMeta, lua_tostring(L, lua_upvalueindex(1)));
 
         luaObj param[3];
         for(i = 0; i<cnt; i++) param[i].fromLuaStack(L, -stackTop + i);
@@ -579,8 +508,8 @@ public:
     template <class C, typename P1, typename P2, typename P3, typename P4> static int constructor(lua_State *L){
         char bufMeta[256];
         int  i, stackTop = lua_gettop(L);
-        int  cnt = min(stackTop, 4);
-        strcpy_s(bufMeta, lua_tostring(L, lua_upvalueindex(1)));
+        int  cnt = std::min(stackTop, 4);
+        strcpy(bufMeta, lua_tostring(L, lua_upvalueindex(1)));
 
         luaObj param[4];
         for(i = 0; i<cnt; i++) param[i].fromLuaStack(L, -stackTop + i);
@@ -598,12 +527,92 @@ public:
     }
 };
 
+template <> struct lsClassBinder::MethodBinder <void> {
+    template <class C> static int lsFunc(lua_State *L){
+        int stackTop = lua_gettop(L);
+        luaObj pObj;
+
+        pObj.fromLuaStack(L, -stackTop);
+        C *p = (C *)(void *)pObj;
+
+        lua_pushvalue(L, lua_upvalueindex(1));
+        void (C::*F)() = *(void (C::**)())lua_touserdata(L, -1);
+
+        lua_settop(L, 0);
+        (p->*F)();
+        return 0;
+    }
+    template <class C, typename P1> static int lsFunc(lua_State *L){
+        int stackTop = lua_gettop(L);
+        luaObj pObj, param;
+
+        pObj.fromLuaStack(L, -stackTop);
+        param.fromLuaStack(L, -stackTop + 1);
+        C *p = (C *)(void *)pObj;
+
+        lua_pushvalue(L, lua_upvalueindex(1));
+        void (C::*F)(P1) = *(void (C::**)(P1))lua_touserdata(L, -1);
+
+        lua_settop(L, 0);
+        (p->*F)(std::move(param));
+        return 0;
+    }
+    template <class C, typename P1, typename P2> static int lsFunc(lua_State *L){
+        int i, stackTop = lua_gettop(L);
+        int cnt = std::min(stackTop - 1, 2);
+        luaObj pObj, param[2];
+
+        pObj.fromLuaStack(L, -stackTop);
+        for(i = 0; i<cnt; i++) param[i].fromLuaStack(L, -stackTop + i + 1);
+        C *p = (C *)(void *)pObj;
+
+        lua_pushvalue(L, lua_upvalueindex(1));
+        void (C::*F)(P1, P2) = *(void (C::**)(P1, P2))lua_touserdata(L, -1);
+
+        lua_settop(L, 0);
+        (p->*F)(std::move(param[0]), std::move(param[1]));
+        return 0;
+    }
+    template <class C, typename P1, typename P2, typename P3> static int lsFunc(lua_State *L){
+        int i, stackTop = lua_gettop(L);
+        int cnt = std::min(stackTop - 1, 3);
+        luaObj pObj, param[3];
+
+        pObj.fromLuaStack(L, -stackTop);
+        for(i = 0; i<cnt; i++) param[i].fromLuaStack(L, -stackTop + i + 1);
+        C *p = (C *)(void *)pObj;
+
+        lua_pushvalue(L, lua_upvalueindex(1));
+        void (C::*F)(P1, P2, P3) = *(void (C::**)(P1, P2, P3))lua_touserdata(L, -1);
+
+        lua_settop(L, 0);
+        (p->*F)(std::move(param[0]), std::move(param[1]), std::move(param[2]));
+        return 0;
+    }
+    template <class C, typename P1, typename P2, typename P3, typename P4> static int lsFunc(lua_State *L){
+        int i, stackTop = lua_gettop(L);
+        int cnt = std::min(stackTop - 1, 4);
+        luaObj pObj, param[4];
+
+        pObj.fromLuaStack(L, -stackTop);
+        for(i = 0; i<cnt; i++) param[i].fromLuaStack(L, -stackTop + i + 1);
+        C *p = (C *)(void *)pObj;
+
+        lua_pushvalue(L, lua_upvalueindex(1));
+        void (C::*F)(P1, P2, P3, P4) = *(void (C::**)(P1, P2, P3, P4))lua_touserdata(L, -1);
+
+        lua_settop(L, 0);
+        (p->*F)(std::move(param[0]), std::move(param[1]), std::move(param[2]), std::move(param[3]));
+        return 0;
+    }
+};
+
 enum LUAMODE {
     LUAMODE_CONFIG = 0,
     LUAMODE_SCRIPT = 1,
 };
 
-struct luaScript{                                                          //--- lua script object
+struct luaScript {                                                           //--- lua script object
     LUAMODE      _mode;
     char         _lastErrorMessage[256];
     unsigned int _userdataSize;
@@ -665,17 +674,6 @@ struct luaScript{                                                          //---
     template <typename T, class C, typename P1, typename P2, typename P3, typename P4> bool regMethod(const char *meta, const char *mName, T(C::*pf)(P1, P2, P3, P4));
 };
 
-namespace std {
-    template <> struct hash<luaObj> {
-        std::size_t operator()(const luaObj& t) const {
-            if (t._type == LUATYPE_STRING) {
-                size_t h = hash_value((const char *)(t._str.sz < LUAOBJ_STRMAX ? t._str.buf : t._str.farptr));
-                return h;
-            }
-            else if (t._type == LUATYPE_NUMBER) return hash_value(t._std.num);
-            else if (t._type == LUATYPE_BOOL) return hash_value(t._std.boolean);
-            else return hash_value(&t);
-        }
-    };
 
-}
+
+

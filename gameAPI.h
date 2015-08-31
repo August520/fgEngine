@@ -19,9 +19,7 @@ namespace fg {
         math::p2d getCoordSystemDimension() const;
         math::p2d getDPIFactor() const;
 
-        template <typename F, typename ...ARGS> void postponedDispatch(F func, ARGS... args) {
-            _engine.postponedDispatch(func, args...);
-        }
+        template <typename F, typename ...ARGS> void postponedDispatch(F func, ARGS... args);
 
         render::CameraInterface &getCamera();
 

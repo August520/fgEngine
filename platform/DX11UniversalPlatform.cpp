@@ -743,10 +743,6 @@ namespace fg {
             _owner->_context->UpdateSubresource(_self, mip, &tbox, src, w * _pixelsz, 0);
         }
 
-        void *UniversalTexture2D::getNativeHandle() const {
-            return _self;
-        }
-
         void UniversalTexture2D::release() {
             if(_view) {
                 _view->Release();

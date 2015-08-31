@@ -1,6 +1,7 @@
 // TODO: 
 //
 
+#include <string.h>
 
 namespace fg {
     class string final {
@@ -24,7 +25,7 @@ namespace fg {
             _rehash();
         }
         template <unsigned short SZ> string(char (&utf8str)[SZ]) : _size(SZ) {
-            _size = unsigned short(strlen(utf8str));
+            _size = (unsigned short)(strlen(utf8str));
             _allocate();
             _initmem(utf8str);
             _rehash();
@@ -201,25 +202,17 @@ namespace fg {
         }
 
     protected:
-        template <unsigned N> struct _NearestPower2 {
-            template <unsigned num, unsigned power> struct _Helper {
-                template <bool> struct IF1 {
-                    static const unsigned value = power;
-                };
-                template <> struct IF1 <false> {
-                    static const unsigned value = _Helper <num, power << 1> ::value;
-                };
-
-                static const unsigned value = IF1 <num <= power> ::value;
-            };
-            template <unsigned num> struct _Helper <num, 262144> {
-                static const unsigned value = 262144;
-            };
-
-            static const unsigned value = _Helper <N, 1> ::value;
+        template <bool, unsigned num, unsigned power> struct _nearest_power_if {
+            static const unsigned value = power;
+        };
+        template <unsigned num, unsigned power> struct _nearest_power_if <false, num, power> {
+            static const unsigned value = _nearest_power_if <num <= power * 2, num, power << 1> ::value;
+        };
+        template <unsigned N> struct _nearest_power {
+            static const unsigned value = _nearest_power_if <false, N, 1> ::value;
         };
 
-        static const unsigned ARRAYMAX = _NearestPower2 <MAXELEMENTS> ::value * 2;
+        static const unsigned ARRAYMAX = _nearest_power <MAXELEMENTS> ::value * 2;
 
         struct Entry {
             unsigned       count;

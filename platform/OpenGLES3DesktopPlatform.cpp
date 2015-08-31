@@ -570,10 +570,6 @@ namespace fg {
             glTexSubImage2D(GL_TEXTURE_2D, mip, x, y, w, h, __nativeTextureFormat[unsigned(_format)], GL_UNSIGNED_BYTE, src);
             glBindTexture(GL_TEXTURE_2D, 0);
         }
-        
-        void *ES3DesktopTexture2D::getNativeHandle() const {
-            return (void *)_texture;
-        }
 
         void ES3DesktopTexture2D::set(platform::TextureSlot slot) {            
             glActiveTexture(GL_TEXTURE0 + unsigned(slot)); //
@@ -1051,7 +1047,7 @@ namespace fg {
                 offset += curParams.floatCounts[i - startIndex] * sizeof(float);
             }
 
-            glDrawArrays(__nativeTopology[unsigned(topology)], 0, vertexCount); //
+            glDrawArraysInstanced(__nativeTopology[unsigned(topology)], 0, vertexCount, instanceCount); //
             glBindBuffer(GL_ARRAY_BUFFER, 0);
             glBindVertexArray(0);
         }

@@ -741,10 +741,6 @@ namespace fg {
             _owner->_context->UpdateSubresource(_self, mip, &tbox, src, w * _pixelsz, 0);
         }
 
-        void *DesktopTexture2D::getNativeHandle() const {
-            return _self;
-        }
-
         void DesktopTexture2D::release() {
             if(_view) {
                 _view->Release();

@@ -140,8 +140,8 @@ namespace fg {
 
             virtual void *lock() = 0;
             virtual void unlock() = 0;
+            
             virtual void update(const void *data, unsigned instanceCount) = 0;
-
             virtual void release() = 0;
         };
 
@@ -188,8 +188,6 @@ namespace fg {
             virtual unsigned getWidth() const = 0;
             virtual unsigned getHeight() const = 0;
             virtual unsigned getMipCount() const = 0;
-
-            virtual void *getNativeHandle() const = 0;
 
             virtual void update(unsigned mip, unsigned x, unsigned y, unsigned w, unsigned h, void *src) = 0;
             virtual void release() = 0;

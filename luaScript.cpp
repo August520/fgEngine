@@ -1,6 +1,17 @@
 ﻿
-    #include "lua-5.1.4/all.c"
+#include "lua-5.1.4/all.c"
 
+namespace std {
+    std::size_t hash<luaObj>::operator()(const luaObj& t) const {
+        if(t._type == LUATYPE_STRING) {
+            size_t h = hash<std::string>()((const char *)(t._str.sz < LUAOBJ_STRMAX ? t._str.buf : t._str.farptr));
+            return h;
+        }
+        else if(t._type == LUATYPE_NUMBER) return hash<double>()(t._std.num);
+        else if(t._type == LUATYPE_BOOL) return hash<bool>()(t._std.boolean);
+        else return hash<const void *>()(&t);
+    }
+}
 
 luaObj _luaObj_empty;
 
