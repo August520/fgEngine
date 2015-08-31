@@ -281,16 +281,6 @@ namespace fg {
 
         }
 
-        void *UniversalInstanceData::lock() {
-            D3D11_MAPPED_SUBRESOURCE mapres = {0};
-            _owner->_context->Map(_instanceBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapres);
-            return mapres.pData;
-        }
-
-        void UniversalInstanceData::unlock() {
-            _owner->_context->Unmap(_instanceBuffer, 0);
-        }
-
         void UniversalInstanceData::update(const void *data, unsigned instanceCount) {
             D3D11_MAPPED_SUBRESOURCE mapres = {0};
             _owner->_context->Map(_instanceBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapres);

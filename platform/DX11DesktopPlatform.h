@@ -121,8 +121,6 @@ namespace fg {
             DesktopInstanceData(DesktopPlatform *owner, platform::InstanceDataType type, unsigned instanceCount);
             ~DesktopInstanceData() override;
 
-            void *lock() override;
-            void unlock() override;
             void update(const void *data, unsigned instanceCount) override;
             
             void release() override;
