@@ -20,7 +20,7 @@ namespace fg {
 
         Resource::~Resource() {
             if(_binaryData != nullptr) {
-                delete[] _binaryData;
+                delete (char *)_binaryData;
             }
         }
         
@@ -67,7 +67,7 @@ namespace fg {
         }
 
         void Resource::freeBinary() {
-            delete _binaryData;
+            delete (char *)_binaryData;
             _binaryData = nullptr;
             _binarySize = 0;
         }

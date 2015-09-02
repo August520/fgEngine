@@ -333,8 +333,8 @@ luaObj::operator const char * () const{
   }
   else if(_type == LUATYPE_NUMBER){
     int dnum = (int)_std.num;
-    if(fabs(_std.num - (float)dnum) > LUAOBJ_EPSILON) _gcvt_s(_str.buf, _std.num, 10);
-    else _itoa_s(dnum, _str.buf, 10);
+    if(fabs(_std.num - (float)dnum) > LUAOBJ_EPSILON) sprintf(_str.buf, "%2.4lf", _std.num); //gcvt(_std.num, 10, _str.buf)
+    else sprintf(_str.buf, "%d", dnum);//itoa(dnum, _str.buf, 10);
     return _str.buf;
   }
   else{
@@ -763,7 +763,8 @@ template <class C, typename F> void lsRegClass(lua_State *_lua, const char *meta
   }
 
   lua_pushstring(_lua, meta);
-  lua_pushcclosure(_lua, func, 1);
+  int (*tf)(lua_State *) = bindFunc;
+  lua_pushcclosure(_lua, tf, 1);
   lua_setglobal(_lua, meta);      
   lua_settop(_lua, stackTop);
 }
@@ -775,12 +776,11 @@ template <typename T, typename F> void lsRegFunction(lua_State *_lua, const char
   lua_setglobal(_lua, funcName);
 }
 
-template <typename F, typename FB> bool lsRegMethod(const char *meta, const char *mName, F fptr, FB bindFunc){
+template <typename F, typename FB> bool lsRegMethod(lua_State *_lua, const char *meta, const char *mName, F fptr, FB bindFunc){
   int stackTop = lua_gettop(_lua); 
   luaL_getmetatable(_lua, meta);
 
-  if(!lua_istable(_lua, -1)){
-    sprintf_s(_lastErrorMessage, "luaScript error: can't find metatable %s", meta);      
+  if(!lua_istable(_lua, -1)){   
     return false;
   }                       
   lua_pushstring(_lua, "__index");
@@ -800,7 +800,7 @@ luaScript::luaScript(){
   _mode = LUAMODE_CONFIG;
   _lua = lua_open();
   if(!_lua){
-    strcpy_s(_lastErrorMessage, "can't create lua VM");
+    strcpy(_lastErrorMessage, "can't create lua VM");
     return;
   }
 
@@ -825,7 +825,7 @@ bool luaScript::execLuaChunk(const char *icode, unsigned int isize, LUAMODE mode
 
   if(!result) result |= lua_pcall(_lua, 0, LUA_MULTRET, 0);
   if(result){
-    strcpy_s(_lastErrorMessage, lua_tostring(_lua, -1));
+    strcpy(_lastErrorMessage, lua_tostring(_lua, -1));
     lua_close(_lua);
     _lua = 0;
     return false;
@@ -840,7 +840,7 @@ bool luaScript::reset(){
   _lua = lua_open();
 
   if(!_lua){
-    strcpy_s(_lastErrorMessage, "can't create lua VM");
+    strcpy(_lastErrorMessage, "can't create lua VM");
     return false;
   }                            
 
@@ -874,7 +874,7 @@ void luaScript::setGlobalVar(const luaObj &key, const luaObj &ivalue) const{
 
 void luaScript::regStdFunction(const char *funcName, int (*func)(luaScript *)){        
   lua_pushlightuserdata(_lua, this);
-  lua_pushlightuserdata(_lua, func);
+  lua_pushlightuserdata(_lua, (void *)func);
   lua_pushcclosure(_lua, lsNativeFunction, 2);
   lua_setglobal(_lua, funcName);
 } 
@@ -885,7 +885,7 @@ int luaScript::callLuaFunc(const char *funcName){
   if(lua_isnoneornil(_lua, -1)) return 0;
 
   if(lua_pcall(_lua, 0, -1, 0)){
-    strcpy_s(_lastErrorMessage, lua_tostring(_lua, -1));
+    strcpy(_lastErrorMessage, lua_tostring(_lua, -1));
     return -1;    
   }
   else _lastErrorMessage[0] = 0;
@@ -900,7 +900,7 @@ int luaScript::callLuaFunc(const char *funcName, const luaObj &p0){
   p0.toLuaStack(_lua);
 
   if(lua_pcall(_lua, 1, -1, 0)){
-    strcpy_s(_lastErrorMessage, lua_tostring(_lua, -1));
+    strcpy(_lastErrorMessage, lua_tostring(_lua, -1));
     return -1;    
   }
   else _lastErrorMessage[0] = 0;
@@ -916,7 +916,7 @@ int luaScript::callLuaFunc(const char *funcName, const luaObj &p0, const luaObj 
   p1.toLuaStack(_lua);
 
   if(lua_pcall(_lua, 2, -1, 0)){
-    strcpy_s(_lastErrorMessage, lua_tostring(_lua, -1));
+    strcpy(_lastErrorMessage, lua_tostring(_lua, -1));
     return -1;    
   }
   else _lastErrorMessage[0] = 0;
@@ -933,7 +933,7 @@ int luaScript::callLuaFunc(const char *funcName, const luaObj &p0, const luaObj 
   p2.toLuaStack(_lua);
 
   if(lua_pcall(_lua, 3, -1, 0)){
-    strcpy_s(_lastErrorMessage, lua_tostring(_lua, -1));
+    strcpy(_lastErrorMessage, lua_tostring(_lua, -1));
     return -1;    
   }
   else _lastErrorMessage[0] = 0;
@@ -951,7 +951,7 @@ int luaScript::callLuaFunc(const char *funcName, const luaObj &p0, const luaObj 
   p3.toLuaStack(_lua);
 
   if(lua_pcall(_lua, 4, -1, 0)){
-    strcpy_s(_lastErrorMessage, lua_tostring(_lua, -1));
+    strcpy(_lastErrorMessage, lua_tostring(_lua, -1));
     return -1;    
   }
   else _lastErrorMessage[0] = 0;
@@ -1054,7 +1054,7 @@ template <class C> bool luaScript::regStdMethod(const char *meta, const char *mN
   luaL_getmetatable(_lua, meta);
 
   if(!lua_istable(_lua, -1)){
-    sprintf_s(_lastErrorMessage, "luaScript error: can't find metatable %s", meta);      
+    sprintf(_lastErrorMessage, "luaScript error: can't find metatable %s", meta);      
     return false;
   }                       
   lua_pushstring(_lua, "__index");
@@ -1096,37 +1096,37 @@ template <typename T> void luaScript::regFunction(const char *funcName, T (*f)()
 }
 
 template <typename T, typename P1> void luaScript::regFunction(const char *funcName, T (*f)(P1)){
-  lsRegFunction(_lua, funcName, f, lsFunctionBinder<T>::lsFunc <P1>);
+  lsRegFunction(_lua, funcName, f, lsFunctionBinder<T>::template lsFunc <P1>);
 }
 
 template <typename T, typename P1, typename P2> void luaScript::regFunction(const char *funcName, T (*f)(P1, P2)){
-  lsRegFunction(_lua, funcName, f, lsFunctionBinder<T>::lsFunc <P1, P2>);
+  lsRegFunction(_lua, funcName, f, lsFunctionBinder<T>::template lsFunc <P1, P2>);
 }
 
 template <typename T, typename P1, typename P2, typename P3> void luaScript::regFunction(const char *funcName, T (*f)(P1, P2, P3)){
-  lsRegFunction(_lua, funcName, f, lsFunctionBinder<T>::lsFunc <P1, P2, P3>);
+  lsRegFunction(_lua, funcName, f, lsFunctionBinder<T>::template lsFunc <P1, P2, P3>);
 }
 
 template <typename T, typename P1, typename P2, typename P3, typename P4> void luaScript::regFunction(const char *funcName, T (*f)(P1, P2, P3, P4)){
-  lsRegFunction(_lua, funcName, f, lsFunctionBinder<T>::lsFunc <P1, P2, P3, P4>);
+  lsRegFunction(_lua, funcName, f, lsFunctionBinder<T>::template lsFunc <P1, P2, P3, P4>);
 }
 
-template <typename T, class C> bool regMethod(const char *meta, const char *mName, T (C::*pf)()){
-  return lsRegMethod(meta, mName, pf, lsClassBinder::MethodBinder <T>::lsFunc <C>);
+template <typename T, class C> bool luaScript::regMethod(const char *meta, const char *mName, T (C::*pf)()){
+  return lsRegMethod(_lua, meta, mName, pf, lsClassBinder::MethodBinder <T>::template lsFunc <C>);
 }  
 
-template <typename T, class C, typename P1> bool regMethod(const char *meta, const char *mName, T (C::*pf)(P1)){
-  return lsRegMethod(meta, mName, pf, lsClassBinder::MethodBinder <T>::lsFunc <C, P1>);
+template <typename T, class C, typename P1> bool luaScript::regMethod(const char *meta, const char *mName, T (C::*pf)(P1)){
+  return lsRegMethod(_lua, meta, mName, pf, lsClassBinder::MethodBinder <T>::template lsFunc <C, P1>);
 }
 
-template <typename T, class C, typename P1, typename P2> bool regMethod(const char *meta, const char *mName, T (C::*pf)(P1, P2)){
-  return lsRegMethod(meta, mName, pf, lsClassBinder::MethodBinder <T>::lsFunc <C, P1, P2>);
+template <typename T, class C, typename P1, typename P2> bool luaScript::regMethod(const char *meta, const char *mName, T (C::*pf)(P1, P2)){
+  return lsRegMethod(_lua, meta, mName, pf, lsClassBinder::MethodBinder <T>::template lsFunc <C, P1, P2>);
 }
 
-template <typename T, class C, typename P1, typename P2, typename P3> bool regMethod(const char *meta, const char *mName, T (C::*pf)(P1, P2, P3)){  
-  return lsRegMethod(meta, mName, pf, lsClassBinder::MethodBinder <T>::lsFunc <C, P1, P2, P3>);
+template <typename T, class C, typename P1, typename P2, typename P3> bool luaScript::regMethod(const char *meta, const char *mName, T (C::*pf)(P1, P2, P3)){
+  return lsRegMethod(_lua, meta, mName, pf, lsClassBinder::MethodBinder <T>::template lsFunc <C, P1, P2, P3>);
 }
 
-template <typename T, class C, typename P1, typename P2, typename P3, typename P4> bool regMethod(const char *meta, const char *mName, T (C::*pf)(P1, P2, P3, P4)){
-  return lsRegMethod(meta, mName, pf, lsClassBinder::MethodBinder <T>::lsFunc <C, P1, P2, P3, P4>);
+template <typename T, class C, typename P1, typename P2, typename P3, typename P4> bool luaScript::regMethod(const char *meta, const char *mName, T (C::*pf)(P1, P2, P3, P4)){
+  return lsRegMethod(_lua, meta, mName, pf, lsClassBinder::MethodBinder <T>::template lsFunc <C, P1, P2, P3, P4>);
 }

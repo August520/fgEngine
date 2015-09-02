@@ -10,7 +10,7 @@ namespace fg {
         }
 
         void SoundResource::unloaded() {
-            delete[] _binaryData;
+            delete (char *)_binaryData;
             _binaryData = nullptr;
             _binarySize = 0;
         }

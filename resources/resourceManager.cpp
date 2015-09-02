@@ -84,7 +84,7 @@ namespace fg {
             }
 
             if(_resListFutures.size()) {
-                if(_resListFutures.front().future._Is_ready()) { //
+                if(_resListFutures.front().future.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) { //
                     std::string *result = _resListFutures.front().future.get();
                     
                     _resListReadyCallback(result->c_str(), _resListFutures.front().isUnloadable);
@@ -153,7 +153,7 @@ namespace fg {
                                 curResource->setSavingState(ResourceSavingState::INVALID);
                             }
 
-                            delete binaryData;
+                            delete (char *)binaryData;
                             return curResource;
                         }));
                     }
@@ -161,7 +161,7 @@ namespace fg {
             }
 
             if(_resourceLoadingFutures.size()) {
-                if(_resourceLoadingFutures.front()._Is_ready()) { //
+                if(_resourceLoadingFutures.front().wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) { //
                     ManagedResourceInterface *curResource = _resourceLoadingFutures.front().get();
                     _resourceLoadingFutures.pop_front();
 
@@ -190,7 +190,7 @@ namespace fg {
             }
 
             if(_resourceSavingFutures.size()) {
-                if(_resourceSavingFutures.front()._Is_ready()) { //
+                if(_resourceSavingFutures.front().wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) { //
                     ManagedResourceInterface *curResource = _resourceSavingFutures.front().get();
                     _resourceSavingFutures.pop_front();
 

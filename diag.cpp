@@ -15,7 +15,7 @@ namespace fg {
 
             va_list ap;
             va_start(ap, msg);
-            vsprintf_s(_text, msg, ap);
+            vsprintf(_text, msg, ap);
             va_end(ap);
 
             printf("[Error] %02d:%02d:%02d:%03d > %s\n", localTime.tm_hour, localTime.tm_min, localTime.tm_sec, int(ms.count() % 1000), _text);
@@ -29,7 +29,7 @@ namespace fg {
 
             va_list ap;
             va_start(ap, msg);
-            vsprintf_s(_text, msg, ap);
+            vsprintf(_text, msg, ap);
             va_end(ap);
 
             printf("[Warning] %02d:%02d:%02d:%03d > %s\n", localTime.tm_hour, localTime.tm_min, localTime.tm_sec, int(ms.count() % 1000), _text);
@@ -43,7 +43,7 @@ namespace fg {
 
             va_list ap;
             va_start(ap, msg);
-            vsprintf_s(_text, msg, ap);
+            vsprintf(_text, msg, ap);
             va_end(ap);
 
             printf("[Info] %02d:%02d:%02d:%03d > %s\n", localTime.tm_hour, localTime.tm_min, localTime.tm_sec, int(ms.count() % 1000), _text);

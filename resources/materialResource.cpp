@@ -38,7 +38,7 @@ namespace fg {
                 }
             }
             else{
-                log.msgError("MaterialResource::loaded %s - %s", _loadPath, cfgSource.getLastError());
+                log.msgError("MaterialResource::loaded %s - %s", _loadPath.data(), cfgSource.getLastError());
                 _loadingState = ResourceLoadingState::INVALID;
             }
         }

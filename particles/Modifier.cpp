@@ -73,7 +73,7 @@ namespace fg {
         }
 
         void Modifier::setFunction(ModifierFunction func) {
-            static float (Modifier::*_modifierEvaluateFunctions[ModifierFunction::_count])(float) const = {
+            static float (Modifier::*_modifierEvaluateFunctions[unsigned(ModifierFunction::_count)])(float) const = {
                 &Modifier::_getConstValue,
                 &Modifier::_getLineUpValue,
                 &Modifier::_getLineDownValue,

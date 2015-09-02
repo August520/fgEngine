@@ -48,7 +48,7 @@ namespace fg {
                     _mipsCount = 1;
                 }
                 else {
-                    log.msgError("ResTexture::_loadedCallback %s bad format", _loadPath);
+                    log.msgError("ResTexture::_loadedCallback %s bad format", _loadPath.data());
                     _loadingState = ResourceLoadingState::INVALID;
                 }
             }

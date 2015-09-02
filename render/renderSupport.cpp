@@ -92,16 +92,16 @@ namespace fg {
             _simpleShader = nullptr;
             _ifaceShader = nullptr;
 
-            _defInstanceData->release();
-            _defDisplayObjectInstanceData->release();
-            _defRasterizerParams->release();
-            _defBlenderParams->release();
-            _defDepthParams->release();
-            _defLinearSampler->release();
-            _defPointSampler->release();
-            _oddVertexBufferSimple->release();
-            _oddVertexBufferTextured->release();
-            _oddVertexBufferNormal->release();
+            if(_defInstanceData) _defInstanceData->release();
+            if(_defDisplayObjectInstanceData) _defDisplayObjectInstanceData->release();
+            if(_defRasterizerParams) _defRasterizerParams->release();
+            if(_defBlenderParams) _defBlenderParams->release();
+            if(_defDepthParams) _defDepthParams->release();
+            if(_defLinearSampler) _defLinearSampler->release();
+            if(_defPointSampler) _defPointSampler->release();
+            if(_oddVertexBufferSimple) _oddVertexBufferSimple->release();
+            if(_oddVertexBufferTextured) _oddVertexBufferTextured->release();
+            if(_oddVertexBufferNormal) _oddVertexBufferNormal->release();
             
             _defInstanceData = nullptr;
             _defDisplayObjectInstanceData = nullptr;

@@ -43,7 +43,7 @@ namespace fg {
 
         void FontResource::loaded(const diag::LogInterface &log) {
             if(!stbtt_InitFont(&_self, (unsigned char *)_binaryData, 0)){
-                log.msgError("ResFont::loaded %s bad format", _loadPath);
+                log.msgError("ResFont::loaded %s bad format", _loadPath.data());
                 _loadingState = ResourceLoadingState::INVALID;
             }
         }
@@ -61,7 +61,7 @@ namespace fg {
 
             _fontSizes.clear();
 
-            delete[] _binaryData;
+            delete (char *)_binaryData;
             _binaryData = nullptr;
             _binarySize = 0;
         }

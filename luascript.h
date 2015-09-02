@@ -1,14 +1,15 @@
 ﻿// todo: luaObj optimize -> dynamic, lua namespace, variadic templates
 
+#include <stdlib.h>
+#include <string.h>
+#include <unordered_map>
+
 #pragma once
 
 #include "lua-5.1.4/lua.h"
 #include "lua-5.1.4/lstate.h"
 #include "lua-5.1.4/lualib.h"
 #include "lua-5.1.4/lauxlib.h"
-
-#include <string.h>
-#include <unordered_map>
 
 enum LUATYPE {
     LUATYPE_NULL = LUA_TNIL,

@@ -55,7 +55,7 @@ namespace fg {
     }
     
     string::string(const char *&utf8str) {
-        _size = unsigned short(strlen(utf8str));
+        _size = (unsigned short)(strlen(utf8str));
         _allocate();
         _initmem(utf8str);
         _rehash();
@@ -88,7 +88,7 @@ namespace fg {
 
     string &string::operator =(const char *utf8str) {
         _free();        
-        _size = unsigned short(strlen(utf8str));        
+        _size = (unsigned short)(strlen(utf8str));        
         _allocate();
         _initmem(utf8str);
         _rehash();

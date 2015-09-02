@@ -15,7 +15,9 @@ namespace fg {
             const char *getRenderResourceList() const override;
 
         protected:
-            
+            float _frameCount = 0.0f;
+            float _countedTime = 0.0f;
+            float _fps = 0.0f;            
         };
     }
 }

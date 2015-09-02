@@ -2,6 +2,19 @@
 #include <vector>
 #include <unordered_map>
 
+namespace std {
+    template <> struct hash<fg::particles::EmitterParamType> {
+        size_t operator()(fg::particles::EmitterParamType value) const {
+            return hash<size_t>()(size_t(value));
+        }
+    };
+    template <> struct hash<fg::particles::ParticleParamType> {
+        size_t operator()(fg::particles::ParticleParamType value) const {
+            return hash<size_t>()(size_t(value));
+        }
+    };
+}
+
 namespace fg {
     namespace particles {
         static const bool FG_PARTICLE_INTERPOLATION = true;
@@ -41,7 +54,7 @@ namespace fg {
             float      _frameTime;
             unsigned   _frameCount;
             
-            float      _dynamicParams[ParticleParamType::_count];
+            float      _dynamicParams[unsigned(ParticleParamType::_count)];
             float      _angle;
 
             math::p3d  _startPos;
@@ -114,7 +127,7 @@ namespace fg {
             float  _nrmLifePeriodMs;                 // cycle period multiple of min born period
             float  _lifeTimeMs;                      // active time of emitter (cycle time)
             float  _frameTimeMs;
-            float  _dynamicParams[EmitterParamType::_count];
+            float  _dynamicParams[unsigned(EmitterParamType::_count)];
 
             float  _curTimeMs;                       // current global time
             float  _curNrmTimeMs;                    // current global time normalized to '_nrmLifePeriodMs' range

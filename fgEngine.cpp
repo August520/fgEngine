@@ -183,14 +183,19 @@ namespace fg {
                 _updateHandler(frameTimeMs);
             }
 
-            _render->update(frameTimeMs, render::RenderAPI(_platform, _resMan, _renderSupport, *_gameCamera));
+            render::RenderAPI &&api = render::RenderAPI(_platform, _resMan, _renderSupport, *_gameCamera);
+            _render->update(frameTimeMs, api);
+            
             _renderSupport.getCamera().set(*_gameCamera);
-
             _renderSupport.frameInit3D(frameTimeMs);            
-            _render->draw3D(object3d::RenderObjectIterator(_root3D, _platform, _resMan, frameTimeMs), render::RenderAPI(_platform, _resMan, _renderSupport, *_gameCamera));
+            
+            object3d::RenderObjectIterator &&iterator3D = object3d::RenderObjectIterator(_root3D, _platform, _resMan, frameTimeMs);
+            _render->draw3D(iterator3D, api);
             
             _renderSupport.frameInit2D(frameTimeMs, _screenPixelsPerCoordSystemPixelsX, _screenPixelsPerCoordSystemPixelsY, _systemDpiPerCoordSystemDpi);
-            _render->draw2D(object2d::DisplayObjectIterator(_root2D, _platform, _resMan, frameTimeMs), render::RenderAPI(_platform, _resMan, _renderSupport, *_gameCamera));
+            
+            object2d::DisplayObjectIterator &&iterator2D = object2d::DisplayObjectIterator(_root2D, _platform, _resMan, frameTimeMs);
+            _render->draw2D(iterator2D, api);
         }
 
         _platform.rdPresent();
@@ -211,7 +216,9 @@ namespace fg {
     void Engine::_binaryResourcesLoadedCallback() {
         _log.msgInfo("binary resources loaded"); 
         _renderSupport.init(_platform, _resMan);
-        _render->init(render::RenderAPI(_platform, _resMan, _renderSupport, *_gameCamera));
+        
+        render::RenderAPI &&api = render::RenderAPI(_platform, _resMan, _renderSupport, *_gameCamera);
+        _render->init(api);
 
         if(_initHandler.isBinded()) {
             _initHandler();

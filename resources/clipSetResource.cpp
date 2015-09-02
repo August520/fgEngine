@@ -59,7 +59,7 @@ namespace fg {
                 });
             }
             else{
-                log.msgError("ClipSetResource::loaded %s / %s", _loadPath, src.getLastError());
+                log.msgError("ClipSetResource::loaded %s / %s", _loadPath.data(), src.getLastError());
                 _loadingState = ResourceLoadingState::INVALID;
             }
         }

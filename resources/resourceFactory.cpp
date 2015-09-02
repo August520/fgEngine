@@ -4,7 +4,7 @@
 namespace fg {
     namespace resources {
         template <typename IFACE> struct ResourceInterfaceTable {
-            typedef void type;
+            typedef void *type;
         };
         template <> struct ResourceInterfaceTable <TextResourceInterface> {
             typedef TextResource type;
@@ -89,7 +89,7 @@ namespace fg {
         }
 
         template <typename DOWNTYPE> DOWNTYPE *ResourcePtr::_to() const {
-            return static_cast <DOWNTYPE *> (static_cast <ResourceInterfaceTable <std::remove_const <DOWNTYPE>::type> ::type *> (_resource));
+            return static_cast <DOWNTYPE *> (static_cast <typename ResourceInterfaceTable <typename std::remove_const <DOWNTYPE>::type> ::type *> (_resource));
         }
 
         template TextResourceInterface *ResourcePtr::_to <TextResourceInterface>() const;
