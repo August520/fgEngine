@@ -23,11 +23,10 @@ namespace fg {
                         
                         const luaObj &textureBinds = params.get("textureBinds");
                         if(textureBinds.type() == LUATYPE_TABLE){
-                            textureBinds.foreach([curParams](const luaObj &varName, const luaObj &textureName){
-                                curParams->textureBinds[curParams->textureBindCount] = (const char *)textureName;
+                            for(unsigned i = 0; i < textureBinds.count(); i++) {
+                                curParams->textureBinds[curParams->textureBindCount] = (const char *)textureBinds.get(i + 1);
                                 curParams->textureBindCount++;
-                                return true;
-                            });
+                            }
                         }
 
                         //curParams->userData = params.get("userData");
