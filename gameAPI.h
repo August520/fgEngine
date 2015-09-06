@@ -2,8 +2,6 @@
 //TODO: getting screen width/height
 
 namespace fg {
-    class Engine;
-
     struct GameAPI {        
         resources::ResourceManagerInterface  &resources;
         input::InputManagerInterface         &input;
@@ -32,4 +30,8 @@ namespace fg {
     protected:
         Engine &_engine;
     };
+
+    template <typename F, typename ...ARGS> void GameAPI::postponedDispatch(F func, ARGS... args) {
+        _engine.postponedDispatch(func, args...);
+    }
 }

@@ -39,7 +39,6 @@ typedef long long int64;
 #include "input/InputManager.h"
 
 #include "Iterators.h"
-#include "GameAPI.h"
 
 #ifdef FG_RESOURCE_LONGNAME
 #define FG_SIMPLE_SHADER "bin/simpleModel.shader"
@@ -148,3 +147,5 @@ namespace fg {
         Engine &operator =(const Engine &);
     };
 }
+
+#include "GameAPI.h"
