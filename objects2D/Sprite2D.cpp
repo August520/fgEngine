@@ -25,6 +25,7 @@ namespace fg {
             _frameCount = 1;
             _frameCounter = 0;
             _timeCounter = 0;
+            _curFrame = 0;
             _cycleCallback.set(nullptr);
         }
 
@@ -35,6 +36,7 @@ namespace fg {
             _clip = nullptr;
             _frameCounter = 0;
             _timeCounter = 0;
+            _curFrame = 0;
             _frameCount = 1;
             _cycleCallback.set(nullptr);
         }
@@ -157,8 +159,8 @@ namespace fg {
             return false;
         }
 
-        void Sprite2D::updateCoordinates(float frameTimeMs) {
-            DisplayObject::updateCoordinates(frameTimeMs);
+        void Sprite2D::updateCoordinates(float frameTimeMs, resources::ResourceManagerInterface &resMan) {
+            DisplayObject::updateCoordinates(frameTimeMs, resMan);
 
             if(_stopped == false && _clip) {
                 _timeCounter += unsigned(frameTimeMs);

@@ -11,29 +11,38 @@ namespace fg {
             void getMatrix(const fg::string &boneName, math::m4x4 &oMatrix);
             void updateAnimation(float frameTimeMs);
             void updateResources(resources::ResourceManagerInterface &resMan);
-            void playAnim(const fg::string &animResourcePath, float animLenMs, float animOffsetMs, float smoothTimeMs, AnimationLayer ilayer);
+            void playAnim(const fg::string &animResourcePath, float animLenMs, float animOffsetMs, float smoothTimeMs, bool cycled, AnimationLayer ilayer);
+            void setAnimFinishCallback(const callback <void()> &cb, AnimationLayer ilayer);
+            
+            bool isDirtyResources() const;
 
             unsigned getActiveLayersCount() const;
+            float    getAnimKoeff(AnimationLayer ilayer) const;
 
         private:
             struct Layer {
-                const resources::AnimationResourceInterface *curAnimation;
-                const resources::AnimationResourceInterface *nextAnimation;
+                const resources::AnimationResourceInterface *curAnimation = nullptr;
+                const resources::AnimationResourceInterface *nextAnimation = nullptr;
             
                 fg::string  curAnimResourcePath;
                 fg::string  nextAnimResourcePath;
                 
-                float curAnimTimeLen;
-                float curAnimTimePass;
-                float nextAnimTimeLen;
-                float nextAnimTimePass;
-                float smoothTime;
+                float curAnimTimeLen = 0.0f;
+                float curAnimTimePass = 0.0f;
+                bool  curAnimCycled = true;
+                float nextAnimTimeLen = 0.0f;
+                float nextAnimTimePass = 0.0f;
+                bool  nextAnimCycled = true;
+                float smoothTime = 0.0f;
+                
+                callback  <void()> animFinishCallback;
 
-                Layer() : curAnimation(nullptr), nextAnimation(nullptr), curAnimTimeLen(0), curAnimTimePass(0), nextAnimTimeLen(0), nextAnimTimePass(0), smoothTime(0) {}
+                Layer() {}
             };
 
             Layer     _layers[FG_ANIM_LAYERS_MAX];
-            unsigned  _activeLayers;
+            unsigned  _activeLayers = 0;
+            bool      _isDirty = false;
             
             Animator(const Animator &);
             Animator &operator =(const Animator &);
@@ -100,11 +109,12 @@ namespace fg {
 
             bool  isMeshVisible(const fg::string &meshName) override;
 
-            void  playAnim(const fg::string &animResourcePath, float animLenMs, float animOffsetMs, float smoothTimeMs, AnimationLayer layer = AnimationLayer::LAYER0) override;
+            void  playAnim(const fg::string &animResourcePath, float animLenMs, float animOffsetMs, float smoothTimeMs, bool cycled, AnimationLayer layer = AnimationLayer::LAYER0) override;
+            void  setAnimFinishCallback(const callback <void()> &cb, AnimationLayer layer = AnimationLayer::LAYER0) override;
             void  setAnimLayerKoeff(AnimationLayer layer, float koeff) const override;
             float getAnimLayerKoeff(AnimationLayer layer) const override;
 
-            void  updateCoordinates(float frameTimeMs) override;
+            void  updateCoordinates(float frameTimeMs, resources::ResourceManagerInterface &resMan) override;
             bool  isResourcesReady(platform::PlatformInterface &platform, resources::ResourceManagerInterface &resMan) override;
 
             unsigned  getComponentCount() const override;

@@ -24,7 +24,7 @@ namespace fg {
 
         bool DisplayObjectIterator::next() {
             while(_current = _current->getNext()) {
-                _current->updateCoordinates(_frameTimeMs);
+                _current->updateCoordinates(_frameTimeMs, _resMan);
 
                 if(_current->isResourcesReady(_platform, _resMan)) {
                     return true;

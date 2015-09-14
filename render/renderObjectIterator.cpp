@@ -40,7 +40,7 @@ namespace fg {
 
             while(_current = _current->getNext()) {                
                 if(_current->isResourcesReady(_platform, _resMan)) {
-                    _current->updateCoordinates(_frameTimeMs);
+                    _current->updateCoordinates(_frameTimeMs, _resMan);
                     _componentIndex = 0;
                     _componentCount = _current->getComponentCount();
 
@@ -53,7 +53,7 @@ namespace fg {
                     }
                 }
                 else {
-                    _current->updateCoordinates(_frameTimeMs);
+                    _current->updateCoordinates(_frameTimeMs, _resMan);
                 }
             }
 

@@ -60,7 +60,7 @@ namespace fg {
             bool  hitTestPoint(const math::p2d &point, const math::p2d &dpiFactor) const override;
             bool  hitTestLine(const math::p2d &point, const math::p2d &dpiFactor) const override;
 
-            void  updateCoordinates(float frameTimeMs) override;
+            void  updateCoordinates(float frameTimeMs, resources::ResourceManagerInterface &resMan) override;
             bool  isResourcesReady(platform::PlatformInterface &platform, resources::ResourceManagerInterface &resMan) override;
             
         protected:

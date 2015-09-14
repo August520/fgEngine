@@ -74,7 +74,7 @@ namespace fg {
             virtual const fg::color &getColor() const = 0;
             virtual bool  isVisible() const = 0;
                         
-            virtual void  updateCoordinates(float frameTimeMs) = 0;
+            virtual void  updateCoordinates(float frameTimeMs, resources::ResourceManagerInterface &resMan) = 0;
             virtual bool  isResourcesReady(platform::PlatformInterface &platform, resources::ResourceManagerInterface &resMan) = 0;
             
             virtual unsigned  getComponentCount() const = 0;
@@ -121,7 +121,8 @@ namespace fg {
 
             virtual bool  isMeshVisible(const fg::string &meshName) = 0;
 
-            virtual void  playAnim(const fg::string &animResourcePath, float animLenMs, float animOffsetMs, float smoothTimeMs, AnimationLayer layer = AnimationLayer::LAYER0) = 0;
+            virtual void  playAnim(const fg::string &animResourcePath, float animLenMs, float animOffsetMs, float smoothTimeMs, bool cycled, AnimationLayer layer = AnimationLayer::LAYER0) = 0;
+            virtual void  setAnimFinishCallback(const callback <void()> &cb, AnimationLayer layer = AnimationLayer::LAYER0) = 0;
             virtual void  setAnimLayerKoeff(AnimationLayer layer, float koeff) const = 0;
             virtual float getAnimLayerKoeff(AnimationLayer layer) const = 0;
         };

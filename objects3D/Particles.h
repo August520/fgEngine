@@ -36,7 +36,7 @@ namespace fg {
             particles::EmitterInterface *getEmitter(const fg::string &name) const override;
 
             void  setResource(const fg::string &particlesResourcePath) override;
-            void  updateCoordinates(float frameTimeMs) override;
+            void  updateCoordinates(float frameTimeMs, resources::ResourceManagerInterface &resMan) override;
             bool  isResourcesReady(platform::PlatformInterface &platform, resources::ResourceManagerInterface &resMan) override;
 
             unsigned  getComponentCount() const override;

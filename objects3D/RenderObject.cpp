@@ -296,7 +296,7 @@ namespace fg {
             return _visible;
         }
 
-        void RenderObject::updateCoordinates(float frameTimeMs) {
+        void RenderObject::updateCoordinates(float frameTimeMs, resources::ResourceManagerInterface &resMan) {
             if(_updateHandler.isBinded()) {
                 _updateHandler(frameTimeMs);
             }

@@ -10,8 +10,8 @@ namespace fg {
             bool  constructed(const diag::LogInterface &log, platform::PlatformInterface &api) override;
             void  unloaded() override;
 
-            bool getMatrix(const fg::string &boneName, float animKoeff, math::m4x4 &oMatrix) const override;
-            bool getTransform(const fg::string &boneName, float animKoeff, math::p3d &oTranslation, math::quat &oRotation, math::p3d &oScaling) const override;
+            bool getMatrix(const fg::string &boneName, float animKoeff, bool cycled, math::m4x4 &oMatrix) const override;
+            bool getTransform(const fg::string &boneName, float animKoeff, bool cycled, math::p3d &oTranslation, math::quat &oRotation, math::p3d &oScaling) const override;
 
         protected:
             struct AnimKey {

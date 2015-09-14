@@ -277,7 +277,7 @@ namespace fg {
             return false;
         }
 
-        void DisplayObject::updateCoordinates(float frameTimeMs) {
+        void DisplayObject::updateCoordinates(float frameTimeMs, resources::ResourceManagerInterface &resMan) {
             if(_updateHandler.isBinded()) {
                 _updateHandler(frameTimeMs);
             }

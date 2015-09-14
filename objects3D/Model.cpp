@@ -18,11 +18,11 @@ namespace fg {
             math::p3d  resultScaling, tmpScaling;
 
             float curTimeKoeff = layer.curAnimTimePass / layer.curAnimTimeLen;
-            if(layer.curAnimation->getTransform(boneName, curTimeKoeff, resultTranslation, resultRotation, resultScaling)) {
+            if(layer.curAnimation->getTransform(boneName, curTimeKoeff, layer.curAnimCycled, resultTranslation, resultRotation, resultScaling)) {
                 if(layer.nextAnimation && layer.nextAnimation->valid() && layer.nextAnimTimePass < layer.smoothTime) {
                     float nextTimeKoeff = layer.nextAnimTimePass / layer.nextAnimTimeLen;
 
-                    if(layer.nextAnimation->getTransform(boneName, nextTimeKoeff, tmpTranslation, tmpRotation, tmpScaling)) {
+                    if(layer.nextAnimation->getTransform(boneName, nextTimeKoeff, layer.nextAnimCycled, tmpTranslation, tmpRotation, tmpScaling)) {
                         float smoothKoeff = layer.nextAnimTimePass / layer.smoothTime;
                         
                         resultRotation.slerp(resultRotation, tmpRotation, smoothKoeff);
@@ -45,7 +45,6 @@ namespace fg {
         void Animator::updateAnimation(float frameTimeMs) {
             for(unsigned i = 0; i < _activeLayers; i++) {
                 Layer &layer = _layers[i];
-                layer.curAnimTimePass += frameTimeMs;
 
                 if(layer.nextAnimation && layer.nextAnimation->valid()) {
                     layer.nextAnimTimePass += frameTimeMs;
@@ -55,12 +54,26 @@ namespace fg {
                         layer.curAnimTimeLen = layer.nextAnimTimeLen;
                         layer.curAnimResourcePath = std::move(layer.nextAnimResourcePath);
                         layer.curAnimation = layer.nextAnimation;
+                        layer.curAnimCycled = layer.nextAnimCycled;
                         layer.nextAnimation = nullptr;
                     }
                 }
 
-                if(layer.curAnimTimePass >= layer.curAnimTimeLen) {
-                    layer.curAnimTimePass = 0.0f;
+                if(layer.curAnimTimePass < layer.curAnimTimeLen) {
+                    layer.curAnimTimePass += frameTimeMs;
+
+                    if(layer.curAnimTimePass >= layer.curAnimTimeLen) {
+                        if(layer.curAnimCycled) {
+                            layer.curAnimTimePass = 0.0f;
+                        }
+                        else {
+                            layer.curAnimTimePass = layer.curAnimTimeLen - 1.0f;
+                        }
+
+                        if(layer.animFinishCallback.isBinded()) {
+                            layer.animFinishCallback();
+                        }
+                    }
                 }
             }
         }
@@ -97,9 +110,11 @@ namespace fg {
 
                 _activeLayers++;
             }
+
+            _isDirty = false;
         }
         
-        void Animator::playAnim(const fg::string &animResourcePath, float animLenMs, float animOffsetMs, float smoothTimeMs, AnimationLayer ilayer) {
+        void Animator::playAnim(const fg::string &animResourcePath, float animLenMs, float animOffsetMs, float smoothTimeMs, bool cycled, AnimationLayer ilayer) {
             Layer &layer = _layers[unsigned(ilayer)];
 
             if(layer.curAnimResourcePath.empty() == true) {
@@ -112,18 +127,36 @@ namespace fg {
                 layer.nextAnimTimeLen = 0.0f;
                 layer.nextAnimTimePass = 0.0f;
                 layer.smoothTime = 0.0f;
+                layer.curAnimCycled = cycled;
             }
-            else { //if(animResourcePath != layer.curAnimResourcePath) ?
+            else { 
                 layer.nextAnimation = nullptr;
                 layer.nextAnimResourcePath = animResourcePath;
                 layer.nextAnimTimeLen = animLenMs;
                 layer.nextAnimTimePass = animOffsetMs;
                 layer.smoothTime = smoothTimeMs;
+                layer.nextAnimCycled = cycled;
             }
+
+            _isDirty = true;
+        }
+
+        void Animator::setAnimFinishCallback(const callback <void()> &cb, AnimationLayer ilayer) {
+            Layer &layer = _layers[unsigned(ilayer)];
+            layer.animFinishCallback = cb;
+        }
+
+        bool Animator::isDirtyResources() const {
+            return _isDirty;
         }
 
         unsigned Animator::getActiveLayersCount() const {
             return _activeLayers;
+        }
+
+        float Animator::getAnimKoeff(AnimationLayer ilayer) const {
+            const Layer &layer = _layers[unsigned(ilayer)];
+            return layer.curAnimTimePass / layer.curAnimTimeLen;
         }
 
         //---
@@ -302,20 +335,24 @@ namespace fg {
             return mesh->_visible;
 		}
         
-        void Model3D::playAnim(const fg::string &animResourcePath, float animLenMs, float animOffsetMs, float smoothTimeMs, AnimationLayer layer) {
-            _animator.playAnim(animResourcePath, animLenMs, animOffsetMs, smoothTimeMs, layer);
+        void Model3D::playAnim(const fg::string &animResourcePath, float animLenMs, float animOffsetMs, float smoothTimeMs, bool cycled, AnimationLayer layer) {
+            _animator.playAnim(animResourcePath, animLenMs, animOffsetMs, smoothTimeMs, cycled, layer);
 		}
+
+        void Model3D::setAnimFinishCallback(const callback <void()> &cb, AnimationLayer layer) {
+            _animator.setAnimFinishCallback(cb, layer);
+        }
 
         void Model3D::setAnimLayerKoeff(AnimationLayer layer, float koeff) const {
-
-		}
+            //!!!
+        }
 
         float Model3D::getAnimLayerKoeff(AnimationLayer layer) const {
-            return 0.0f;
+            return _animator.getAnimKoeff(layer);
 		}
         
-        void Model3D::updateCoordinates(float frameTimeMs) {
-            RenderObject::updateCoordinates(frameTimeMs);
+        void Model3D::updateCoordinates(float frameTimeMs, resources::ResourceManagerInterface &resMan) {
+            RenderObject::updateCoordinates(frameTimeMs, resMan);
             _animator.updateAnimation(frameTimeMs);
 
             struct fn {
@@ -356,13 +393,17 @@ namespace fg {
             };
 
             if(_modelReady) {
+                if(_animator.isDirtyResources()) {
+                    _animator.updateResources(resMan);
+                }
+                
                 if(_animator.getActiveLayersCount()) {
                     fn::recursiveMeshAnimationUpdate(_animator, _root, _fullTransform);
                 }
                 else {
                     fn::recursiveMeshUpdate(_root, _fullTransform);
                 }
-                
+
                 for(unsigned i = 0; i < _meshCount; i++) {
                     MeshData *cur = _meshes[i];
 

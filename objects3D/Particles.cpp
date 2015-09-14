@@ -96,8 +96,8 @@ namespace fg {
             return nullptr;
         }
 
-        void Particles3D::updateCoordinates(float frameTimeMs) {
-            RenderObject::updateCoordinates(frameTimeMs);
+        void Particles3D::updateCoordinates(float frameTimeMs, resources::ResourceManagerInterface &resMan) {
+            RenderObject::updateCoordinates(frameTimeMs, resMan);
             _timeElapsed += frameTimeMs;
 
             if(_transformHistoryData) {

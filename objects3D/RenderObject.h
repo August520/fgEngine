@@ -53,7 +53,7 @@ namespace fg {
             const fg::color &getColor() const override;
             bool  isVisible() const override;
 
-            void  updateCoordinates(float frameTimeMs) override;
+            void  updateCoordinates(float frameTimeMs, resources::ResourceManagerInterface &resMan) override;
             bool  isResourcesReady(platform::PlatformInterface &platform, resources::ResourceManagerInterface &resMan) override;
 
             unsigned  getComponentCount() const override;

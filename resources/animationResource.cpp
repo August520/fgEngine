@@ -63,20 +63,20 @@ namespace fg {
             _boneAnims.clear();
         }
 
-        bool AnimationResource::getMatrix(const fg::string &boneName, float animKoeff, math::m4x4 &oMatrix) const {
+        bool AnimationResource::getMatrix(const fg::string &boneName, float animKoeff, bool cycled, math::m4x4 &oMatrix) const {
             auto ptr = _boneAnims.get(boneName);
 
-            if(ptr != nullptr){  
+            if(ptr != nullptr) {  
                 const BoneAnimation &cur = *ptr; 
 
-                unsigned lineSize = cur.animKeyCount;
+                unsigned lineSize = cur.animKeyCount - 1 + unsigned(cycled);
                 float    koeff = float(lineSize) * animKoeff;
 
                 unsigned key1 = unsigned(koeff);
                 unsigned key2 = key1 + 1;
                 float    between = koeff - float(key1);
 
-                if(key2 >= lineSize){
+                if(key2 >= cur.animKeyCount) {
                     key2 = 0;
                 }
 
@@ -103,21 +103,21 @@ namespace fg {
             return false;
         }
 
-        bool AnimationResource::getTransform(const fg::string &boneName, float animKoeff, math::p3d &oTranslation, math::quat &oRotation, math::p3d &oScaling) const {
+        bool AnimationResource::getTransform(const fg::string &boneName, float animKoeff, bool cycled, math::p3d &oTranslation, math::quat &oRotation, math::p3d &oScaling) const {
             auto ptr = _boneAnims.get(boneName);
 
-            if(ptr != nullptr){
+            if(ptr != nullptr) {
                 const BoneAnimation &cur = *ptr;
 
-                unsigned lineSize = cur.animKeyCount;
+                unsigned lineSize = cur.animKeyCount - 1 + unsigned(cycled);
                 float    koeff = float(lineSize) * animKoeff;
 
                 unsigned key1 = unsigned(koeff);
                 unsigned key2 = key1 + 1;
                 float    between = koeff - float(key1);
 
-                if(key2 >= lineSize){
-                    key2 = 0;
+                if(key2 >= cur.animKeyCount) {
+                    key2 = 0; 
                 }
 
                 oRotation.slerp(cur.animationKeys[key1].localRotation, cur.animationKeys[key2].localRotation, between);
