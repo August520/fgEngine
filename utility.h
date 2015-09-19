@@ -17,6 +17,16 @@ template <typename RET, typename... ARG> struct callback <RET (ARG...)> final {
     callback() : _callPtr(nullptr), _ptr(nullptr) {
 
     }
+    callback(const callback <RET(ARG...)> &cb) {
+        if(cb._callPtr) {
+            _callPtr = cb._callPtr;
+            _ptr = cb._ptr;
+            memcpy(_mtd, cb._mtd, _MTD_SIZE);
+        }
+        else {
+            _callPtr = nullptr;
+        }
+    }
     callback(RET (*func)(ARG...)) : _callPtr(nullptr), _ptr(nullptr) {
         set(func);
     }
@@ -48,6 +58,16 @@ template <typename RET, typename... ARG> struct callback <RET (ARG...)> final {
 
     bool operator ==(const callback <RET (ARG...)> &cb) {
         return _callPtr == cb._callPtr && _ptr == cb._ptr;
+    }
+    void operator =(const callback <RET(ARG...)> &cb) {
+        if(cb._callPtr) {
+            _callPtr = cb._callPtr;
+            _ptr = cb._ptr;
+            memcpy(_mtd, cb._mtd, _MTD_SIZE);
+        }
+        else {
+            _callPtr = nullptr;
+        }
     }
 
     RET operator ()(ARG... args) {

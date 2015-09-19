@@ -32,6 +32,7 @@ namespace fg {
                 bool  curAnimCycled = true;
                 float nextAnimTimeLen = 0.0f;
                 float nextAnimTimePass = 0.0f;
+                float nextAnimTimeOffset = 0.0f;
                 bool  nextAnimCycled = true;
                 float smoothTime = 0.0f;
                 

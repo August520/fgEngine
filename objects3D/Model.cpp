@@ -19,11 +19,17 @@ namespace fg {
 
             float curTimeKoeff = layer.curAnimTimePass / layer.curAnimTimeLen;
             if(layer.curAnimation->getTransform(boneName, curTimeKoeff, layer.curAnimCycled, resultTranslation, resultRotation, resultScaling)) {
-                if(layer.nextAnimation && layer.nextAnimation->valid() && layer.nextAnimTimePass < layer.smoothTime) {
+                float nextAnimTime = layer.nextAnimTimePass - layer.nextAnimTimeOffset;
+                
+                if(layer.nextAnimation && layer.nextAnimation->valid() && nextAnimTime < layer.smoothTime) {
                     float nextTimeKoeff = layer.nextAnimTimePass / layer.nextAnimTimeLen;
 
+                    if(nextTimeKoeff >= 1.0f) {
+                        nextTimeKoeff -= 1.0f;
+                    }
+
                     if(layer.nextAnimation->getTransform(boneName, nextTimeKoeff, layer.nextAnimCycled, tmpTranslation, tmpRotation, tmpScaling)) {
-                        float smoothKoeff = layer.nextAnimTimePass / layer.smoothTime;
+                        float smoothKoeff = nextAnimTime / layer.smoothTime;
                         
                         resultRotation.slerp(resultRotation, tmpRotation, smoothKoeff);
                         resultTranslation = resultTranslation + (tmpTranslation - resultTranslation) * smoothKoeff;
@@ -49,7 +55,7 @@ namespace fg {
                 if(layer.nextAnimation && layer.nextAnimation->valid()) {
                     layer.nextAnimTimePass += frameTimeMs;
 
-                    if(layer.nextAnimTimePass >= layer.smoothTime) {
+                    if(layer.nextAnimTimePass - layer.nextAnimTimeOffset >= layer.smoothTime) {
                         layer.curAnimTimePass = layer.nextAnimTimePass;
                         layer.curAnimTimeLen = layer.nextAnimTimeLen;
                         layer.curAnimResourcePath = std::move(layer.nextAnimResourcePath);
@@ -59,20 +65,19 @@ namespace fg {
                     }
                 }
 
-                if(layer.curAnimTimePass < layer.curAnimTimeLen) {
-                    layer.curAnimTimePass += frameTimeMs;
+                layer.curAnimTimePass = std::fmod(layer.curAnimTimePass, layer.curAnimTimeLen);
+                layer.curAnimTimePass += frameTimeMs;
 
-                    if(layer.curAnimTimePass >= layer.curAnimTimeLen) {
-                        if(layer.curAnimCycled) {
-                            layer.curAnimTimePass = 0.0f;
-                        }
-                        else {
-                            layer.curAnimTimePass = layer.curAnimTimeLen - 1.0f;
-                        }
+                if(layer.curAnimTimePass >= layer.curAnimTimeLen) {
+                    if(layer.curAnimCycled) {
+                        layer.curAnimTimePass = 0.0f;
+                    }
+                    else {
+                        layer.curAnimTimePass = layer.curAnimTimeLen - 1.0f;
+                    }
 
-                        if(layer.animFinishCallback.isBinded()) {
-                            layer.animFinishCallback();
-                        }
+                    if(layer.nextAnimation == nullptr && layer.animFinishCallback.isBinded()) {
+                        layer.animFinishCallback();
                     }
                 }
             }
@@ -126,6 +131,7 @@ namespace fg {
                 layer.nextAnimResourcePath = fg::string();
                 layer.nextAnimTimeLen = 0.0f;
                 layer.nextAnimTimePass = 0.0f;
+                layer.nextAnimTimeOffset = 0.0f;
                 layer.smoothTime = 0.0f;
                 layer.curAnimCycled = cycled;
             }
@@ -134,6 +140,7 @@ namespace fg {
                 layer.nextAnimResourcePath = animResourcePath;
                 layer.nextAnimTimeLen = animLenMs;
                 layer.nextAnimTimePass = animOffsetMs;
+                layer.nextAnimTimeOffset = animOffsetMs;
                 layer.smoothTime = smoothTimeMs;
                 layer.nextAnimCycled = cycled;
             }
