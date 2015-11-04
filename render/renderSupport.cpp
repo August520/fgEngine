@@ -166,6 +166,33 @@ namespace fg {
         void RenderSupport::setTexture(platform::TextureSlot slot, const resources::Texture2DResourceInterface *texture) {
             _platform->rdSetTexture2D(slot, texture->getPlatformObject());
         }
+
+        void RenderSupport::setScissorRect(const math::p2d &center, const math::p2d &lt, const math::p2d &rb, bool resolutionDepended) {
+            if(fabs(lt.x - rb.x) > FLT_MIN || fabs(lt.y - rb.y) > FLT_MIN) {
+                float dpiKoeffX = 1.0f;
+                float dpiKoeffY = 1.0f;
+                float scaleX = _screenPixelsPerCoordSystemPixelsX;
+                float scaleY = _screenPixelsPerCoordSystemPixelsY;
+
+                if(resolutionDepended) {
+                    dpiKoeffX = fabs(_systemDpiPerCoordSystemDpi / _screenPixelsPerCoordSystemPixelsX);
+                    dpiKoeffY = fabs(_systemDpiPerCoordSystemDpi / _screenPixelsPerCoordSystemPixelsY);
+                }
+
+                math::p2d fullLT;
+                math::p2d fullRB;
+
+                fullLT.x = (lt.x * dpiKoeffX + center.x) * scaleX;
+                fullLT.y = (lt.y * dpiKoeffY + center.y) * scaleY;
+                fullRB.x = (rb.x * dpiKoeffX + center.x) * scaleX;
+                fullRB.y = (rb.y * dpiKoeffY + center.y) * scaleY;
+
+                _platform->rdSetScissorRect(fullLT, fullRB);
+            }
+            else {
+                _platform->rdSetScissorRect(math::p2d(0, 0), math::p2d(_platform->getScreenWidth(), _platform->getScreenHeight()));
+            }
+        }
         
         void RenderSupport::drawQuad2D(const math::m3x3 &trfm, const resources::ClipData *clip, unsigned frame, const fg::color &c, bool resolutionDepended) {
             float dpiKoeffX = 1.0f;

@@ -100,12 +100,16 @@ namespace fg {
 
             virtual bool  isPlaying() const = 0;
             virtual void  setAnimCycleCallback(const callback <void ()> &cb) = 0;
+            virtual void  setScissorRect(const math::p2d &lt, const math::p2d &rb) = 0;
 
             virtual unsigned getFrameCount() const = 0;
             virtual unsigned getCurrentFrame() const = 0;
 
             virtual const resources::Texture2DResourceInterface *getTexture() const = 0;
             virtual const resources::ClipData *getClipData() const = 0;
+
+            virtual const math::p2d &getScissorRectLT() const = 0;
+            virtual const math::p2d &getScissorRectRB() const = 0;
         };
 
         class Sprite2DInterface : public DisplayObjectInterface, virtual public Sprite2DBase {

@@ -1069,13 +1069,6 @@ namespace fg {
                 rdSetSampler(platform::TextureSlot(i), _defSampler);
             }
 
-            D3D11_RECT rect;
-            rect.top = 0;
-            rect.left = 0;
-            rect.right = int(_nativeWidth) - 1;
-            rect.bottom = int(_nativeHeight) - 1;
-
-            _context->RSSetScissorRects(1, &rect);
             return true;
         }
 
@@ -1515,6 +1508,14 @@ namespace fg {
             else {
                 static ID3D11ShaderResourceView *tnull[platform::TEXTURE_UNITS_MAX] = {nullptr};
                 _context->PSSetShaderResources(0, platform::TEXTURE_UNITS_MAX, tnull);
+
+                D3D11_RECT rect;
+                rect.top = 0;
+                rect.left = 0;
+                rect.right = int(_nativeWidth) - 1;
+                rect.bottom = int(_nativeHeight) - 1;
+
+                _context->RSSetScissorRects(1, &rect);
             }
         }
 

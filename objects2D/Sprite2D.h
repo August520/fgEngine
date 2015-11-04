@@ -23,12 +23,16 @@ namespace fg {
 
             bool  isPlaying() const override;
             void  setAnimCycleCallback(const callback <void ()> &cb) override;
+            void  setScissorRect(const math::p2d &lt, const math::p2d &rb) override;
 
             unsigned getFrameCount() const override;
             unsigned getCurrentFrame() const override;
 
             const resources::Texture2DResourceInterface *getTexture() const override;
             const resources::ClipData *getClipData() const override;
+
+            const math::p2d &getScissorRectLT() const override;
+            const math::p2d &getScissorRectRB() const override;
 
             bool  hitTestPoint(const math::p2d &point, const math::p2d &dpiFactor) const override;
             bool  hitTestLine(const math::p2d &point, const math::p2d &dpiFactor) const override;
@@ -40,6 +44,9 @@ namespace fg {
             fg::string  _textureResourcePath;
             fg::string  _clipResourcePath;
             fg::string  _clipName;
+
+            math::p2d   _scissorLT;
+            math::p2d   _scissorRB;
 
             unsigned    _timeCounter;
             unsigned    _frameRate;

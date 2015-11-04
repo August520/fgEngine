@@ -61,6 +61,7 @@ namespace fg {
 
             virtual void setShader(const resources::ShaderResourceInterface *shader) = 0;
             virtual void setTexture(platform::TextureSlot slot, const resources::Texture2DResourceInterface *texture) = 0;
+            virtual void setScissorRect(const math::p2d &center, const math::p2d &lt, const math::p2d &rb, bool resolutionDepended = false) = 0;
 
             virtual void drawQuad2D(const math::m3x3 &trfm, const resources::ClipData *clip, unsigned frame, const fg::color &c, bool resolutionDepended = false) = 0;
             virtual void drawText2D(const fg::string &utf8text, const math::m3x3 &trfm, const resources::FontResourceInterface *font, unsigned size, const fg::color &c, bool resolutionDepended = false) = 0;

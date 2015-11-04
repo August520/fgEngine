@@ -95,6 +95,11 @@ namespace fg {
             _cycleCallback = cb;
         }
 
+        void Sprite2D::setScissorRect(const math::p2d &lt, const math::p2d &rb) {
+            _scissorLT = lt;
+            _scissorRB = rb;
+        }
+
         unsigned Sprite2D::getFrameCount() const {
             return _frameCount;
         }
@@ -111,6 +116,14 @@ namespace fg {
             return _clip;
         }
         
+        const math::p2d &Sprite2D::getScissorRectLT() const {
+            return _scissorLT;
+        }
+
+        const math::p2d &Sprite2D::getScissorRectRB() const {
+            return _scissorRB;
+        }
+
         bool Sprite2D::hitTestPoint(const math::p2d &point, const math::p2d &dpiFactor) const {
             math::m3x3 invFullTransform;
             math::p2d  tp = point;
