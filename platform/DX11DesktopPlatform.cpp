@@ -491,7 +491,7 @@ namespace fg {
 
         //--- 
 
-        DesktopShader::DesktopShader(DesktopPlatform *owner, const byteform &binary) : PlatformObject(owner) {
+        DesktopShader::DesktopShader(DesktopPlatform *owner, const byteinput &binary) : PlatformObject(owner) {
             _vsh = nullptr;
             _psh = nullptr;
             _layout = nullptr;
@@ -542,7 +542,7 @@ namespace fg {
 
             if(_owner->_device->CreateVertexShader(binary.getCurrentPtr(), vsLength, nullptr, &_vsh) == S_OK) {
                 if(_owner->_device->CreateInputLayout(inputDesc, inputCount, binary.getCurrentPtr(), vsLength, &_layout) == S_OK) {
-                    binary.incOffset(vsLength);
+                    binary.startOff(binary.getOffset() + vsLength);
                     _owner->_device->CreatePixelShader(binary.getCurrentPtr(), psLength, nullptr, &_psh);
                 }
             }
@@ -1282,7 +1282,7 @@ namespace fg {
 
         }
 
-        platform::ShaderInterface *DesktopPlatform::rdCreateShader(const byteform &binary) {
+        platform::ShaderInterface *DesktopPlatform::rdCreateShader(const byteinput &binary) {
             DesktopShader *r = new DesktopShader (this, binary);
 
             if(r->valid()) {

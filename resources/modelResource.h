@@ -35,13 +35,13 @@ namespace fg {
                     SkinContainer();
                     ~SkinContainer();
 
-                    void load(ModelResource *mdl, Mesh *target, const byteform &data, unsigned vertexCount);
+                    void load(ModelResource *mdl, Mesh *target, const byteinput &data, unsigned vertexCount);
                 };
 
                 Mesh(ModelResource *container);
                 ~Mesh() override;
 
-                void load(const byteform &data, math::m4x4 *parentTransform, Mesh *root);
+                void load(const byteinput &data, math::m4x4 *parentTransform, Mesh *root);
                 void construct(platform::PlatformInterface &api);
                 
                 const fg::string  &getName() const override;

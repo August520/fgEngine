@@ -14,7 +14,7 @@ namespace fg {
             delete[] skinVertexes;
         }
 
-        void ModelResource::Mesh::SkinContainer::load(ModelResource *mdl, ModelResource::Mesh *target, const byteform &data, unsigned vertexCount) {
+        void ModelResource::Mesh::SkinContainer::load(ModelResource *mdl, ModelResource::Mesh *target, const byteinput &data, unsigned vertexCount) {
             unsigned int i, c, k;
             skinVertexes = new SkinVertex [vertexCount];
             skinVertexCount = vertexCount;
@@ -41,7 +41,6 @@ namespace fg {
                         }
                         else {
                             printf("skin bones count > FG_SKIN_MAX_BONES\n");
-                            //core.log.warning("%s : skin bones count > FG_SKIN_MAX_BONES", mdl->loadPath);
                         }
                     }
 
@@ -93,7 +92,7 @@ namespace fg {
             }
         }
 
-        void ModelResource::Mesh::load(const byteform &data, math::m4x4 *parentTransform, ModelResource::Mesh *root) {
+        void ModelResource::Mesh::load(const byteinput &data, math::m4x4 *parentTransform, ModelResource::Mesh *root) {
             unsigned i, c, k;
 
             if((_flags = data.readDword()) == 0) {
@@ -149,8 +148,6 @@ namespace fg {
                 _container->_helpersCount++;
             }
             if((_flags & (MESHTYPE_GEOMETRY | MESHTYPE_SKIN)) && (_flags & MESHTYPE_HELPER) == 0) {
-                _container->_totalMeshCount++;
-
                 struct ImportVertex {
                     float x, y, z;
                     float nx, ny, nz;
@@ -161,47 +158,40 @@ namespace fg {
                 };
 
                 if((_vertexArraySize = data.readDword()) > 0) {
+                    _container->_totalMeshCount++;
+
                     ImportVertex *importVArray = new ImportVertex[_vertexArraySize];
                     data.readBytes((char *)importVArray, sizeof(ImportVertex) * _vertexArraySize);
 
-                    if(_flags & MESHTYPE_VISIBLE) {
-                        _vertexArray = new VertexSkinnedNormal [_vertexArraySize];
+                    _vertexArray = new VertexSkinnedNormal[_vertexArraySize];
 
-                        for(i = 0; i < _vertexArraySize; i++) {
-                            _vertexArray[i].position.x = importVArray[i].x;
-                            _vertexArray[i].position.y = importVArray[i].y;
-                            _vertexArray[i].position.z = importVArray[i].z;
+                    for(i = 0; i < _vertexArraySize; i++) {
+                        _vertexArray[i].position.x = importVArray[i].x;
+                        _vertexArray[i].position.y = importVArray[i].y;
+                        _vertexArray[i].position.z = importVArray[i].z;
 
-                            _vertexArray[i].uv.x = importVArray[i].u0;
-                            _vertexArray[i].uv.y = importVArray[i].v0;
+                        _vertexArray[i].uv.x = importVArray[i].u0;
+                        _vertexArray[i].uv.y = importVArray[i].v0;
 
-                            _vertexArray[i].normal.x = importVArray[i].nx;
-                            _vertexArray[i].normal.y = importVArray[i].ny;
-                            _vertexArray[i].normal.z = importVArray[i].nz;
+                        _vertexArray[i].normal.x = importVArray[i].nx;
+                        _vertexArray[i].normal.y = importVArray[i].ny;
+                        _vertexArray[i].normal.z = importVArray[i].nz;
 
-                            _vertexArray[i].binormal.x = importVArray[i].bx;
-                            _vertexArray[i].binormal.y = importVArray[i].by;
-                            _vertexArray[i].binormal.z = importVArray[i].bz;
+                        _vertexArray[i].binormal.x = importVArray[i].bx;
+                        _vertexArray[i].binormal.y = importVArray[i].by;
+                        _vertexArray[i].binormal.z = importVArray[i].bz;
 
-                            _vertexArray[i].tangent.x = importVArray[i].tx;
-                            _vertexArray[i].tangent.y = importVArray[i].ty;
-                            _vertexArray[i].tangent.z = importVArray[i].tz;
-                        }
+                        _vertexArray[i].tangent.x = importVArray[i].tx;
+                        _vertexArray[i].tangent.y = importVArray[i].ty;
+                        _vertexArray[i].tangent.z = importVArray[i].tz;
                     }
-                    else _vertexArraySize = 0;
-
+                    
                     delete[] importVArray;
                 }
 
                 if((_indexArraySize = data.readDword()) > 0) {
                     _indexArray = new unsigned short[_indexArraySize];
                     data.readBytes((char *)_indexArray, sizeof(unsigned short) * _indexArraySize);
-
-                    if((_flags & MESHTYPE_VISIBLE) == 0) {
-                        delete _indexArray;
-                        _indexArray = nullptr;
-                        _indexArraySize = 0;
-                    }
                 }
 
                 _minBB.x = data.readFloat();
@@ -408,7 +398,7 @@ namespace fg {
         }
 
         void ModelResource::loaded(const diag::LogInterface &log) {
-            byteform data (_binaryData, _binarySize);
+            byteinput data(_binaryData, _binarySize);
 
             if(data.readDword() == 0xf0ffaaf0) {
                 _root = new Mesh(this);

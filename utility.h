@@ -8,6 +8,8 @@
 #include <type_traits>
 #include <unordered_map>
 
+typedef long long int64;
+
 template <typename F> struct callback final {
 
 };
@@ -115,224 +117,285 @@ template <class C, typename RET, typename... ARG> callback <RET(ARG...)> make_ca
 
 //--- TODO: 
 
-struct byteform {
-    byteform(void *itarget, unsigned int isize) : _target((char *)itarget), _offset(0), _size(isize) {}
+struct byteinput {
+    byteinput(void *target, unsigned size) : _target((char *)target), _offset(0), _size(size) {
 
-    byteform &startOff(unsigned int startOffset) {
+    }
+    byteinput &startOff(unsigned int startOffset) {
         _offset = startOffset;
         return *this;
     }
-
-    unsigned int getSize() const {
+    const byteinput &startOff(unsigned int startOffset) const {
+        _offset = startOffset;
+        return *this;
+    }
+    unsigned getSize() const {
         return _size;
     }
-
-    unsigned int getOffset() const {
+    unsigned getOffset() const {
         return _offset;
     }
-
-    void incOffset(unsigned int increment) const {
-        _offset += increment;
-    }
-
     const char *getPtr() const {
         return _target;
     }
-
-    char *getCurrentPtr() const {
+    char *getPtr() {
+        return _target;
+    }
+    const char *getCurrentPtr() const {
         return _target + _offset;
     }
-
-    byteform &writeChar(char v) {
-        *((char *)&_target[_offset]) = v;
-        _offset += sizeof(v);
-        return *this;
-    }
-    byteform &writeByte(unsigned char v) {
-        *((unsigned char *)&_target[_offset]) = v;
-        _offset += sizeof(v);
-        return *this;
-    }
-    byteform &writeShort(short v) {
-        *((short *)&_target[_offset]) = v;
-        _offset += sizeof(v);
-        return *this;
-    }
-    byteform &writeWord(unsigned short v) {
-        *((unsigned short *)&_target[_offset]) = v;
-        _offset += sizeof(v);
-        return *this;
-    }
-    byteform &writeInt(int v) {
-        *((int *)&_target[_offset]) = v;
-        _offset += sizeof(v);
-        return *this;
-    }
-    byteform &writeDword(unsigned int v) {
-        *((unsigned int *)&_target[_offset]) = v;
-        _offset += sizeof(v);
-        return *this;
-    }
-    byteform &writeInt64(int64 v) {
-        *((int64 *)&_target[_offset]) = v;
-        _offset += sizeof(v);
-        return *this;
-    }
-    byteform &writeQword(unsigned long long v) {
-        *((unsigned long long *)&_target[_offset]) = v;
-        _offset += sizeof(v);
-        return *this;
-    }
-    byteform &writeFloat(float v) {
-        *((float *)&_target[_offset]) = v;
-        _offset += sizeof(v);
-        return *this;
-    }
-    byteform &writeDouble(double v) {
-        *((double *)&_target[_offset]) = v;
-        _offset += sizeof(v);
-        return *this;
-    }
-    byteform &writeBytes(const char *data, int count) {
-        memcpy(_target + _offset, data, count);
-        _offset += count;
-        return *this;
-    }
-    byteform &writeString(const char *str) {
-        unsigned short len = (unsigned short)strlen(str);
-        writeWord(len);
-        memcpy(_target + _offset, str, len);
-        _offset += len;
-        return *this;
-    }
-    template <typename T> byteform &write(const T &v) {
-        *((T *)&_target[_offset]) = v;
-        _offset += sizeof(v);
-        return *this;
-    }
-
     char readChar() const {
-        char r = *((char *)&_target[_offset]);
-        _offset += sizeof(char);
-        return r;
+        if (_offset <= _size - sizeof(char)) {
+            char r = *((char *)&_target[_offset]);
+            _offset += sizeof(char);
+            return r;
+        }
+        else {
+            return 0;
+        }
     }
     unsigned char readByte() const {
-        unsigned char r = *((unsigned char *)&_target[_offset]);
-        _offset += sizeof(unsigned char);
-        return r;
+        if (_offset <= _size - sizeof(unsigned char)) {
+            unsigned char r = *((unsigned char *)&_target[_offset]);
+            _offset += sizeof(unsigned char);
+            return r;
+        }
+        else {
+            return 0;
+        }
     }
     short readShort() const {
-        short r = *((short *)&_target[_offset]);
-        _offset += sizeof(short);
-        return r;
+        if (_offset <= _size - sizeof(short)) {
+            short r = *((short *)&_target[_offset]);
+            _offset += sizeof(short);
+            return r;
+        }
+        else {
+            return 0;
+        }
     }
     unsigned short readWord() const {
-        unsigned short r = *((unsigned short *)&_target[_offset]);
-        _offset += sizeof(unsigned short);
-        return r;
+        if (_offset <= _size - sizeof(unsigned short)) {
+            unsigned short r = *((unsigned short *)&_target[_offset]);
+            _offset += sizeof(unsigned short);
+            return r;
+        }
+        else {
+            return 0;
+        }
     }
     int readInt() const {
-        int r = *((int *)&_target[_offset]);
-        _offset += sizeof(int);
-        return r;
+        if (_offset <= _size - sizeof(int)) {
+            int r = *((int *)&_target[_offset]);
+            _offset += sizeof(int);
+            return r;
+        }
+        else {
+            return 0;
+        }
     }
     unsigned int readDword() const {
-        unsigned int r = *((unsigned int *)&_target[_offset]);
-        _offset += sizeof(unsigned int);
-        return r;
+        if (_offset <= _size - sizeof(unsigned int)) {
+            unsigned int r = *((unsigned int *)&_target[_offset]);
+            _offset += sizeof(unsigned int);
+            return r;
+        }
+        else {
+            return 0;
+        }
     }
     int64 readInt64() const {
-        int64 r = *((int64 *)&_target[_offset]);
-        _offset += sizeof(int64);
-        return r;
+        if (_offset <= _size - sizeof(int64)) {
+            int64 r = *((int64 *)&_target[_offset]);
+            _offset += sizeof(int64);
+            return r;
+        }
+        else {
+            return 0;
+        }
     }
     unsigned long long readQword() const {
-        unsigned long long r = *((unsigned long long *)&_target[_offset]);
-        _offset += sizeof(unsigned long long);
-        return r;
+        if (_offset <= _size - sizeof(unsigned long long)) {
+            unsigned long long r = *((unsigned long long *)&_target[_offset]);
+            _offset += sizeof(unsigned long long);
+            return r;
+        }
+        else {
+            return 0;
+        }
     }
     float readFloat() const {
-        float r = *((float *)&_target[_offset]);
-        _offset += sizeof(float);
-        return r;
+        if (_offset <= _size - sizeof(float)) {
+            float r = *((float *)&_target[_offset]);
+            _offset += sizeof(float);
+            return r;
+        }
+        else {
+            return 0.0f;
+        }
     }
     double readDouble() const {
-        double r = *((double *)&_target[_offset]);
-        _offset += sizeof(double);
-        return r;
+        if (_offset <= _size - sizeof(double)) {
+            double r = *((double *)&_target[_offset]);
+            _offset += sizeof(double);
+            return r;
+        }
+        else {
+            return 0.0;
+        }
     }
-    const byteform &readBytes(char *odata, int count) const {
-        memcpy(odata, _target + _offset, count);
-        _offset += count;
+    const byteinput &readBytes(char *odata, int count) const {
+        if (_offset <= _size - count) {
+            memcpy(odata, _target + _offset, count);
+            _offset += count;
+        }
         return *this;
     }
-    const byteform &readString(char *ostr) const {
-        unsigned short len = readWord();
-        memcpy(ostr, _target + _offset, len);
-        ostr[len] = 0;
-        _offset += len;
+    const byteinput &readString(char *ostr, unsigned maxlen) const {
+        unsigned len = 0;
+        if (_offset <= _size - sizeof(unsigned short)) {
+            len = readWord();
+            len = len < maxlen ? len : maxlen;
+        }
+        if (_offset <= _size - len) {
+            memcpy(ostr, _target + _offset, len);
+            ostr[len] = 0;
+            _offset += len;
+        }
         return *this;
     }
-    template <typename T> const byteform &read(T &out) const {
-        out = *((T *)&_target[_offset]);
-        _offset += sizeof(T);
-    }
-
-    const byteform &readChar(char &out) const {
-        out = *((char *)&_target[_offset]);
-        _offset += sizeof(char);
-        return *this;
-    }
-    const byteform &readByte(unsigned char &out) const {
-        out = *((unsigned char *)&_target[_offset]);
-        _offset += sizeof(unsigned char);
-        return *this;
-    }
-    const byteform &readShort(short &out) const {
-        out = *((short *)&_target[_offset]);
-        _offset += sizeof(short);
-        return *this;
-    }
-    const byteform &readWord(unsigned short &out) const {
-        out = *((unsigned short *)&_target[_offset]);
-        _offset += sizeof(unsigned short);
-        return *this;
-    }
-    const byteform &readInt(int &out) const {
-        out = *((int *)&_target[_offset]);
-        _offset += sizeof(int);
-        return *this;
-    }
-    const byteform &readDword(unsigned int &out) const {
-        out = *((unsigned int *)&_target[_offset]);
-        _offset += sizeof(unsigned int);
-        return *this;
-    }
-    const byteform &readInt64(int64 &out) const {
-        out = *((int64 *)&_target[_offset]);
-        _offset += sizeof(int64);
-        return *this;
-    }
-    const byteform &readQword(unsigned long long &out) const {
-        out = *((unsigned long long *)&_target[_offset]);
-        _offset += sizeof(unsigned long long);
-        return *this;
-    }
-    const byteform &readFloat(float &out) const {
-        out = *((float *)&_target[_offset]);
-        _offset += sizeof(float);
-        return *this;
-    }
-    const byteform &readDouble(double &out) const {
-        out = *((double *)&_target[_offset]);
-        _offset += sizeof(double);
+    template <typename T> const byteinput &read(T &out) const {
+        if (_offset <= _size - sizeof(T)) {
+            out = *((T *)&_target[_offset]);
+            _offset += sizeof(T);
+        }
         return *this;
     }
 
 protected:
     char *_target;
-    mutable unsigned int  _offset;
-    unsigned int  _size;
+    mutable unsigned _offset;
+    unsigned _size;
+};
+
+struct byteoutput {
+    byteoutput(void *target, unsigned maxsize) : _target((char *)target), _offset(0), _maxsize(maxsize) {
+
+    }
+    byteoutput &startOff(unsigned startOffset) {
+        _offset = startOffset;
+        return *this;
+    }
+    unsigned getOffset() const {
+        return _offset;
+    }
+    const char *getPtr() const {
+        return _target;
+    }
+    char *getPtr() {
+        return _target;
+    }
+    char *getCurrentPtr() {
+        return _target + _offset;
+    }
+    byteoutput &writeChar(char v) {
+        if (_offset < _maxsize - sizeof(char)) {
+            *((char *)&_target[_offset]) = v;
+            _offset += sizeof(v);
+        }
+        return *this;
+    }
+    byteoutput &writeByte(unsigned char v) {
+        if (_offset < _maxsize - sizeof(unsigned char)) {
+            *((unsigned char *)&_target[_offset]) = v;
+            _offset += sizeof(v);
+        }
+        return *this;
+    }
+    byteoutput &writeShort(short v) {
+        if (_offset < _maxsize - sizeof(short)) {
+            *((short *)&_target[_offset]) = v;
+            _offset += sizeof(v);
+        }
+        return *this;
+    }
+    byteoutput &writeWord(unsigned short v) {
+        if (_offset < _maxsize - sizeof(unsigned short)) {
+            *((unsigned short *)&_target[_offset]) = v;
+            _offset += sizeof(v);
+        }
+        return *this;
+    }
+    byteoutput &writeInt(int v) {
+        if (_offset < _maxsize - sizeof(int)) {
+            *((int *)&_target[_offset]) = v;
+            _offset += sizeof(v);
+        }
+        return *this;
+    }
+    byteoutput &writeDword(unsigned int v) {
+        if (_offset < _maxsize - sizeof(unsigned int)) {
+            *((unsigned int *)&_target[_offset]) = v;
+            _offset += sizeof(v);
+        }
+        return *this;
+    }
+    byteoutput &writeInt64(int64 v) {
+        if (_offset < _maxsize - sizeof(int64)) {
+            *((int64 *)&_target[_offset]) = v;
+            _offset += sizeof(v);
+        }
+        return *this;
+    }
+    byteoutput &writeQword(unsigned long long v) {
+        if (_offset < _maxsize - sizeof(unsigned long long)) {
+            *((unsigned long long *)&_target[_offset]) = v;
+            _offset += sizeof(v);
+        }
+        return *this;
+    }
+    byteoutput &writeFloat(float v) {
+        if (_offset < _maxsize - sizeof(float)) {
+            *((float *)&_target[_offset]) = v;
+            _offset += sizeof(v);
+        }
+        return *this;
+    }
+    byteoutput &writeDouble(double v) {
+        if (_offset < _maxsize - sizeof(double)) {
+            *((double *)&_target[_offset]) = v;
+            _offset += sizeof(v);
+        }
+        return *this;
+    }
+    byteoutput &writeBytes(const char *data, int count) {
+        if (_offset < _maxsize - count) {
+            memcpy(_target + _offset, data, count);
+            _offset += count;
+        }
+        return *this;
+    }
+    byteoutput &writeString(const char *str) {
+        unsigned short len = (unsigned short)strlen(str);
+        if (_offset < _maxsize - sizeof(unsigned short) - len) {
+            writeWord(len);
+            memcpy(_target + _offset, str, len);
+            _offset += len;
+        }
+        return *this;
+    }
+    template <typename T> byteoutput &write(const T &v) {
+        if (_offset < _maxsize - sizeof(T)) {
+            *((T *)&_target[_offset]) = v;
+            _offset += sizeof(v);
+        }
+        return *this;
+    }
+
+protected:
+    char *_target;
+    unsigned _offset;
+    unsigned _maxsize;
 };
 
 //---

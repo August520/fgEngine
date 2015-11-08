@@ -224,7 +224,7 @@ namespace fg {
             virtual VertexBufferInterface         *rdCreateVertexBuffer(VertexType vtype, unsigned vcount, bool isDynamic, const void *data = nullptr) = 0;
             virtual IndexedVertexBufferInterface  *rdCreateIndexedVertexBuffer(VertexType vtype, unsigned vcount, unsigned ushortIndexCount, bool isDynamic, const void *vdata = nullptr, const void *idata = nullptr) = 0;
             virtual InstanceDataInterface         *rdCreateInstanceData(InstanceDataType type, unsigned instanceCount) = 0;
-            virtual ShaderInterface               *rdCreateShader(const byteform &binary) = 0;
+            virtual ShaderInterface               *rdCreateShader(const byteinput &binary) = 0;
             virtual RasterizerParamsInterface     *rdCreateRasterizerParams(CullMode cull) = 0;
             virtual BlenderParamsInterface        *rdCreateBlenderParams(const BlendMode blendMode) = 0;
             virtual DepthParamsInterface          *rdCreateDepthParams(bool depthEnabled, DepthFunc compareFunc, bool depthWriteEnabled) = 0;

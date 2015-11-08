@@ -17,7 +17,7 @@ namespace fg {
         }
 
         void AnimationResource::loaded(const diag::LogInterface &log) {
-            byteform data (_binaryData, _binarySize);
+            byteinput data (_binaryData, _binarySize);
 
             unsigned signature = data.readDword();
             unsigned flags = data.readDword();
@@ -27,8 +27,8 @@ namespace fg {
                 char     tname[32];
                 unsigned tkeyCount;
 
-                data.readString(tname);
-                data.readDword(tkeyCount);
+                data.readString(tname, 32);
+                tkeyCount = data.readDword();
 
                 BoneAnimation *boneAnim = new BoneAnimation(tkeyCount);
                 _boneAnims.add(tname, boneAnim);
@@ -123,6 +123,25 @@ namespace fg {
                 oRotation.slerp(cur.animationKeys[key1].localRotation, cur.animationKeys[key2].localRotation, between);
                 oTranslation = cur.animationKeys[key1].localPosition + (cur.animationKeys[key2].localPosition - cur.animationKeys[key1].localPosition) * between;
                 oScaling = cur.animationKeys[key1].localScale + (cur.animationKeys[key2].localScale - cur.animationKeys[key1].localScale) * between;
+                return true;
+            }
+
+            return false;
+        }
+
+        bool AnimationResource::getTransformWithoutInterpolate(const fg::string &boneName, float animKoeff, bool cycled, math::p3d &oTranslation, math::quat &oRotation, math::p3d &oScaling) const {
+            auto ptr = _boneAnims.get(boneName);
+
+            if(ptr != nullptr) {
+                const BoneAnimation &cur = *ptr;
+
+                unsigned lineSize = cur.animKeyCount - 1 + unsigned(cycled);
+                float    koeff = float(lineSize) * animKoeff;
+                unsigned key = unsigned(koeff);
+                
+                oRotation = cur.animationKeys[key].localRotation;
+                oTranslation = cur.animationKeys[key].localPosition;
+                oScaling = cur.animationKeys[key].localScale;
                 return true;
             }
 

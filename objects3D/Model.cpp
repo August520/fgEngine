@@ -3,7 +3,7 @@
 namespace fg {
     namespace object3d {
         Animator::Animator() {
-        
+            _getTransformMethod = &resources::AnimationResourceInterface::getTransform;
         }
 
         Animator::~Animator() {
@@ -18,7 +18,7 @@ namespace fg {
             math::p3d  resultScaling, tmpScaling;
 
             float curTimeKoeff = layer.curAnimTimePass / layer.curAnimTimeLen;
-            if(layer.curAnimation->getTransform(boneName, curTimeKoeff, layer.curAnimCycled, resultTranslation, resultRotation, resultScaling)) {
+            if((layer.curAnimation->*_getTransformMethod)(boneName, curTimeKoeff, layer.curAnimCycled, resultTranslation, resultRotation, resultScaling)) {
                 float nextAnimTime = layer.nextAnimTimePass - layer.nextAnimTimeOffset;
                 
                 if(layer.nextAnimation && layer.nextAnimation->valid() && nextAnimTime < layer.smoothTime) {
@@ -28,7 +28,7 @@ namespace fg {
                         nextTimeKoeff -= 1.0f;
                     }
 
-                    if(layer.nextAnimation->getTransform(boneName, nextTimeKoeff, layer.nextAnimCycled, tmpTranslation, tmpRotation, tmpScaling)) {
+                    if((layer.nextAnimation->*_getTransformMethod)(boneName, nextTimeKoeff, layer.nextAnimCycled, tmpTranslation, tmpRotation, tmpScaling)) {
                         float smoothKoeff = nextAnimTime / layer.smoothTime;
                         
                         resultRotation.slerp(resultRotation, tmpRotation, smoothKoeff);
@@ -49,11 +49,13 @@ namespace fg {
         }
 
         void Animator::updateAnimation(float frameTimeMs) {
+            float ft = frameTimeMs / _scale;
+
             for(unsigned i = 0; i < _activeLayers; i++) {
                 Layer &layer = _layers[i];
 
                 if(layer.nextAnimation && layer.nextAnimation->valid()) {
-                    layer.nextAnimTimePass += frameTimeMs;
+                    layer.nextAnimTimePass += ft;
 
                     if(layer.nextAnimTimePass - layer.nextAnimTimeOffset >= layer.smoothTime) {
                         layer.curAnimTimePass = layer.nextAnimTimePass;
@@ -66,9 +68,9 @@ namespace fg {
                 }
 
                 layer.curAnimTimePass = std::fmod(layer.curAnimTimePass, layer.curAnimTimeLen);
-                layer.curAnimTimePass += frameTimeMs;
+                layer.curAnimTimePass += ft;
 
-                if(layer.curAnimTimePass >= layer.curAnimTimeLen) {
+                if(layer.curAnimTimePass + ft >= layer.curAnimTimeLen) {
                     if(layer.curAnimCycled) {
                         layer.curAnimTimePass = 0.0f;
                     }
@@ -76,7 +78,7 @@ namespace fg {
                         layer.curAnimTimePass = layer.curAnimTimeLen - 1.0f;
                     }
 
-                    if(layer.nextAnimation == nullptr && layer.animFinishCallback.isBinded()) {
+                    if(layer.nextAnimResourcePath.empty() && layer.animFinishCallback.isBinded()) {
                         layer.animFinishCallback();
                     }
                 }
@@ -145,12 +147,21 @@ namespace fg {
                 layer.nextAnimCycled = cycled;
             }
 
+            _scale = 1.0f;
             _isDirty = true;
         }
 
         void Animator::setAnimFinishCallback(const callback <void()> &cb, AnimationLayer ilayer) {
             Layer &layer = _layers[unsigned(ilayer)];
             layer.animFinishCallback = cb;
+        }
+
+        void Animator::setUseInterpolation(bool useInterpolation) {
+            _getTransformMethod = useInterpolation ? &resources::AnimationResourceInterface::getTransform : &resources::AnimationResourceInterface::getTransformWithoutInterpolate;
+        }
+
+        void Animator::setTimeScale(float scale) {
+            _scale = scale;
         }
 
         bool Animator::isDirtyResources() const {
@@ -168,18 +179,7 @@ namespace fg {
 
         //---
 
-        Model3D::MeshData::MeshData() :
-            _addtrfm(false),
-            _skinned(false),
-            _visible(true),
-            _childs(nullptr),
-            _childCount(0),
-            _mesh(nullptr),
-            _shader(nullptr),
-            _materialParams(nullptr),
-            _skinMatrixes(nullptr),
-            _skinMatrixCount(0)
-        {
+        Model3D::MeshData::MeshData() {
             for(unsigned i = 0; i < resources::FG_MATERIAL_TEXTURE_MAX; i++) {
                 _textureBinds[i] = nullptr;
             }
@@ -288,13 +288,36 @@ namespace fg {
         void Model3D::setMeshVisible(const fg::string &meshName, bool visible) {
             MeshData *mesh = _getOrCreateMeshByName(meshName);
             mesh->_visible = visible;
+            mesh->_visibilityApplied = true;
 		}
+
+        void Model3D::setHierarchyVisible(const fg::string &rootMeshName, bool visible) {
+            MeshData *mesh = _getOrCreateMeshByName(rootMeshName);
+
+            _resourceReadyApplies.push_back([mesh, visible]() {
+                struct fn {
+                    static void setVisibleRecursive(MeshData &cur, bool visible) {
+                        cur._visible = visible;
+
+                        for(unsigned i = 0; i < cur._childCount; i++) {
+                            setVisibleRecursive(*cur._childs[i], visible);
+                        }
+                    }
+                };
+
+                fn::setVisibleRecursive(*mesh, visible);
+            });
+        }
 
         void Model3D::setMeshAdditionalTransform(const fg::string &meshName, const math::m4x4 &transform) {
             MeshData *mesh = _getOrCreateMeshByName(meshName);
             mesh->_additionalTransform = transform;
-            mesh->_addtrfm = true;
+            mesh->_transformApplied = true;
 		}
+
+        void Model3D::setUseAnimInterpolation(bool use) {
+            _animator.setUseInterpolation(use);
+        }
         
         const math::m4x4 *Model3D::getMeshTransform(const fg::string &meshName) const {
             MeshData *mesh = _meshesByName.get(meshName);
@@ -350,8 +373,12 @@ namespace fg {
             _animator.setAnimFinishCallback(cb, layer);
         }
 
-        void Model3D::setAnimLayerKoeff(AnimationLayer layer, float koeff) const {
-            //!!!
+        void Model3D::setAnimLayerTimeScale(float scale, AnimationLayer layer) {
+            _animator.setTimeScale(scale);
+        }
+
+        void Model3D::setAnimLayerKoeff(float koeff, AnimationLayer layer) {
+            //todo
         }
 
         float Model3D::getAnimLayerKoeff(AnimationLayer layer) const {
@@ -369,7 +396,7 @@ namespace fg {
                     math::m4x4 localTransform = rmesh->getLocalTransform();
                     curMesh->_fullTransform = localTransform * parentFullTransform;
 
-                    if(curMesh->_addtrfm) {
+                    if(curMesh->_transformApplied) {
                         curMesh->_fullTransform = curMesh->_additionalTransform * curMesh->_fullTransform;
                     }
 
@@ -387,7 +414,7 @@ namespace fg {
                     animator.getMatrix(rmesh->getName(), localTransform);
                     curMesh->_fullTransform = localTransform * parentFullTransform;
 
-                    if(curMesh->_addtrfm) {
+                    if(curMesh->_transformApplied) {
                         curMesh->_fullTransform = curMesh->_additionalTransform * curMesh->_fullTransform;
                     }
 
@@ -429,10 +456,11 @@ namespace fg {
 
             struct fn { 
                 static void createMeshesRecursive(Model3D &mdl, MeshData *current, const resources::MeshInterface *mesh, const resources::MaterialResourceInterface *material) {
-                    if(mesh->isVisible()) {
+                    if(mesh->getGeometryVertexCount()) {
                         mdl._meshes[mdl._meshCount++] = current;
                     }
                     
+                    current->_visible = current->_visibilityApplied ? current->_visible : mesh->isVisible();
                     current->_mesh = mesh;
                     current->_materialParams = material->getMeshParams(mesh->getName());
 
@@ -494,7 +522,15 @@ namespace fg {
                     }
                 }
 
-                _modelReady = true;
+                _modelReady = true;                
+                
+                for(auto &lambda : _resourceReadyApplies) {
+                    if(lambda.isBinded()) {
+                        lambda();
+                    }
+                }                
+
+                _resourceReadyApplies.clear();
                 return true;
             }
 

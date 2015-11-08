@@ -12,6 +12,7 @@ namespace fg {
 
             bool getMatrix(const fg::string &boneName, float animKoeff, bool cycled, math::m4x4 &oMatrix) const override;
             bool getTransform(const fg::string &boneName, float animKoeff, bool cycled, math::p3d &oTranslation, math::quat &oRotation, math::p3d &oScaling) const override;
+            bool getTransformWithoutInterpolate(const fg::string &boneName, float animKoeff, bool cycled, math::p3d &oTranslation, math::quat &oRotation, math::p3d &oScaling) const override;
 
         protected:
             struct AnimKey {

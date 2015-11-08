@@ -10,7 +10,7 @@ namespace fg {
         }
 
         void Texture2DResource::loaded(const diag::LogInterface &log) {
-            byteform data (_binaryData, _binarySize);
+            byteinput data(_binaryData, _binarySize);
 
             if(*(unsigned *)data.getPtr() == 0xf0fa5566) {
                 data.readDword();
@@ -28,7 +28,7 @@ namespace fg {
                     unsigned mipDataSize = data.readDword();
 
                     tools::lodepng_decode32(&_imgData[i], &tw, &th, (unsigned char *)(data.getPtr() + data.getOffset()), mipDataSize);
-                    data.incOffset(mipDataSize);
+                    data.startOff(data.getOffset() + mipDataSize);
 
                     if(i == 0) {
                         _szx = tw;

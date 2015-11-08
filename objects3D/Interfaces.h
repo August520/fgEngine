@@ -111,7 +111,9 @@ namespace fg {
             virtual void  setModelAndMaterial(const fg::string &mdlResourcePath, const fg::string &materialResourcePath) = 0;
             virtual void  setMaterial(const fg::string &materialResourcePath) = 0;
             virtual void  setMeshVisible(const fg::string &meshName, bool visible) = 0;
+            virtual void  setHierarchyVisible(const fg::string &rootMeshName, bool visible) = 0;
             virtual void  setMeshAdditionalTransform(const fg::string &meshName, const math::m4x4 &transform) = 0;
+            virtual void  setUseAnimInterpolation(bool use) = 0;
 
             virtual const math::m4x4 *getMeshTransform(const fg::string &meshName) const = 0;
             virtual const math::m4x4 *getMeshAdditionalTransform(const fg::string &meshName) const = 0;
@@ -123,8 +125,9 @@ namespace fg {
 
             virtual void  playAnim(const fg::string &animResourcePath, float animLenMs, float animOffsetMs, float smoothTimeMs, bool cycled, AnimationLayer layer = AnimationLayer::LAYER0) = 0;
             virtual void  setAnimFinishCallback(const callback <void()> &cb, AnimationLayer layer = AnimationLayer::LAYER0) = 0;
-            virtual void  setAnimLayerKoeff(AnimationLayer layer, float koeff) const = 0;
-            virtual float getAnimLayerKoeff(AnimationLayer layer) const = 0;
+            virtual void  setAnimLayerTimeScale(float scale, AnimationLayer layer = AnimationLayer::LAYER0) = 0;
+            virtual void  setAnimLayerKoeff(float koeff, AnimationLayer layer = AnimationLayer::LAYER0) = 0;
+            virtual float getAnimLayerKoeff(AnimationLayer layer = AnimationLayer::LAYER0) const = 0;
         };
 
         class Model3DInterface : public RenderObjectInterface, virtual public Model3DBase {

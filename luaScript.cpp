@@ -703,13 +703,13 @@ void luaObj::tableImport(unsigned char *iBin, int iBinSize){
 
 char  _luaObjTableImportBuffer[65536];
 
-void luaObj::tableImport(const byteform & target){
+void luaObj::tableImport(const byteinput & target) {
     while(true){
         unsigned char keyType = target.readByte();
         luaObj key, value;
 
         if(keyType == 0x01){
-            target.readString(_luaObjTableImportBuffer);
+            target.readString(_luaObjTableImportBuffer, 65536);
             key = _luaObjTableImportBuffer;
         }
         else if(keyType == 0x02){
@@ -726,7 +726,7 @@ void luaObj::tableImport(const byteform & target){
             value.tableImport(target);
         }
         else if(valueType == 0x01){
-            target.readString(_luaObjTableImportBuffer);
+            target.readString(_luaObjTableImportBuffer, 65536);
             value = _luaObjTableImportBuffer;
         }
         else if(valueType == 0x02){

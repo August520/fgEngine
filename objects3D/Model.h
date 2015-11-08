@@ -1,4 +1,6 @@
 
+#include <algorithm>
+
 namespace fg {
     const unsigned FG_ANIM_LAYERS_MAX = 4;
 
@@ -13,6 +15,8 @@ namespace fg {
             void updateResources(resources::ResourceManagerInterface &resMan);
             void playAnim(const fg::string &animResourcePath, float animLenMs, float animOffsetMs, float smoothTimeMs, bool cycled, AnimationLayer ilayer);
             void setAnimFinishCallback(const callback <void()> &cb, AnimationLayer ilayer);
+            void setUseInterpolation(bool useInterpolation);
+            void setTimeScale(float scale);
             
             bool isDirtyResources() const;
 
@@ -43,7 +47,10 @@ namespace fg {
 
             Layer     _layers[FG_ANIM_LAYERS_MAX];
             unsigned  _activeLayers = 0;
+            float     _scale = 1.0f;
             bool      _isDirty = false;
+
+            bool (resources::AnimationResourceInterface::*_getTransformMethod)(const fg::string &boneName, float animKoeff, bool cycled, math::p3d &oTranslation, math::quat &oRotation, math::p3d &oScaling) const;
             
             Animator(const Animator &);
             Animator &operator =(const Animator &);
@@ -76,22 +83,24 @@ namespace fg {
                 bool isResourcesReady(platform::PlatformInterface &platform, resources::ResourceManagerInterface &resMan) override;
 
             protected:
-                bool      _skinned;
-                bool      _visible;
-                bool      _addtrfm;
-                MeshData  **_childs;
+                bool      _skinned = false;
+                bool      _visible = false;
+                MeshData  **_childs = nullptr;
                 
-                unsigned  _childCount;
-                unsigned  _skinMatrixCount;
+                unsigned  _childCount = 0;
+                unsigned  _skinMatrixCount = 0;
 
                 math::m4x4  _fullTransform;
                 math::m4x4  _additionalTransform;                
-                math::m4x4  *_skinMatrixes;
+                math::m4x4  *_skinMatrixes = nullptr;
 
-                const resources::MeshInterface               *_mesh;
-                const resources::MaterialMeshParams          *_materialParams;
+                bool      _transformApplied = false;
+                bool      _visibilityApplied = false;
+
+                const resources::MeshInterface               *_mesh = nullptr;
+                const resources::MaterialMeshParams          *_materialParams = nullptr;
                 const resources::Texture2DResourceInterface  *_textureBinds[resources::FG_MATERIAL_TEXTURE_MAX];
-                const resources::ShaderResourceInterface     *_shader;
+                const resources::ShaderResourceInterface     *_shader = nullptr;
             };
 
             Model3D();
@@ -100,7 +109,9 @@ namespace fg {
             void  setModelAndMaterial(const fg::string &mdlResourcePath, const fg::string &materialResourcePath) override;
             void  setMaterial(const fg::string &materialResourcePath) override;
             void  setMeshVisible(const fg::string &meshName, bool visible) override;
+            void  setHierarchyVisible(const fg::string &rootMeshName, bool visible) override;
             void  setMeshAdditionalTransform(const fg::string &meshName, const math::m4x4 &transform) override;
+            void  setUseAnimInterpolation(bool use);
 
             const math::m4x4 *getMeshTransform(const fg::string &meshName) const override;
             const math::m4x4 *getMeshAdditionalTransform(const fg::string &meshName) const override;
@@ -112,7 +123,8 @@ namespace fg {
 
             void  playAnim(const fg::string &animResourcePath, float animLenMs, float animOffsetMs, float smoothTimeMs, bool cycled, AnimationLayer layer = AnimationLayer::LAYER0) override;
             void  setAnimFinishCallback(const callback <void()> &cb, AnimationLayer layer = AnimationLayer::LAYER0) override;
-            void  setAnimLayerKoeff(AnimationLayer layer, float koeff) const override;
+            void  setAnimLayerTimeScale(float scale, AnimationLayer layer = AnimationLayer::LAYER0) override;
+            void  setAnimLayerKoeff(float koeff, AnimationLayer layer = AnimationLayer::LAYER0) override;
             float getAnimLayerKoeff(AnimationLayer layer) const override;
 
             void  updateCoordinates(float frameTimeMs, resources::ResourceManagerInterface &resMan) override;
@@ -135,7 +147,8 @@ namespace fg {
             bool        _modelReady;
 
             mutable StaticHash  <resources::FG_MESH_MAX, MeshData *> _meshesByName;
-            
+            std::vector         <callback <void()>> _resourceReadyApplies;
+
             MeshData *_getOrCreateMeshByName(const fg::string &meshName) const;
         };
     }

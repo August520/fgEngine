@@ -179,7 +179,7 @@ struct luaObj {
     int   tableExport(unsigned char *oBin);                                  // export to binary
     void  tableImport(unsigned char *iBin, int iBinSize);                    // import from binary
 
-    void  tableImport(const byteform & target);                              // import from byteform, TODO: format changes?
+    void  tableImport(const byteinput & target);                             // import from byteform, TODO: format changes?
 
 };
 

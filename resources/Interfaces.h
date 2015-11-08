@@ -177,7 +177,7 @@ namespace fg {
 
         //---
 
-        static const unsigned FG_MESH_MAX = 32;
+        static const unsigned FG_MESH_MAX = 64;
         static const unsigned FG_MATERIAL_TEXTURE_MAX = 8;
 
         struct MaterialMeshParams {
@@ -221,6 +221,7 @@ namespace fg {
         public:
             virtual bool getMatrix(const fg::string &boneName, float animKoeff, bool cycled, math::m4x4 &oMatrix) const = 0;
             virtual bool getTransform(const fg::string &boneName, float animKoeff, bool cycled, math::p3d &oTranslation, math::quat &oRotation, math::p3d &oScaling) const = 0;
+            virtual bool getTransformWithoutInterpolate(const fg::string &boneName, float animKoeff, bool cycled, math::p3d &oTranslation, math::quat &oRotation, math::p3d &oScaling) const = 0;
         };
 
         //---

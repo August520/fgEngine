@@ -9,8 +9,8 @@
 
 typedef long long int64;
 
-#include "LuaScript.h"
 #include "utility.h"
+#include "LuaScript.h"
 #include "string.h"
 
 #include "diag.h"
