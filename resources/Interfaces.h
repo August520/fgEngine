@@ -177,7 +177,8 @@ namespace fg {
 
         //---
 
-        static const unsigned FG_MESH_MAX = 64;
+        static const unsigned FG_MESH_MAX = 128;
+        static const unsigned FG_MATERIAL_ENTRY_MAX = 32;
         static const unsigned FG_MATERIAL_TEXTURE_MAX = 8;
 
         struct MaterialMeshParams {
@@ -189,6 +190,7 @@ namespace fg {
         class MaterialResourceInterface : virtual public ResourceInterface {
         public:
             virtual const MaterialMeshParams *getMeshParams(const fg::string &meshName) const = 0;
+            virtual const MaterialMeshParams *getMeshSubTreeParams(const fg::string &rootName) const = 0;
         };
 
         //---

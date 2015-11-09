@@ -223,6 +223,10 @@ namespace fg {
         Entry     _data[ARRAYMAX];
         unsigned  _entryIndex;
         unsigned  _ptrIndex;
+
+    private:
+        StaticHash(const StaticHash &);
+        StaticHash &operator =(const StaticHash &);
     };
 
 }

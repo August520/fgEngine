@@ -12,29 +12,11 @@ namespace fg {
 
             if(cfgSource.execLuaChunk((char *)_binaryData, _binarySize)){
                 luaObj cfg;
+
+                cfgSource.getGlobalVar("roots", cfg);
+                _addMaterial(_roots, cfg);
                 cfgSource.getGlobalVar("material", cfg);
-
-                if(cfg.type() == LUATYPE_TABLE){
-                    cfg.foreach([this](const char *meshName, luaObj &params){
-                        MaterialMeshParams *curParams = new MaterialMeshParams();
-
-                        curParams->textureBindCount = 0;
-                        curParams->shaderPath = (const char *)params.get("shader");
-                        
-                        const luaObj &textureBinds = params.get("textureBinds");
-                        if(textureBinds.type() == LUATYPE_TABLE){
-                            for(unsigned i = 0; i < textureBinds.count(); i++) {
-                                curParams->textureBinds[curParams->textureBindCount] = (const char *)textureBinds.get(i + 1);
-                                curParams->textureBindCount++;
-                            }
-                        }
-
-                        //curParams->userData = params.get("userData");
-                        
-                        _meshes.add(meshName, curParams);
-                        return true; // continue cycle
-                    });
-                }
+                _addMaterial(_meshes, cfg);
             }
             else{
                 log.msgError("MaterialResource::loaded %s - %s", _loadPath.data(), cfgSource.getLastError());
@@ -56,6 +38,36 @@ namespace fg {
         
         const MaterialMeshParams *MaterialResource::getMeshParams(const fg::string &meshName) const {
             return _meshes.get(meshName);
+        }
+
+        const MaterialMeshParams *MaterialResource::getMeshSubTreeParams(const fg::string &rootName) const {
+            if(rootName == "obs_rot_bridge") {
+                printf("");
+            }
+
+            return _roots.get(rootName);
+        }
+
+        void MaterialResource::_addMaterial(StaticHash <FG_MATERIAL_ENTRY_MAX, MaterialMeshParams *> &target, const luaObj &cfg) {
+            if(cfg.type() == LUATYPE_TABLE) {
+                cfg.foreach([&target](const char *meshName, luaObj &params) {
+                    MaterialMeshParams *curParams = new MaterialMeshParams();
+
+                    curParams->textureBindCount = 0;
+                    curParams->shaderPath = (const char *)params.get("shader");
+
+                    const luaObj &textureBinds = params.get("textureBinds");
+                    if(textureBinds.type() == LUATYPE_TABLE) {
+                        for(unsigned i = 0; i < textureBinds.count(); i++) {
+                            curParams->textureBinds[curParams->textureBindCount] = (const char *)textureBinds.get(i + 1);
+                            curParams->textureBindCount++;
+                        }
+                    }
+
+                    target.add(meshName, curParams);
+                    return true; // continue cycle
+                });
+            }
         }
     }
 }

@@ -70,9 +70,9 @@ namespace fg {
                 layer.curAnimTimePass = std::fmod(layer.curAnimTimePass, layer.curAnimTimeLen);
                 layer.curAnimTimePass += ft;
 
-                if(layer.curAnimTimePass + ft >= layer.curAnimTimeLen) {
+                if(layer.curAnimTimePass >= layer.curAnimTimeLen) {
                     if(layer.curAnimCycled) {
-                        layer.curAnimTimePass = 0.0f;
+                        layer.curAnimTimePass = layer.curAnimTimePass - layer.curAnimTimeLen; 
                     }
                     else {
                         layer.curAnimTimePass = layer.curAnimTimeLen - 1.0f;
@@ -455,17 +455,28 @@ namespace fg {
             _modelReady = false;
 
             struct fn { 
-                static void createMeshesRecursive(Model3D &mdl, MeshData *current, const resources::MeshInterface *mesh, const resources::MaterialResourceInterface *material) {
+                static void createMeshesRecursive(Model3D &mdl, MeshData *current, const resources::MeshInterface *mesh, const resources::MaterialResourceInterface *material, const resources::MaterialMeshParams *rootMaterial = nullptr) {
                     if(mesh->getGeometryVertexCount()) {
                         mdl._meshes[mdl._meshCount++] = current;
                     }
                     
+                    const resources::MaterialMeshParams *newRootMaterial = nullptr;
+
                     current->_visible = current->_visibilityApplied ? current->_visible : mesh->isVisible();
                     current->_mesh = mesh;
                     current->_materialParams = material->getMeshParams(mesh->getName());
 
                     if(current->_materialParams == nullptr) {
-                        current->_materialParams = material->getMeshParams("any");
+                        if(rootMaterial) {
+                            newRootMaterial = current->_materialParams = rootMaterial;
+                        }
+                        else {
+                            newRootMaterial = current->_materialParams = material->getMeshSubTreeParams(mesh->getName());
+
+                            if(current->_materialParams == nullptr) {
+                                current->_materialParams = material->getMeshParams("any");
+                            }
+                        }
                     }
 
                     current->_childCount = mesh->getChildCount();
@@ -476,7 +487,7 @@ namespace fg {
                         for(unsigned i = 0; i < current->_childCount; i++) {
                             const resources::MeshInterface *child = mesh->getChild(i);
                             current->_childs[i] = mdl._getOrCreateMeshByName(child->getName());
-                            createMeshesRecursive(mdl, current->_childs[i], child, material);
+                            createMeshesRecursive(mdl, current->_childs[i], child, material, newRootMaterial);
                         }
                     }                    
                 }

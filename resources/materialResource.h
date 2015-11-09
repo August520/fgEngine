@@ -11,9 +11,13 @@ namespace fg {
             void  unloaded() override;
 
             const MaterialMeshParams *getMeshParams(const fg::string &meshName) const override;
+            const MaterialMeshParams *getMeshSubTreeParams(const fg::string &rootName) const override;
 
         protected:
-            StaticHash <FG_MESH_MAX, MaterialMeshParams *> _meshes;
+            StaticHash <FG_MATERIAL_ENTRY_MAX, MaterialMeshParams *> _roots;
+            StaticHash <FG_MATERIAL_ENTRY_MAX, MaterialMeshParams *> _meshes;
+
+            void _addMaterial(StaticHash <FG_MATERIAL_ENTRY_MAX, MaterialMeshParams *> &target, const luaObj &cfg);
         };
     }
 }
