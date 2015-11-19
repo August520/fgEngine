@@ -312,7 +312,7 @@ namespace fg {
 
             for(const char *charPtr = utf8text.data(); charPtr[0] != 0; charPtr += tchLen, i++) {
                 tchLen = fg::string::utf8CharLen(charPtr);
-                font->getChar(charPtr, size, curCharData);
+                font->getChar(charPtr, size, 0, 0, 0, curCharData);
 
                 if(*charPtr == '\n') {
                     lt = ltOrigin;
@@ -325,9 +325,9 @@ namespace fg {
                     }
 
                     lt += rightDir * floor(curCharData.lsb);
-                    math::p2d lb = lt + downDir * float(size);
+                    math::p2d lb = lt + downDir * curCharData.height;
                     math::p2d rt = lt + rightDir * curCharData.width;
-                    math::p2d rb = rt + downDir * float(size);
+                    math::p2d rb = rt + downDir * curCharData.height;
 
                     int index = i * 6;
 

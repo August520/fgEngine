@@ -3,7 +3,13 @@
 
 namespace fg {
     namespace resources {
-        FontResource::FontSize::Atlas::Atlas(const diag::LogInterface &log, platform::PlatformInterface &api) : hOffset(0), vOffset(0), nextPtr(nullptr) {
+        static const int FONT_ATLAS_SIZE = 512;
+        static const int FONT_MIN_SIZE = 6;
+        static const int FONT_MAX_SIZE = 128;
+        static const int FONT_MIN_OFFSET = 4;
+        //static const int FONT_MAX_GLOW = 4;
+
+        FontResource::FontForm::Atlas::Atlas(const diag::LogInterface &log, platform::PlatformInterface &api) : hOffset(FONT_MIN_OFFSET), vOffset(FONT_MIN_OFFSET) {
             texture = api.rdCreateTexture2D(platform::TextureFormat::RED8, FONT_ATLAS_SIZE, FONT_ATLAS_SIZE, 1);
 
             if(texture == nullptr){
@@ -11,13 +17,13 @@ namespace fg {
             }
         }
 
-        FontResource::FontSize::Atlas::~Atlas() {
+        FontResource::FontForm::Atlas::~Atlas() {
             if(texture) {
                 texture->release();
             }
         }
 
-        FontResource::FontSize::~FontSize() {
+        FontResource::FontForm::~FontForm() {
             for(auto index = chars.begin(); index != chars.end(); ++index){
                 delete index->second;
             }
@@ -36,7 +42,7 @@ namespace fg {
         }
 
         FontResource::~FontResource() {
-            for(auto index = _fontSizes.begin(); index != _fontSizes.end(); ++index){
+            for(auto index = _fontForms.begin(); index != _fontForms.end(); ++index){
                 delete index->second;
             }
         }
@@ -55,28 +61,28 @@ namespace fg {
         }
 
         void FontResource::unloaded() {
-            for(auto index = _fontSizes.begin(); index != _fontSizes.end(); ++index){
+            for(auto index = _fontForms.begin(); index != _fontForms.end(); ++index){
                 delete index->second;
             }
 
-            _fontSizes.clear();
+            _fontForms.clear();
 
             delete (char *)_binaryData;
             _binaryData = nullptr;
             _binarySize = 0;
         }
 
-        void FontResource::cache(const char *mbcharsz, unsigned fontSize) {
+        void FontResource::cache(const char *mbcharsz, unsigned fontSize, unsigned glow, int shadowX, int shadowY) {
             if(fontSize < FONT_MIN_SIZE || fontSize > FONT_MAX_SIZE) return;
 
-            FontSize *curFontSize = nullptr;
-            auto fontSzIndex = _fontSizes.find(fontSize);
+            FontForm *curFontForm = nullptr;
+            auto fontSzIndex = _fontForms.find(fontSize);
 
-            if(fontSzIndex != _fontSizes.end()){
-                curFontSize = fontSzIndex->second;
+            if(fontSzIndex != _fontForms.end()){
+                curFontForm = fontSzIndex->second;
             }
             else{
-                curFontSize = _cacheFontSize(fontSize);
+                curFontForm = _cacheForm(fontSize, glow, shadowX, shadowY);
             }
 
             unsigned short ch = 0;
@@ -85,27 +91,27 @@ namespace fg {
             for(const char *charPtr = mbcharsz; charPtr[0] != 0; charPtr += chLen){
                 ch = string::utf8ToUTF16(charPtr, &chLen);
 
-                auto charIndex = curFontSize->chars.find(ch);
-                if(charIndex == curFontSize->chars.end()){
-                    _cacheChar(ch, curFontSize);
+                auto charIndex = curFontForm->chars.find(ch);
+                if(charIndex == curFontForm->chars.end()){
+                    _cacheChar(ch, curFontForm);
                 }
             }
         }
 
-        void FontResource::getChar(const char *mbChar, unsigned fontSize, FontCharInfo &out) const {
-            getChar(string::utf8ToUTF16(mbChar), fontSize, out);
+        void FontResource::getChar(const char *mbChar, unsigned fontSize, unsigned glow, int shadowX, int shadowY, FontCharInfo &out) const {
+            getChar(string::utf8ToUTF16(mbChar), fontSize, glow, shadowX, shadowY, out);
         }
 
-        void FontResource::getChar(unsigned short ch, unsigned fontSize, FontCharInfo &out) const {
-            FontSize        *curFontSize = nullptr;
+        void FontResource::getChar(unsigned short ch, unsigned fontSize, unsigned glow, int shadowX, int shadowY, FontCharInfo &out) const {
+            FontForm  *curFontSize = nullptr;
             const CharData  *charData = nullptr;
-            auto  fontSzIndex = _fontSizes.find(fontSize);
+            auto  fontSzIndex = _fontForms.find(fontSize);
 
-            if(fontSzIndex != _fontSizes.end()) {
+            if(fontSzIndex != _fontForms.end()) {
                 curFontSize = fontSzIndex->second;
             }
             else {
-                curFontSize = _cacheFontSize(fontSize);
+                curFontSize = _cacheForm(fontSize, glow, shadowX, shadowY);
             }
             auto charIndex = curFontSize->chars.find(ch);
 
@@ -149,70 +155,134 @@ namespace fg {
             return resultWidth;
         }
 
-        const FontResource::CharData *FontResource::_cacheChar(unsigned short ch, FontSize *fontSize) const {
-            FontSize::Atlas *curAtlas = nullptr;
+        const FontResource::CharData *FontResource::_cacheChar(unsigned short ch, FontForm *fontForm) const {
+            FontForm::Atlas *curAtlas = nullptr;
             CharData *curCharData = new CharData;
 
             int glyph = stbtt_FindGlyphIndex(&_self, ch);
             int ix0, ix1, iy0, iy1, iadvance, ilsb;
 
             stbtt_GetGlyphHMetrics(&_self, glyph, &iadvance, &ilsb);
-            stbtt_GetGlyphBitmapBoxSubpixel(&_self, glyph, fontSize->fontScale, fontSize->fontScale, 0, 0, &ix0, &iy0, &ix1, &iy1);
-            int dx = int(ix1 - ix0);
-            curAtlas = fontSize->atlasListEnd;
+            stbtt_GetGlyphBitmapBoxSubpixel(&_self, glyph, fontForm->fontScale, fontForm->fontScale, 0, 0, &ix0, &iy0, &ix1, &iy1);
+
+            int sideLeft = fontForm->glow;
+            int sideRight = fontForm->glow;
+            int sideTop = fontForm->glow;
+            int sideBottom = fontForm->glow;
+
+            fontForm->shadowX > 0 ? sideRight += fontForm->shadowX : sideLeft += std::abs(fontForm->shadowX);
+            fontForm->shadowY > 0 ? sideBottom += fontForm->shadowY : sideTop += std::abs(fontForm->shadowY);
+
+            int dx = int(ix1 - ix0) + sideLeft + sideRight + 1;
+            int dy = int(iy1 - iy0) + sideTop + sideBottom + 1;
+            curAtlas = fontForm->atlasListEnd;
 
             if(curAtlas == nullptr){
-                curAtlas = new FontSize::Atlas(*_log, *_api);
-                fontSize->atlasListEnd = curAtlas;
-                fontSize->atlasList = curAtlas;
+                curAtlas = new FontForm::Atlas(*_log, *_api);
+                fontForm->atlasListEnd = curAtlas;
+                fontForm->atlasList = curAtlas;
             }
-            else if(FONT_ATLAS_SIZE - curAtlas->hOffset < dx){ // - 10
+            else if(FONT_ATLAS_SIZE - curAtlas->hOffset - FONT_MIN_OFFSET - sideRight < dx){
                 curAtlas->hOffset = 0;
-                curAtlas->vOffset += fontSize->height; // + 10
+                curAtlas->vOffset += fontForm->height + FONT_MIN_OFFSET;
 
-                if(FONT_ATLAS_SIZE - curAtlas->vOffset < fontSize->height){ // - 10
-                    curAtlas->nextPtr = new FontSize::Atlas(*_log, *_api);
+                if(FONT_ATLAS_SIZE - curAtlas->vOffset - FONT_MIN_OFFSET - sideBottom < fontForm->height){
+                    curAtlas->nextPtr = new FontForm::Atlas(*_log, *_api);
                     curAtlas = curAtlas->nextPtr;
-                    fontSize->atlasListEnd = curAtlas;
+                    fontForm->atlasListEnd = curAtlas;
                 }
             }
-
-            unsigned char glyphBuffer[FONT_MAX_SIZE * FONT_MAX_SIZE] = {0};
-            unsigned char *toff = glyphBuffer + (fontSize->baseline + iy0) * FONT_MAX_SIZE; // + 10  + 10
-            stbtt_MakeGlyphBitmapSubpixel(&_self, toff, dx, iy1 - iy0, dx, fontSize->fontScale, fontSize->fontScale, 0, 0, glyph, ix0, iy0);
             
-            curAtlas->texture->update(0, curAtlas->hOffset, curAtlas->vOffset + fontSize->baseline + iy0, dx, iy1 - iy0, toff); //??
+            unsigned char glyphBufferSrc[2 * FONT_MAX_SIZE * FONT_MAX_SIZE] = {0};
+            unsigned char glyphBufferTmp[2 * FONT_MAX_SIZE * FONT_MAX_SIZE] = {0};
 
+            unsigned char *src = glyphBufferSrc + (fontForm->baseline + iy0 + FONT_MIN_OFFSET + sideTop) * FONT_MAX_SIZE + FONT_MIN_OFFSET + sideLeft;
+            unsigned char *tmp = glyphBufferTmp + (fontForm->baseline + iy0 + FONT_MIN_OFFSET + sideTop) * FONT_MAX_SIZE + FONT_MIN_OFFSET + sideLeft;
+            
+            stbtt_MakeGlyphBitmapSubpixel(&_self, src + sideTop * dx + sideLeft + 1, FONT_MAX_SIZE, FONT_MAX_SIZE, dx, fontForm->fontScale, fontForm->fontScale, 0, 0, glyph);
+            
+            if (fontForm->shadowX != 0 || fontForm->shadowY != 0 || fontForm->glow != 0) {
+                _processGlyphGlow(src, tmp, dx, dy, fontForm->glow, fontForm->shadowX, fontForm->shadowY);
+            }
+            if (iy1 > iy0 && dx) {
+                curAtlas->texture->update(0, curAtlas->hOffset, curAtlas->vOffset + fontForm->baseline + iy0, dx, dy, src);
+            }
+            
             curCharData->tu = float(curAtlas->hOffset) / float(FONT_ATLAS_SIZE);
             curCharData->tv = float(curAtlas->vOffset) / float(FONT_ATLAS_SIZE);
             curCharData->atlas = curAtlas;
             curCharData->txWidth = float(dx) / float(FONT_ATLAS_SIZE);
-            curCharData->txHeight = float(fontSize->height) / float(FONT_ATLAS_SIZE);
+            curCharData->txHeight = float(fontForm->height + sideTop + sideBottom) / float(FONT_ATLAS_SIZE); //
             curCharData->width = float(dx);
-            curCharData->height = float(fontSize->height);
-            curCharData->advance = fontSize->fontScale * float(iadvance);
-            curCharData->lsb = fontSize->fontScale * float(ilsb);
+            curCharData->height = float(fontForm->height + sideTop + sideBottom); //fontSize->height
+            curCharData->advance = fontForm->fontScale * float(iadvance);
+            curCharData->lsb = fontForm->fontScale * float(ilsb);
 
             curAtlas->hOffset += dx + 1;
-            fontSize->chars[ch] = curCharData;
+            fontForm->chars[ch] = curCharData;
 
             return curCharData;
         }
 
-        FontResource::FontSize *FontResource::_cacheFontSize(unsigned fontSize) const {
-            FontSize *curFontSize = new FontSize();
+        // todo: optimize
+        //
+        void FontResource::_processGlyphGlow(unsigned char *src, unsigned char *tmp, int w, int h, unsigned glow, int shadowX, int shadowY) const {
+            for (int i = 0; i < w; i++) {
+                for (int c = 0; c < h; c++) {
+                    unsigned base = c * w + i;
+                    unsigned ch = src[base];
 
-            curFontSize->atlasList = nullptr;
-            curFontSize->atlasListEnd = nullptr;
-            curFontSize->fontScale = stbtt_ScaleForPixelHeight(&_self, float(fontSize));
-            curFontSize->height = fontSize;
+                    tmp[base] = unsigned char(std::min(127u, ch)); 
+                }
+            }
+
+            for (unsigned k = 0; k < glow; k++) {
+                for (int i = 0; i < w; i++) {
+                    for (int c = 0; c < h; c++) {
+                        unsigned base = c * w + i;
+                        unsigned ch = tmp[base];
+
+                        ch += tmp[base + 1];
+                        ch += tmp[base - 1];
+                        ch += tmp[base + w];
+                        ch += tmp[base - w];
+                        ch += tmp[base + w + 1];
+                        ch += tmp[base - w - 1];
+                        ch += tmp[base + w - 1];
+                        ch += tmp[base - w + 1];
+
+                        tmp[base] = std::min(unsigned char(127), unsigned char(ch >> 3));
+                    }
+                }
+            }
+
+            for (int i = 0; i < w; i++) {
+                for (int c = 0; c < h; c++) {
+                    int base = c * w + i;
+                    int shadowBase = base - shadowY * w - shadowX;
+                    unsigned ch = src[base];
+                    unsigned char shadow = shadowBase >= 0 ? tmp[shadowBase] : 0;
+
+                    src[base] = std::max(shadow, unsigned char(std::min(127u, ch))) + unsigned char(src[base] >> 1);
+                }
+            }
+        }
+
+        FontResource::FontForm *FontResource::_cacheForm(unsigned fontSize, unsigned glow, int shadowX, int shadowY) const {
+            FontForm *curFontForm = new FontForm();
+
+            curFontForm->fontScale = stbtt_ScaleForPixelHeight(&_self, float(fontSize));
+            curFontForm->height = fontSize;
+            curFontForm->glow = int(glow);
+            curFontForm->shadowX = shadowX;
+            curFontForm->shadowY = shadowY;
 
             int ascent;
             stbtt_GetFontVMetrics(&_self, &ascent, 0, 0);
-            curFontSize->baseline = (int)(ascent * curFontSize->fontScale);
+            curFontForm->baseline = (int)(ascent * curFontForm->fontScale);
 
-            _fontSizes[fontSize] = curFontSize;
-            return curFontSize;
+            _fontForms[fontSize] = curFontForm;
+            return curFontForm;
         }
     }
 }

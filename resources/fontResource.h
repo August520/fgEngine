@@ -1,23 +1,16 @@
 
-// todo:
-// + safely
-
 #include <unordered_map>
 
 namespace fg {
     namespace resources {
         class FontResource : public FontResourceInterface, public Resource {
         public:
-            static const int FONT_ATLAS_SIZE = 512;
-            static const int FONT_MIN_SIZE = 6;
-            static const int FONT_MAX_SIZE = 512;
-
             struct CharData;
-            struct FontSize {
+            struct FontForm {
                 struct Atlas {
-                    platform::Texture2DInterface *texture;
+                    platform::Texture2DInterface *texture = nullptr;
                     
-                    Atlas   *nextPtr;
+                    Atlas   *nextPtr = nullptr;
                     int     hOffset;
                     int     vOffset;
 
@@ -27,17 +20,20 @@ namespace fg {
 
                 std::unordered_map <unsigned short, CharData *> chars;
 
-                Atlas   *atlasList;
-                Atlas   *atlasListEnd;
+                Atlas   *atlasList = nullptr;
+                Atlas   *atlasListEnd = nullptr;
                 int     baseline;
                 int     height;
+                int     glow;
+                int     shadowX;
+                int     shadowY;
                 float   fontScale;
 
-                ~FontSize();
+                ~FontForm();
             };
 
             struct CharData {
-                FontSize::Atlas *atlas;
+                FontForm::Atlas *atlas;
 
                 float   tu;
                 float   tv;
@@ -56,19 +52,21 @@ namespace fg {
             bool  constructed(const diag::LogInterface &log, platform::PlatformInterface &api) override;
             void  unloaded() override;
 
-            void  cache(const char *mbcharsz, unsigned fontSize) override;
-            void  getChar(const char *mbChar, unsigned fontSize, FontCharInfo &out) const override;
-            void  getChar(unsigned short ch, unsigned fontSize, FontCharInfo &out) const override;
+            void  cache(const char *mbcharsz, unsigned fontSize, unsigned glow, int shadowX, int shadowY) override;
+            void  getChar(const char *mbChar, unsigned fontSize, unsigned glow, int shadowX, int shadowY, FontCharInfo &out) const override;
+            void  getChar(unsigned short ch, unsigned fontSize, unsigned glow, int shadowX, int shadowY, FontCharInfo &out) const override;
             float getTextWidth(const char *text, unsigned fontSize) const override;
 
         protected:
-            mutable std::unordered_map     <unsigned, FontSize *> _fontSizes;
+            mutable std::unordered_map     <unsigned, FontForm *> _fontForms;
             mutable tools::stbtt_fontinfo  _self;            
             platform::PlatformInterface    *_api;
             const diag::LogInterface       *_log;
 
-            const CharData  *_cacheChar(unsigned short ch, FontSize *fontSize) const;
-            FontSize        *_cacheFontSize(unsigned fontSize) const;
+            const CharData  *_cacheChar(unsigned short ch, FontForm *fontForm) const;
+            FontForm        *_cacheForm(unsigned fontSize, unsigned glow, int shadowX, int shadowY) const;
+
+            void  _processGlyphGlow(unsigned char *src, unsigned char *tmp, int w, int h, unsigned glow, int shadowX, int shadowY) const;
         };
     }
 }
