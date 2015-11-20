@@ -32,7 +32,7 @@ namespace fg {
             api.platform.rdSetRenderTarget(api.platform.rdGetDefaultRenderTarget());
             api.platform.rdClearCurrentDepthBuffer();
             api.platform.rdClearCurrentColorBuffer();
-            api.rendering.debugDrawAxis();
+            //api.rendering.debugDrawAxis();
 
             while(iterator.next()) {
 
@@ -46,9 +46,15 @@ namespace fg {
                 }
             }
             
-            char buffer[64];
-            sprintf(buffer, "FPS = %2.4f", _fps); //
-            api.rendering.drawText2D(buffer, fg::math::m3x3(), api.resources.getResource("arial.ttf"), 18, fg::color(0.8f, 0.9f, 1.0f, 1.0f));            
+            //char buffer[64];
+            //sprintf(buffer, "FPS = %2.4f", _fps); //
+            //api.rendering.drawText2D(buffer, fg::math::m3x3(), api.resources.getResource("arial.ttf"), 18, fg::color(0.8f, 0.9f, 1.0f, 1.0f));
+
+            fg::math::m3x3 coord;
+            coord.setTranslate(fg::math::p2d(20, 20));
+            api.platform.rdSetBlenderParams(api.rendering.getDefaultAddBlenderParams());
+            //api.platform.rdSetSampler(fg::platform::TextureSlot::TEXTURE0, api.rendering.getDefaultLinearSampler());
+            api.rendering.drawText2D("bullq Ёжик", coord, api.resources.getResource("arial.ttf"), 24, fg::color()); //
         }
 
         const char *DefaultRender::getRenderResourceList() const {

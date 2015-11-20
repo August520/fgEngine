@@ -12,21 +12,7 @@ namespace fg {
         const unsigned ODDBUFFER_TEXTURED_INDEX_MAX = 768;
 
         RenderSupport::RenderSupport() {
-            _camera = nullptr;
-            _platform = nullptr;
 
-            _defRasterizerParams = nullptr;
-            _defBlenderParams = nullptr;
-            _defDepthParams = nullptr;
-            _defLinearSampler = nullptr;
-            _defPointSampler = nullptr;
-
-            _frameConstants = nullptr;
-            _simpleShader = nullptr;
-            _ifaceShader = nullptr;
-
-            _defInstanceData = nullptr;
-            _defDisplayObjectInstanceData = nullptr;
         }
 
         RenderSupport::~RenderSupport() {
@@ -36,7 +22,8 @@ namespace fg {
         void RenderSupport::init(platform::EnginePlatformInterface &iplatform, resources::ResourceManagerInterface &iresMan) {
             _platform = &iplatform;            
             _defRasterizerParams = iplatform.rdCreateRasterizerParams(platform::CullMode::NONE);
-            _defBlenderParams = iplatform.rdCreateBlenderParams(platform::BlendMode::ALPHA_LERP);
+            _defLerpBlenderParams = iplatform.rdCreateBlenderParams(platform::BlendMode::ALPHA_LERP);
+            _defAddBlenderParams = iplatform.rdCreateBlenderParams(platform::BlendMode::ALPHA_ADD);
             _defDepthParams = iplatform.rdCreateDepthParams(true, platform::DepthFunc::LESS_EQUAL, true);
             _defPointSampler = iplatform.rdCreateSampler(platform::TextureFilter::POINT, platform::TextureAddressMode::CLAMP);
             _defLinearSampler = iplatform.rdCreateSampler(platform::TextureFilter::LINEAR, platform::TextureAddressMode::CLAMP);
@@ -55,7 +42,7 @@ namespace fg {
 
         void RenderSupport::frameInit3D(float frameTimeMs) {
             _platform->rdSetSampler(platform::TextureSlot::TEXTURE0, _defLinearSampler);
-            _platform->rdSetBlenderParams(_defBlenderParams);
+            _platform->rdSetBlenderParams(_defLerpBlenderParams);
             _platform->rdSetDepthParams(_defDepthParams);
             _platform->rdSetRasterizerParams(_defRasterizerParams);
 
@@ -77,7 +64,7 @@ namespace fg {
             _frameConstants->data.camViewProj.identity();
             _frameConstants->updateAndApply();
             
-            _platform->rdSetBlenderParams(_defBlenderParams);
+            _platform->rdSetBlenderParams(_defLerpBlenderParams);
             _platform->rdSetSampler(platform::TextureSlot::TEXTURE0, _defLinearSampler);
             _platform->rdSetShader(_ifaceShader->getPlatformObject());
         }
@@ -95,7 +82,8 @@ namespace fg {
             if(_defInstanceData) _defInstanceData->release();
             if(_defDisplayObjectInstanceData) _defDisplayObjectInstanceData->release();
             if(_defRasterizerParams) _defRasterizerParams->release();
-            if(_defBlenderParams) _defBlenderParams->release();
+            if(_defLerpBlenderParams) _defLerpBlenderParams->release();
+            if(_defAddBlenderParams) _defAddBlenderParams->release();
             if(_defDepthParams) _defDepthParams->release();
             if(_defLinearSampler) _defLinearSampler->release();
             if(_defPointSampler) _defPointSampler->release();
@@ -106,7 +94,8 @@ namespace fg {
             _defInstanceData = nullptr;
             _defDisplayObjectInstanceData = nullptr;
             _defRasterizerParams = nullptr;
-            _defBlenderParams = nullptr;
+            _defLerpBlenderParams = nullptr;
+            _defAddBlenderParams = nullptr;
             _defDepthParams = nullptr;
             _defLinearSampler = nullptr;
             _defPointSampler = nullptr;
@@ -127,8 +116,12 @@ namespace fg {
             return _defRasterizerParams;            
         }
 
-        platform::BlenderParamsInterface *RenderSupport::getDefaultBlenderParams() {
-            return _defBlenderParams;            
+        platform::BlenderParamsInterface *RenderSupport::getDefaultLerpBlenderParams() {
+            return _defLerpBlenderParams;
+        }
+
+        platform::BlenderParamsInterface *RenderSupport::getDefaultAddBlenderParams() {
+            return _defAddBlenderParams;
         }
 
         platform::DepthParamsInterface *RenderSupport::getDefaultDepthParams() {

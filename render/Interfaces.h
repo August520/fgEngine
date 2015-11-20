@@ -48,7 +48,8 @@ namespace fg {
 
             virtual platform::InstanceDataInterface      *getDefaultInstanceData() = 0;
             virtual platform::RasterizerParamsInterface  *getDefaultRasterizerParams() = 0;
-            virtual platform::BlenderParamsInterface     *getDefaultBlenderParams() = 0;
+            virtual platform::BlenderParamsInterface     *getDefaultLerpBlenderParams() = 0;
+            virtual platform::BlenderParamsInterface     *getDefaultAddBlenderParams() = 0;
             virtual platform::DepthParamsInterface       *getDefaultDepthParams() = 0;
             virtual platform::SamplerInterface           *getDefaultPointSampler() = 0;
             virtual platform::SamplerInterface           *getDefaultLinearSampler() = 0;

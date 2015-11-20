@@ -15,7 +15,8 @@ namespace fg {
             
             platform::InstanceDataInterface      *getDefaultInstanceData() override;
             platform::RasterizerParamsInterface  *getDefaultRasterizerParams() override;
-            platform::BlenderParamsInterface     *getDefaultBlenderParams() override;
+            platform::BlenderParamsInterface     *getDefaultLerpBlenderParams() override;
+            platform::BlenderParamsInterface     *getDefaultAddBlenderParams() override;
             platform::DepthParamsInterface       *getDefaultDepthParams() override;
             platform::SamplerInterface           *getDefaultPointSampler() override;
             platform::SamplerInterface           *getDefaultLinearSampler() override;
@@ -43,28 +44,29 @@ namespace fg {
             void debugDrawAxis() override;
 
         protected:
-            CameraInterface *_camera;
+            CameraInterface *_camera = nullptr;
 
-            platform::EnginePlatformInterface    *_platform;
-            platform::RasterizerParamsInterface  *_defRasterizerParams;
-            platform::BlenderParamsInterface     *_defBlenderParams;
-            platform::DepthParamsInterface       *_defDepthParams;
-            platform::SamplerInterface           *_defLinearSampler;
-            platform::SamplerInterface           *_defPointSampler;
+            platform::EnginePlatformInterface    *_platform = nullptr;
+            platform::RasterizerParamsInterface  *_defRasterizerParams = nullptr;
+            platform::BlenderParamsInterface     *_defLerpBlenderParams = nullptr;
+            platform::BlenderParamsInterface     *_defAddBlenderParams = nullptr;
+            platform::DepthParamsInterface       *_defDepthParams = nullptr;
+            platform::SamplerInterface           *_defLinearSampler = nullptr;
+            platform::SamplerInterface           *_defPointSampler = nullptr;
 
-            platform::IndexedVertexBufferInterface  *_oddVertexBufferSimple;
-            platform::IndexedVertexBufferInterface  *_oddVertexBufferTextured;
-            platform::IndexedVertexBufferInterface  *_oddVertexBufferNormal;
+            platform::IndexedVertexBufferInterface  *_oddVertexBufferSimple = nullptr;
+            platform::IndexedVertexBufferInterface  *_oddVertexBufferTextured = nullptr;
+            platform::IndexedVertexBufferInterface  *_oddVertexBufferNormal = nullptr;
 
             InstanceDataDefault                  _defInstanceStruct;
             InstanceDataDisplayObject            _defDisplayObjectInstanceStruct;
-            platform::InstanceDataInterface      *_defInstanceData;
-            platform::InstanceDataInterface      *_defDisplayObjectInstanceData;
+            platform::InstanceDataInterface      *_defInstanceData = nullptr;
+            platform::InstanceDataInterface      *_defDisplayObjectInstanceData = nullptr;
 
-            ShaderConstantBufferStruct           <DefaultFrameConstants> *_frameConstants;
+            ShaderConstantBufferStruct           <DefaultFrameConstants> *_frameConstants = nullptr;
             
-            const resources::ShaderResourceInterface *_simpleShader;
-            const resources::ShaderResourceInterface *_ifaceShader;
+            const resources::ShaderResourceInterface *_simpleShader = nullptr;
+            const resources::ShaderResourceInterface *_ifaceShader = nullptr;
 
             float  _screenPixelsPerCoordSystemPixelsX;
             float  _screenPixelsPerCoordSystemPixelsY;
