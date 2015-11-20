@@ -52,7 +52,7 @@ namespace fg {
             bool  constructed(const diag::LogInterface &log, platform::PlatformInterface &api) override;
             void  unloaded() override;
 
-            void  cache(const char *mbcharsz, unsigned fontSize, unsigned glow, int shadowX, int shadowY) override;
+            unsigned cache(const char *mbcharsz, unsigned fontSize, unsigned glow, int shadowX, int shadowY, unsigned maxCaching) override;
             void  getChar(const char *mbChar, unsigned fontSize, unsigned glow, int shadowX, int shadowY, FontCharInfo &out) const override;
             void  getChar(unsigned short ch, unsigned fontSize, unsigned glow, int shadowX, int shadowY, FontCharInfo &out) const override;
             float getTextWidth(const char *text, unsigned fontSize) const override;

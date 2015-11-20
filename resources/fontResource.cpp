@@ -72,8 +72,8 @@ namespace fg {
             _binarySize = 0;
         }
 
-        void FontResource::cache(const char *mbcharsz, unsigned fontSize, unsigned glow, int shadowX, int shadowY) {
-            if(fontSize < FONT_MIN_SIZE || fontSize > FONT_MAX_SIZE) return;
+        unsigned FontResource::cache(const char *mbcharsz, unsigned fontSize, unsigned glow, int shadowX, int shadowY, unsigned maxCaching) {
+            if(fontSize < FONT_MIN_SIZE || fontSize > FONT_MAX_SIZE) return 0;
 
             FontForm *curFontForm = nullptr;
             auto fontSzIndex = _fontForms.find(fontSize);
@@ -85,17 +85,25 @@ namespace fg {
                 curFontForm = _cacheForm(fontSize, glow, shadowX, shadowY);
             }
 
+            unsigned counter = 0;
             unsigned short ch = 0;
             unsigned chLen = 0;
+            const char *charPtr = mbcharsz;
 
-            for(const char *charPtr = mbcharsz; charPtr[0] != 0; charPtr += chLen){
+            for(; charPtr[0] != 0; charPtr += chLen){
                 ch = string::utf8ToUTF16(charPtr, &chLen);
 
                 auto charIndex = curFontForm->chars.find(ch);
                 if(charIndex == curFontForm->chars.end()){
-                    _cacheChar(ch, curFontForm);
+                    if (counter < maxCaching) {
+                        _cacheChar(ch, curFontForm);
+                        counter++;
+                    }
+                    else break;
                 }
             }
+
+            return unsigned(charPtr - mbcharsz);
         }
 
         void FontResource::getChar(const char *mbChar, unsigned fontSize, unsigned glow, int shadowX, int shadowY, FontCharInfo &out) const {

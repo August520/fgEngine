@@ -268,7 +268,7 @@ namespace fg {
             _platform->rdDrawIndexedGeometry(_oddVertexBufferTextured, _defDisplayObjectInstanceData, platform::PrimitiveTopology::TRIANGLE_STRIP, 4);
         }
 
-        void RenderSupport::drawText2D(const fg::string &utf8text, const math::m3x3 &trfm, const resources::FontResourceInterface *font, unsigned size, const fg::color &c, bool resolutionDepended) {
+        void RenderSupport::drawText2D(const fg::string &utf8text, const math::m3x3 &trfm, const resources::FontResourceInterface *font, const FontForm &form, bool resolutionDepended) {
             float dpiKoeffX = 1.0f;
             float dpiKoeffY = 1.0f;
             float scaleX = _screenPixelsPerCoordSystemPixelsX;
@@ -305,7 +305,7 @@ namespace fg {
 
             for(const char *charPtr = utf8text.data(); charPtr[0] != 0; charPtr += tchLen, i++) {
                 tchLen = fg::string::utf8CharLen(charPtr);
-                font->getChar(charPtr, size, 0, 0, 0, curCharData);
+                font->getChar(charPtr, form.size, form.glow, form.shadowX, form.shadowY, curCharData);
 
                 if(*charPtr == '\n') {
                     lt = ltOrigin;
@@ -384,7 +384,7 @@ namespace fg {
             _oddVertexBufferTextured->unlockIndices();
 
             _defDisplayObjectInstanceStruct.isGrey = 1.0f;
-            _defDisplayObjectInstanceStruct.rgba = c;
+            _defDisplayObjectInstanceStruct.rgba = form.rgba;
             _defDisplayObjectInstanceData->update(&_defDisplayObjectInstanceStruct, 1);
             _platform->rdDrawIndexedGeometry(_oddVertexBufferTextured, _defDisplayObjectInstanceData, platform::PrimitiveTopology::TRIANGLE_LIST, i * 6);
         }

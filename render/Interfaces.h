@@ -1,5 +1,12 @@
 
 namespace fg {
+    namespace object3d {
+        class RenderObjectIteratorInterface;
+    }
+    namespace object2d {
+        class DisplayObjectIteratorInterface;
+    }
+    
     namespace render {
         // TODO: all DRAW constants -> instance data (+ texture index too)
 
@@ -40,6 +47,14 @@ namespace fg {
 
             virtual void updateMatrix() = 0;
         };
+
+        struct FontForm {
+            fg::color rgba;
+            unsigned  size = 20;
+            unsigned  glow = 0;
+            int shadowX = 0;
+            int shadowY = 0;
+        };
         
         class RenderSupportInterface {
         public:
@@ -65,7 +80,7 @@ namespace fg {
             virtual void setScissorRect(const math::p2d &center, const math::p2d &lt, const math::p2d &rb, bool resolutionDepended = false) = 0;
 
             virtual void drawQuad2D(const math::m3x3 &trfm, const resources::ClipData *clip, unsigned frame, const fg::color &c, bool resolutionDepended = false) = 0;
-            virtual void drawText2D(const fg::string &utf8text, const math::m3x3 &trfm, const resources::FontResourceInterface *font, unsigned size, const fg::color &c, bool resolutionDepended = false) = 0;
+            virtual void drawText2D(const fg::string &utf8text, const math::m3x3 &trfm, const resources::FontResourceInterface *font, const FontForm &form, bool resolutionDepended = false) = 0;
             virtual void drawScreenQuad(float x, float y, float width, float height) = 0;
             virtual void drawMesh(const resources::MeshInterface *mesh, const platform::InstanceDataInterface *instanceData = nullptr) = 0;
             
