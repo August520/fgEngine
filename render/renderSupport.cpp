@@ -263,7 +263,7 @@ namespace fg {
             _oddVertexBufferTextured->unlockIndices();
 
             _defDisplayObjectInstanceStruct.isGrey = 0.0f;
-            _defDisplayObjectInstanceStruct.rgba = c;
+            _defDisplayObjectInstanceStruct.primaryColor = c;
             _defDisplayObjectInstanceData->update(&_defDisplayObjectInstanceStruct, 1);
             _platform->rdDrawIndexedGeometry(_oddVertexBufferTextured, _defDisplayObjectInstanceData, platform::PrimitiveTopology::TRIANGLE_STRIP, 4);
         }
@@ -303,7 +303,8 @@ namespace fg {
             resources::FontCharInfo curCharData;
 
             _defDisplayObjectInstanceStruct.isGrey = 1.0f;
-            _defDisplayObjectInstanceStruct.rgba = form.rgba;
+            _defDisplayObjectInstanceStruct.primaryColor = form.rgba;
+            _defDisplayObjectInstanceStruct.secondaryColor = form.glow || form.shadowX || form.shadowY ? form.outline : form.rgba;
             _defDisplayObjectInstanceData->update(&_defDisplayObjectInstanceStruct, 1);
 
             platform::Texture2DInterface *curTexture = nullptr;
@@ -311,10 +312,10 @@ namespace fg {
             unsigned short *tind = nullptr; 
             
             if (align == object2d::TextAlign::RIGHT) {
-                lt -= rightDir * font->getLineWidth(utf8text.data(), realFontSize);
+                lt -= rightDir * std::floor(font->getLineWidth(utf8text.data(), realFontSize));
             }
             else if (align == object2d::TextAlign::CENTER) {
-                lt -= 0.5f * rightDir * font->getLineWidth(utf8text.data(), realFontSize);
+                lt -= rightDir * std::floor(0.5f * font->getLineWidth(utf8text.data(), realFontSize));
             }
 
             for(const char *charPtr = utf8text.data(); *charPtr != 0; charPtr += tchLen, i++) {
@@ -325,10 +326,10 @@ namespace fg {
                     lt = ltOrigin;
 
                     if (align == object2d::TextAlign::RIGHT) {
-                        lt -= rightDir * font->getLineWidth(charPtr + 1, realFontSize);
+                        lt -= rightDir * std::floor(font->getLineWidth(charPtr + 1, realFontSize));
                     }
                     else if (align == object2d::TextAlign::CENTER) {
-                        lt -= 0.5f * rightDir * font->getLineWidth(charPtr + 1, realFontSize);
+                        lt -= rightDir * std::floor(0.5f * font->getLineWidth(charPtr + 1, realFontSize));
                     }
                     
                     line++;
@@ -472,7 +473,7 @@ namespace fg {
             _oddVertexBufferTextured->unlockIndices();
 
             _defDisplayObjectInstanceStruct.isGrey = 0.0f;
-            _defDisplayObjectInstanceStruct.rgba = fg::color(1, 1, 1, 1);
+            _defDisplayObjectInstanceStruct.primaryColor = fg::color(1, 1, 1, 1);
             _defDisplayObjectInstanceData->update(&_defDisplayObjectInstanceStruct, 1);
             _platform->rdDrawIndexedGeometry(_oddVertexBufferTextured, _defDisplayObjectInstanceData, platform::PrimitiveTopology::TRIANGLE_STRIP, 4);
         }

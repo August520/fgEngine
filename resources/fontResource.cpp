@@ -290,10 +290,10 @@ namespace fg {
                 for (int c = 0; c < h; c++) {
                     int base = c * w + i;
                     int shadowBase = base - shadowY * w - shadowX;
-                    unsigned ch = src[base];
+                    unsigned char ch = tmp[base];
                     unsigned char shadow = shadowBase >= 0 ? tmp[shadowBase] : 0;
 
-                    src[base] = std::max(shadow, unsigned char(std::min(127u, ch))) + unsigned char(src[base] >> 1);
+                    src[base] = std::max(shadow, ch) + unsigned char(src[base] >> 1);
                 }
             }
         }

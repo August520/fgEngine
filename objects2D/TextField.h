@@ -12,6 +12,7 @@ namespace fg {
             void  setSize(unsigned size) override;
             void  setColor(const fg::color &c) override;
             void  setGlow(unsigned pixels) override;
+            void  setOutlineColor(const fg::color &c) override;
             void  setShadow(int shadowX, int shadowY) override;
             void  setAlign(TextAlign align) override;
 

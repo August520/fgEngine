@@ -34,6 +34,10 @@ namespace fg {
             _cached = 0;
         }
 
+        void TextField::setOutlineColor(const fg::color &c) {
+            _form.outline = c;
+        }
+
         void TextField::setShadow(int shadowX, int shadowY) {
             _form.shadowX = shadowX;
             _form.shadowY = shadowY;

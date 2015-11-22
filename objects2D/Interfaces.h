@@ -127,6 +127,7 @@ namespace fg {
 
         struct FontForm {
             fg::color rgba;
+            fg::color outline;
             unsigned  size = 20;
             unsigned  glow = 0;
             int shadowX = 0;
@@ -143,6 +144,7 @@ namespace fg {
             virtual void  setSize(unsigned size) = 0;
             virtual void  setColor(const fg::color &c) = 0;
             virtual void  setGlow(unsigned pixels) = 0;
+            virtual void  setOutlineColor(const fg::color &c) = 0;
             virtual void  setShadow(int shadowX, int shadowY) = 0;
             virtual void  setAlign(TextAlign align) = 0;
 

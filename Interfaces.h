@@ -75,8 +75,9 @@ namespace fg {
     //
     struct InstanceDataDisplayObject {
         math::p3d position;
-        float isGrey;             
-        color rgba;
+        float isGrey;
+        color primaryColor;
+        color secondaryColor;
     };
 
 }
