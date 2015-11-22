@@ -7,7 +7,6 @@ namespace fg {
         static const int FONT_MIN_SIZE = 6;
         static const int FONT_MAX_SIZE = 128;
         static const int FONT_MIN_OFFSET = 4;
-        //static const int FONT_MAX_GLOW = 4;
 
         FontResource::FontForm::Atlas::Atlas(const diag::LogInterface &log, platform::PlatformInterface &api) : hOffset(FONT_MIN_OFFSET), vOffset(FONT_MIN_OFFSET) {
             texture = api.rdCreateTexture2D(platform::TextureFormat::RED8, FONT_ATLAS_SIZE, FONT_ATLAS_SIZE, 1);
@@ -144,20 +143,43 @@ namespace fg {
         float FontResource::getTextWidth(const char *text, unsigned fontSize) const {
             float fontScale = stbtt_ScaleForPixelHeight(&_self, float(fontSize));
             float resultWidth = 0.0f;
-            
             unsigned tchLen = 0;
-            unsigned short ch = 0;
-
+            
             for(const char *charPtr = text; charPtr[0] != 0; charPtr += tchLen) {
-                string::utf8ToUTF16(charPtr, &tchLen);
+                if (*charPtr == '\n') {
+                    resultWidth = 0.0f;
+                }
+                else {
+                    unsigned short ch = string::utf8ToUTF16(charPtr, &tchLen);
+
+                    int glyph = stbtt_FindGlyphIndex(&_self, ch);
+                    int iadvance, ilsb;
+
+                    stbtt_GetGlyphHMetrics(&_self, glyph, &iadvance, &ilsb);
+
+                    resultWidth += std::floor(fontScale * float(ilsb));
+                    resultWidth += std::ceil(fontScale * float(iadvance) - fontScale * float(ilsb));
+                }
+            }
+
+            return resultWidth;
+        }
+        
+        float FontResource::getLineWidth(const char *text, unsigned fontSize) const {
+            float fontScale = stbtt_ScaleForPixelHeight(&_self, float(fontSize));
+            float resultWidth = 0.0f;
+            unsigned tchLen = 0;
+
+            for (const char *charPtr = text; charPtr[0] != 0 && charPtr[0] != '\n'; charPtr += tchLen) {
+                unsigned short ch = string::utf8ToUTF16(charPtr, &tchLen);
 
                 int glyph = stbtt_FindGlyphIndex(&_self, ch);
-                int iadvance, ilsb; 
+                int iadvance, ilsb;
 
                 stbtt_GetGlyphHMetrics(&_self, glyph, &iadvance, &ilsb);
 
-                resultWidth += floor(fontScale * float(ilsb));
-                resultWidth += floor(fontScale * float(iadvance) - fontScale * float(ilsb));
+                resultWidth += std::floor(fontScale * float(ilsb));
+                resultWidth += std::ceil(fontScale * float(iadvance) - fontScale * float(ilsb));
             }
 
             return resultWidth;
@@ -190,11 +212,11 @@ namespace fg {
                 fontForm->atlasListEnd = curAtlas;
                 fontForm->atlasList = curAtlas;
             }
-            else if(FONT_ATLAS_SIZE - curAtlas->hOffset - FONT_MIN_OFFSET - sideRight < dx){
-                curAtlas->hOffset = 0;
-                curAtlas->vOffset += fontForm->height + FONT_MIN_OFFSET;
+            else if(FONT_ATLAS_SIZE - curAtlas->hOffset - FONT_MIN_OFFSET <= dx){
+                curAtlas->hOffset = FONT_MIN_OFFSET;
+                curAtlas->vOffset += fontForm->height + sideBottom + sideTop;
 
-                if(FONT_ATLAS_SIZE - curAtlas->vOffset - FONT_MIN_OFFSET - sideBottom < fontForm->height){
+                if(FONT_ATLAS_SIZE - curAtlas->vOffset - FONT_MIN_OFFSET <= fontForm->height + sideBottom + sideTop){
                     curAtlas->nextPtr = new FontForm::Atlas(*_log, *_api);
                     curAtlas = curAtlas->nextPtr;
                     fontForm->atlasListEnd = curAtlas;
@@ -222,7 +244,7 @@ namespace fg {
             curCharData->txWidth = float(dx) / float(FONT_ATLAS_SIZE);
             curCharData->txHeight = float(fontForm->height + sideTop + sideBottom) / float(FONT_ATLAS_SIZE); //
             curCharData->width = float(dx);
-            curCharData->height = float(fontForm->height + sideTop + sideBottom); //fontSize->height
+            curCharData->height = float(fontForm->height + sideTop + sideBottom); 
             curCharData->advance = fontForm->fontScale * float(iadvance);
             curCharData->lsb = fontForm->fontScale * float(ilsb);
 

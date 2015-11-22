@@ -1,5 +1,4 @@
 
-//TODO: getting screen width/height
 
 namespace fg {
     struct GameAPI {        

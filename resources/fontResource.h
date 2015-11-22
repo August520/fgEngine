@@ -56,6 +56,7 @@ namespace fg {
             void  getChar(const char *mbChar, unsigned fontSize, unsigned glow, int shadowX, int shadowY, FontCharInfo &out) const override;
             void  getChar(unsigned short ch, unsigned fontSize, unsigned glow, int shadowX, int shadowY, FontCharInfo &out) const override;
             float getTextWidth(const char *text, unsigned fontSize) const override;
+            float getLineWidth(const char *text, unsigned fontSize) const override;
 
         protected:
             mutable std::unordered_map     <unsigned, FontForm *> _fontForms;

@@ -5,11 +5,11 @@ namespace fg {
     namespace render {
         const unsigned ODDBUFFER_SIMPLE_MAX = 32;
         const unsigned ODDBUFFER_NORMAL_MAX = 32;
-        const unsigned ODDBUFFER_TEXTURED_MAX = 512;
+        const unsigned ODDBUFFER_TEXTURED_MAX = 2048;
 
         const unsigned ODDBUFFER_SIMPLE_INDEX_MAX = 48;
         const unsigned ODDBUFFER_NORMAL_INDEX_MAX = 48;
-        const unsigned ODDBUFFER_TEXTURED_INDEX_MAX = 768;
+        const unsigned ODDBUFFER_TEXTURED_INDEX_MAX = 2048 + 1024;
 
         RenderSupport::RenderSupport() {
 
@@ -268,19 +268,21 @@ namespace fg {
             _platform->rdDrawIndexedGeometry(_oddVertexBufferTextured, _defDisplayObjectInstanceData, platform::PrimitiveTopology::TRIANGLE_STRIP, 4);
         }
 
-        void RenderSupport::drawText2D(const fg::string &utf8text, const math::m3x3 &trfm, const resources::FontResourceInterface *font, const FontForm &form, bool resolutionDepended) {
+        // todo: odd buffer refill (very long text), simplify
+        //
+        void RenderSupport::drawText2D(const std::string &utf8text, const math::m3x3 &trfm, const resources::FontResourceInterface *font, const object2d::FontForm &form, object2d::TextAlign align, bool resolutionDepended) {
             float dpiKoeffX = 1.0f;
             float dpiKoeffY = 1.0f;
             float scaleX = _screenPixelsPerCoordSystemPixelsX;
             float scaleY = _screenPixelsPerCoordSystemPixelsY;
 
-            if(resolutionDepended) {
+            if (resolutionDepended) {
                 dpiKoeffX = fabs(_systemDpiPerCoordSystemDpi / _screenPixelsPerCoordSystemPixelsX);
                 dpiKoeffY = fabs(_systemDpiPerCoordSystemDpi / _screenPixelsPerCoordSystemPixelsY);
             }
 
-            math::p2d rightDir(1.0f * dpiKoeffX, 0.0f);
-            math::p2d downDir(0.0f, 1.0f * dpiKoeffY);
+            math::p2d rightDir(1.0f, 0.0f);
+            math::p2d downDir(0.0f, 1.0f);
 
             rightDir.transform(trfm, false);
             downDir.transform(trfm, false);
@@ -295,29 +297,61 @@ namespace fg {
             math::p2d lt (ltx, lty);
             math::p2d ltOrigin = lt;
 
-            unsigned i = 0;
+            unsigned i = 0, line = 0;
             unsigned tchLen = 0;
+            unsigned realFontSize = unsigned(std::ceil(float(form.size) * dpiKoeffY));
             resources::FontCharInfo curCharData;
 
-            platform::Texture2DInterface *curTexture = nullptr;
-            VertexTextured *tmem = (VertexTextured *)_oddVertexBufferTextured->lockVertices();
-            unsigned short *tind = (unsigned short *)_oddVertexBufferTextured->lockIndices();
+            _defDisplayObjectInstanceStruct.isGrey = 1.0f;
+            _defDisplayObjectInstanceStruct.rgba = form.rgba;
+            _defDisplayObjectInstanceData->update(&_defDisplayObjectInstanceStruct, 1);
 
-            for(const char *charPtr = utf8text.data(); charPtr[0] != 0; charPtr += tchLen, i++) {
+            platform::Texture2DInterface *curTexture = nullptr;
+            VertexTextured *tmem = nullptr; 
+            unsigned short *tind = nullptr; 
+            
+            if (align == object2d::TextAlign::RIGHT) {
+                lt -= rightDir * font->getLineWidth(utf8text.data(), realFontSize);
+            }
+            else if (align == object2d::TextAlign::CENTER) {
+                lt -= 0.5f * rightDir * font->getLineWidth(utf8text.data(), realFontSize);
+            }
+
+            for(const char *charPtr = utf8text.data(); *charPtr != 0; charPtr += tchLen, i++) {
                 tchLen = fg::string::utf8CharLen(charPtr);
-                font->getChar(charPtr, form.size, form.glow, form.shadowX, form.shadowY, curCharData);
+                font->getChar(charPtr, realFontSize, form.glow, form.shadowX, form.shadowY, curCharData);
 
                 if(*charPtr == '\n') {
                     lt = ltOrigin;
-                    lt += downDir * curCharData.height;
+
+                    if (align == object2d::TextAlign::RIGHT) {
+                        lt -= rightDir * font->getLineWidth(charPtr + 1, realFontSize);
+                    }
+                    else if (align == object2d::TextAlign::CENTER) {
+                        lt -= 0.5f * rightDir * font->getLineWidth(charPtr + 1, realFontSize);
+                    }
+                    
+                    line++;
+                    lt += downDir * curCharData.height * float(line);
                 }
                 else {
                     if(curTexture != curCharData.texture) {
+                        if (i) {
+                            _oddVertexBufferTextured->unlockVertices();
+                            _oddVertexBufferTextured->unlockIndices();
+
+                            _platform->rdDrawIndexedGeometry(_oddVertexBufferTextured, _defDisplayObjectInstanceData, platform::PrimitiveTopology::TRIANGLE_LIST, i * 6);
+                            i = 0;
+                        }
+
                         curTexture = curCharData.texture;
                         _platform->rdSetTexture2D(platform::TextureSlot::TEXTURE0, curTexture);
+
+                        tmem = (VertexTextured *)_oddVertexBufferTextured->lockVertices();
+                        tind = (unsigned short *)_oddVertexBufferTextured->lockIndices();
                     }
 
-                    lt += rightDir * floor(curCharData.lsb);
+                    lt += rightDir * std::floor(curCharData.lsb);
                     math::p2d lb = lt + downDir * curCharData.height;
                     math::p2d rt = lt + rightDir * curCharData.width;
                     math::p2d rb = rt + downDir * curCharData.height;
@@ -376,16 +410,13 @@ namespace fg {
                     tmem[index].uv.y = curCharData.tv;
                     tind[index] = index;
 
-                    lt += rightDir * floor(curCharData.advance - curCharData.lsb);
+                    lt += rightDir * std::ceil(curCharData.advance - curCharData.lsb);
                 }
             }
 
             _oddVertexBufferTextured->unlockVertices();
             _oddVertexBufferTextured->unlockIndices();
 
-            _defDisplayObjectInstanceStruct.isGrey = 1.0f;
-            _defDisplayObjectInstanceStruct.rgba = form.rgba;
-            _defDisplayObjectInstanceData->update(&_defDisplayObjectInstanceStruct, 1);
             _platform->rdDrawIndexedGeometry(_oddVertexBufferTextured, _defDisplayObjectInstanceData, platform::PrimitiveTopology::TRIANGLE_LIST, i * 6);
         }
 

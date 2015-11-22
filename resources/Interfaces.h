@@ -174,6 +174,7 @@ namespace fg {
             virtual void  getChar(const char *mbChar, unsigned fontSize, unsigned glow, int shadowX, int shadowY, FontCharInfo &out) const = 0;
             virtual void  getChar(unsigned short ch, unsigned fontSize, unsigned glow, int shadowX, int shadowY, FontCharInfo &out) const = 0;
             virtual float getTextWidth(const char *text, unsigned fontSize) const = 0;
+            virtual float getLineWidth(const char *text, unsigned fontSize) const = 0;
         };
 
         //---

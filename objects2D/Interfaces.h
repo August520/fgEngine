@@ -6,10 +6,10 @@ namespace fg {
             SPRITE     = 1,
             TEXTFIELD  = 2,
             GEOMETRY   = 3,
-            PANEL      = 4,
         };
 
         class DisplayObjectInterface;
+        
         class DisplayObjectBase {
         public:
             virtual ~DisplayObjectBase() {}
@@ -119,17 +119,43 @@ namespace fg {
 
         //---
 
-        class TextFieldInterface {
-        public:
-            virtual ~TextFieldInterface() {}
-
-            virtual void setText(const fg::string &text) = 0;
-            virtual void setFont(const fg::string &fontResourceName, unsigned size = 16, const fg::color &c = fg::color()) = 0;
-            virtual void setColor(const fg::color &c) = 0;
-
-            virtual const fg::string &getText() const = 0;
+        enum class TextAlign {
+            LEFT,
+            CENTER,
+            RIGHT,
         };
 
+        struct FontForm {
+            fg::color rgba;
+            unsigned  size = 20;
+            unsigned  glow = 0;
+            int shadowX = 0;
+            int shadowY = 0;
+        };
+
+        class TextFieldBase {
+        public:
+            virtual ~TextFieldBase() {}
+
+            virtual void  appendText(const std::string &text) = 0;
+            virtual void  setText(const std::string &text) = 0;
+            virtual void  setFont(const fg::string &fontResourceName) = 0;
+            virtual void  setSize(unsigned size) = 0;
+            virtual void  setColor(const fg::color &c) = 0;
+            virtual void  setGlow(unsigned pixels) = 0;
+            virtual void  setShadow(int shadowX, int shadowY) = 0;
+            virtual void  setAlign(TextAlign align) = 0;
+
+            virtual const resources::FontResourceInterface *getFont() const = 0;
+            virtual const std::string &getText() const = 0;
+            virtual const FontForm &getForm() const = 0;
+            virtual TextAlign getAlign() const = 0;
+        };
+
+        class TextFieldInterface : public DisplayObjectInterface, virtual public TextFieldBase {
+        public:
+            virtual ~TextFieldInterface() {}
+        };
         //---
 
         class DisplayObjectIteratorInterface;

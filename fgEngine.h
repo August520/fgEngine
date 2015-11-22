@@ -24,9 +24,9 @@ typedef long long int64;
 #include "particles/Interfaces.h"
 #include "resources/Interfaces.h"
 #include "input/Interfaces.h"
-#include "render/Interfaces.h"
 #include "objects2D/Interfaces.h"
 #include "objects3D/Interfaces.h"
+#include "render/Interfaces.h"
 
 #include "resources/ResourceFactory.h"
 #include "resources/ResourceManager.h"
