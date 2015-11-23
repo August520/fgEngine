@@ -1,6 +1,8 @@
 
 namespace fg {
     namespace render {
+        // Just renders primitives. There's no optimization, reordering or other.
+        //
         class DefaultRender : public RenderInterface {
         public:
             DefaultRender();
@@ -15,6 +17,8 @@ namespace fg {
             const char *getRenderResourceList() const override;
 
         protected:
+            fg::render::TransparentDrawer <1024> _transparentDrawer;
+
             float _frameCount = 0.0f;
             float _countedTime = 0.0f;
             float _fps = 0.0f;            
