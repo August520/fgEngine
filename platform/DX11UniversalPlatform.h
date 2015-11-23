@@ -211,7 +211,7 @@ namespace fg {
 
         class UniversalShader : public PlatformObject, public platform::ShaderInterface {
         public:
-            UniversalShader(UniversalPlatform *owner, const byteform &binary);
+            UniversalShader(UniversalPlatform *owner, const byteinput &binary);
             ~UniversalShader() override;
 
             void release() override;
@@ -348,7 +348,7 @@ namespace fg {
             platform::VertexBufferInterface          *rdCreateVertexBuffer(platform::VertexType vtype, unsigned vcount, bool isDynamic, const void *data) override;
             platform::IndexedVertexBufferInterface   *rdCreateIndexedVertexBuffer(platform::VertexType vtype, unsigned vcount, unsigned ushortIndexCount, bool isDynamic, const void *vdata, const void *idata) override;
             platform::InstanceDataInterface          *rdCreateInstanceData(platform::InstanceDataType type, unsigned instanceCount) override;
-            platform::ShaderInterface                *rdCreateShader(const byteform &binary) override;
+            platform::ShaderInterface                *rdCreateShader(const byteinput &binary) override;
             platform::RasterizerParamsInterface      *rdCreateRasterizerParams(platform::CullMode cull) override;
             platform::BlenderParamsInterface         *rdCreateBlenderParams(const platform::BlendMode blendMode) override; 
             platform::DepthParamsInterface           *rdCreateDepthParams(bool depthEnabled, platform::DepthFunc compareFunc, bool depthWriteEnabled) override; 
