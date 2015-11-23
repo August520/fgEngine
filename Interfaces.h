@@ -77,7 +77,6 @@ namespace fg {
         math::p3d position;
         float isGrey;
         color primaryColor;
-        color secondaryColor;
     };
 
 }

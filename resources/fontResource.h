@@ -24,9 +24,7 @@ namespace fg {
                 Atlas   *atlasListEnd = nullptr;
                 int     baseline;
                 int     height;
-                int     glow;
-                int     shadowX;
-                int     shadowY;
+                int     blur;
                 float   fontScale;
 
                 ~FontForm();
@@ -52,9 +50,9 @@ namespace fg {
             bool  constructed(const diag::LogInterface &log, platform::PlatformInterface &api) override;
             void  unloaded() override;
 
-            unsigned cache(const char *mbcharsz, unsigned fontSize, unsigned glow, int shadowX, int shadowY, unsigned maxCaching) override;
-            void  getChar(const char *mbChar, unsigned fontSize, unsigned glow, int shadowX, int shadowY, FontCharInfo &out) const override;
-            void  getChar(unsigned short ch, unsigned fontSize, unsigned glow, int shadowX, int shadowY, FontCharInfo &out) const override;
+            unsigned cache(const char *mbcharsz, unsigned fontSize, unsigned blur, unsigned maxCaching) override;
+            void  getChar(const char *mbChar, unsigned fontSize, unsigned blur, FontCharInfo &out) const override;
+            void  getChar(unsigned short ch, unsigned fontSize, unsigned blur, FontCharInfo &out) const override;
             float getTextWidth(const char *text, unsigned fontSize) const override;
             float getLineWidth(const char *text, unsigned fontSize) const override;
 
@@ -65,9 +63,9 @@ namespace fg {
             const diag::LogInterface       *_log;
 
             const CharData  *_cacheChar(unsigned short ch, FontForm *fontForm) const;
-            FontForm        *_cacheForm(unsigned fontSize, unsigned glow, int shadowX, int shadowY) const;
+            FontForm        *_cacheForm(unsigned fontSize, unsigned blur) const;
 
-            void  _processGlyphGlow(unsigned char *src, unsigned char *tmp, int w, int h, unsigned glow, int shadowX, int shadowY) const;
+            void  _processGlyphGlow(unsigned char *src, unsigned char *tmp, int w, int h, unsigned blur) const;
         };
     }
 }

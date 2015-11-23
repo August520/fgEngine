@@ -11,9 +11,7 @@ namespace fg {
             void  setFont(const fg::string &fontResourceName) override;
             void  setSize(unsigned size) override;
             void  setColor(const fg::color &c) override;
-            void  setGlow(unsigned pixels) override;
-            void  setOutlineColor(const fg::color &c) override;
-            void  setShadow(int shadowX, int shadowY) override;
+            void  setBlur(unsigned pixels) override;
             void  setAlign(TextAlign align) override;
 
             const resources::FontResourceInterface *getFont() const override;

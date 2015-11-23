@@ -170,9 +170,9 @@ namespace fg {
         class FontResourceInterface : virtual public ResourceInterface {
         public:
             // return value - offset of mbcharsz, where caching was interrupted
-            virtual unsigned cache(const char *mbcharsz, unsigned fontSize, unsigned glow, int shadowX, int shadowY, unsigned maxCaching = unsigned(-1)) = 0;
-            virtual void  getChar(const char *mbChar, unsigned fontSize, unsigned glow, int shadowX, int shadowY, FontCharInfo &out) const = 0;
-            virtual void  getChar(unsigned short ch, unsigned fontSize, unsigned glow, int shadowX, int shadowY, FontCharInfo &out) const = 0;
+            virtual unsigned cache(const char *mbcharsz, unsigned fontSize, unsigned blur, unsigned maxCaching = unsigned(-1)) = 0;
+            virtual void  getChar(const char *mbChar, unsigned fontSize, unsigned blur, FontCharInfo &out) const = 0;
+            virtual void  getChar(unsigned short ch, unsigned fontSize, unsigned blur, FontCharInfo &out) const = 0;
             virtual float getTextWidth(const char *text, unsigned fontSize) const = 0;
             virtual float getLineWidth(const char *text, unsigned fontSize) const = 0;
         };

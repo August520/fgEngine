@@ -127,11 +127,8 @@ namespace fg {
 
         struct FontForm {
             fg::color rgba;
-            fg::color outline;
             unsigned  size = 20;
-            unsigned  glow = 0;
-            int shadowX = 0;
-            int shadowY = 0;
+            unsigned  blur = 0;
         };
 
         class TextFieldBase {
@@ -143,9 +140,7 @@ namespace fg {
             virtual void  setFont(const fg::string &fontResourceName) = 0;
             virtual void  setSize(unsigned size) = 0;
             virtual void  setColor(const fg::color &c) = 0;
-            virtual void  setGlow(unsigned pixels) = 0;
-            virtual void  setOutlineColor(const fg::color &c) = 0;
-            virtual void  setShadow(int shadowX, int shadowY) = 0;
+            virtual void  setBlur(unsigned pixels) = 0;
             virtual void  setAlign(TextAlign align) = 0;
 
             virtual const resources::FontResourceInterface *getFont() const = 0;

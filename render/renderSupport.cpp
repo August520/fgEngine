@@ -292,8 +292,8 @@ namespace fg {
             downDir.x = (2.0f * downDir.x / _platform->getScreenWidth()) * fabs(scaleX);
             downDir.y = (-2.0f * downDir.y / _platform->getScreenHeight()) * fabs(scaleY);
 
-            float ltx = (2.0f * int(trfm._31) / _platform->getScreenWidth() * fabs(scaleX) - 1.0f) * math::fsign(scaleX);
-            float lty = (1.0f - 2.0f * int(trfm._32) / _platform->getScreenHeight() * fabs(scaleY)) * math::fsign(scaleY);
+            float ltx = (2.0f * (int(trfm._31) - int(form.blur)) / _platform->getScreenWidth() * fabs(scaleX) - 1.0f) * math::fsign(scaleX);
+            float lty = (1.0f - 2.0f * (int(trfm._32) - int(form.blur)) / _platform->getScreenHeight() * fabs(scaleY)) * math::fsign(scaleY);
             math::p2d lt (ltx, lty);
             math::p2d ltOrigin = lt;
 
@@ -304,7 +304,6 @@ namespace fg {
 
             _defDisplayObjectInstanceStruct.isGrey = 1.0f;
             _defDisplayObjectInstanceStruct.primaryColor = form.rgba;
-            _defDisplayObjectInstanceStruct.secondaryColor = form.glow || form.shadowX || form.shadowY ? form.outline : form.rgba;
             _defDisplayObjectInstanceData->update(&_defDisplayObjectInstanceStruct, 1);
 
             platform::Texture2DInterface *curTexture = nullptr;
@@ -320,7 +319,7 @@ namespace fg {
 
             for(const char *charPtr = utf8text.data(); *charPtr != 0; charPtr += tchLen, i++) {
                 tchLen = fg::string::utf8CharLen(charPtr);
-                font->getChar(charPtr, realFontSize, form.glow, form.shadowX, form.shadowY, curCharData);
+                font->getChar(charPtr, realFontSize, form.blur, curCharData);
 
                 if(*charPtr == '\n') {
                     lt = ltOrigin;
@@ -333,7 +332,7 @@ namespace fg {
                     }
                     
                     line++;
-                    lt += downDir * curCharData.height * float(line);
+                    lt += downDir * float(form.size * line);
                 }
                 else {
                     if(curTexture != curCharData.texture) {

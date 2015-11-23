@@ -29,18 +29,8 @@ namespace fg {
             _form.rgba = c;
         }
 
-        void TextField::setGlow(unsigned pixels) {
-            _form.glow = pixels;
-            _cached = 0;
-        }
-
-        void TextField::setOutlineColor(const fg::color &c) {
-            _form.outline = c;
-        }
-
-        void TextField::setShadow(int shadowX, int shadowY) {
-            _form.shadowX = shadowX;
-            _form.shadowY = shadowY;
+        void TextField::setBlur(unsigned pixels) {
+            _form.blur = pixels;
             _cached = 0;
         }
 
@@ -71,7 +61,7 @@ namespace fg {
         bool TextField::isResourcesReady(platform::PlatformInterface &platform, resources::ResourceManagerInterface &resMan) {
             if (_font != nullptr) {
                 if (_cached < unsigned(_text.size())) {                    
-                    _cached += _font->cache(_text.c_str() + _cached, _form.size, _form.glow, _form.shadowX, _form.shadowY, 2);
+                    _cached += _font->cache(_text.c_str() + _cached, _form.size, _form.blur, 2);
                 }
                 else return true;
             }
