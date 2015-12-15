@@ -873,6 +873,10 @@ namespace fg {
             return &_renderTexture[index]; 
         }
 
+        unsigned UniversalRenderTarget::getRenderBufferCount() const {
+            return _colorTargetCount;
+        }
+
         void UniversalRenderTarget::release() {
             if(_depthView) {
                 _depthView->Release();
@@ -964,6 +968,7 @@ namespace fg {
             _nativeHeight = params.scrHeight;
             _syncInterval = params.syncInterval;
             _window = params.window;
+            _swapChainPanel = params.swapChainPanel;
 
             DisplayInformation ^curDisplayInfo = DisplayInformation::GetForCurrentView();
 
@@ -998,14 +1003,40 @@ namespace fg {
             swapChainDesc.SampleDesc.Quality = 0;
             swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
             swapChainDesc.BufferCount = 2;
-            swapChainDesc.Scaling = DXGI_SCALING_NONE;
+            swapChainDesc.Scaling = DXGI_SCALING_STRETCH;
             swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
             swapChainDesc.Flags = 0;
 
-            if(dxgiFactory->CreateSwapChainForCoreWindow(_device, (IUnknown *)params.window.Get(), &swapChainDesc, nullptr, &_swapChain) != S_OK) {
-                _log.msgError("can't create hardware device");
-                return false;
+            if (_window.Get() != nullptr) {
+                if(dxgiFactory->CreateSwapChainForCoreWindow(_device, (IUnknown *)params.window.Get(), &swapChainDesc, nullptr, &_swapChain) != S_OK) {
+                    _log.msgError("can't create hardware device");
+                    return false;
+                }
             }
+            else if(_swapChainPanel.Get() != nullptr) {
+                if (dxgiFactory->CreateSwapChainForComposition(_device, &swapChainDesc, nullptr, &_swapChain) != S_OK) {
+                    _log.msgError("can't create hardware device");
+                    return false;
+                }
+
+                IDXGISwapChain2 *swapChain2 = nullptr;
+                ISwapChainPanelNative *swapChainPanelNative = nullptr;
+                IInspectable *panelInspectable = (IInspectable *) reinterpret_cast<IInspectable *>(_swapChainPanel.Get());
+                panelInspectable->QueryInterface(__uuidof(ISwapChainPanelNative), (void **)&swapChainPanelNative);
+
+                swapChainPanelNative->SetSwapChain(_swapChain);
+                swapChainPanelNative->Release();
+
+                _swapChain->QueryInterface(&swapChain2);
+
+                DXGI_MATRIX_3X2_F scale = {0};
+                scale._11 = 1.0f / _swapChainPanel->CompositionScaleX;
+                scale._22 = 1.0f / _swapChainPanel->CompositionScaleY;
+
+                swapChain2->SetMatrixTransform(&scale);
+                swapChain2->Release();
+            }
+            else return false;
             
             dxgiFactory->Release();
             dxgiDevice->SetMaximumFrameLatency(1);
@@ -1299,8 +1330,8 @@ namespace fg {
                 static void formListW(const wchar_t *pathw, std::string &out) {
                     try {
                         Windows::Storage::StorageFolder ^fldr = create_task(Windows::ApplicationModel::Package::Current->InstalledLocation->GetFolderAsync(ref new Platform::String(pathw))).get();
-                        Collections::IVectorView <StorageFile ^> ^files = create_task(fldr->GetFilesAsync()).get();
-                        Collections::IVectorView <StorageFolder ^> ^folders = create_task(fldr->GetFoldersAsync()).get();
+                        Windows::Foundation::Collections::IVectorView <StorageFile ^> ^files = create_task(fldr->GetFilesAsync()).get();
+                        Windows::Foundation::Collections::IVectorView <StorageFolder ^> ^folders = create_task(fldr->GetFoldersAsync()).get();
 
                         for(unsigned int i = 0; i < folders->Size; i++) {
                             Windows::Storage::StorageFolder ^curFolder = folders->GetAt(i);

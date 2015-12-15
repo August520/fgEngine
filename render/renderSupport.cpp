@@ -53,7 +53,9 @@ namespace fg {
             _frameConstants->data.scrHeight = _platform->getScreenHeight();
             _frameConstants->updateAndApply();
             
-            _platform->rdSetShader(_simpleShader->getPlatformObject());
+            if (_simpleShader) {
+                _platform->rdSetShader(_simpleShader->getPlatformObject());
+            }
         }
 
         void RenderSupport::frameInit2D(float frameTimeMs, float scaleX, float scaleY, float dpiFactor) {
@@ -66,7 +68,10 @@ namespace fg {
             
             _platform->rdSetBlenderParams(_defLerpBlenderParams);
             _platform->rdSetSampler(platform::TextureSlot::TEXTURE0, _defLinearSampler);
-            _platform->rdSetShader(_ifaceShader->getPlatformObject());
+
+            if (_ifaceShader) {
+                _platform->rdSetShader(_ifaceShader->getPlatformObject());
+            }
         }
 
         void RenderSupport::destroy() {
@@ -198,25 +203,25 @@ namespace fg {
                 dpiKoeffY = fabs(_systemDpiPerCoordSystemDpi / _screenPixelsPerCoordSystemPixelsY);
             }
 
-            math::p2d lt = math::p2d(-clip->centerX * dpiKoeffX, -clip->centerY * dpiKoeffY);
-            math::p2d lb = math::p2d(-clip->centerX * dpiKoeffX, (clip->height - clip->centerY) * dpiKoeffY);
-            math::p2d rt = math::p2d((clip->width - clip->centerX) * dpiKoeffX, -clip->centerY * dpiKoeffY);
-            math::p2d rb = math::p2d((clip->width - clip->centerX) * dpiKoeffX, (clip->height - clip->centerY) * dpiKoeffY);
+            math::p2d lt = math::p2d(-clip->centerX, -clip->centerY);
+            math::p2d lb = math::p2d(-clip->centerX, (clip->height - clip->centerY));
+            math::p2d rt = math::p2d((clip->width - clip->centerX), -clip->centerY);
+            math::p2d rb = math::p2d((clip->width - clip->centerX), (clip->height - clip->centerY));
 
             lt.transform(trfm, true);
             lb.transform(trfm, true);
             rt.transform(trfm, true);
             rb.transform(trfm, true);
 
-            lt.x = (2.0f * lt.x / _platform->getScreenWidth() * fabs(scaleX) - 1.0f) * math::fsign(scaleX);
-            lb.x = (2.0f * lb.x / _platform->getScreenWidth() * fabs(scaleX) - 1.0f) * math::fsign(scaleX);
-            rt.x = (2.0f * rt.x / _platform->getScreenWidth() * fabs(scaleX) - 1.0f) * math::fsign(scaleX);
-            rb.x = (2.0f * rb.x / _platform->getScreenWidth() * fabs(scaleX) - 1.0f) * math::fsign(scaleX);
+            lt.x = (2.0f * dpiKoeffX * lt.x / _platform->getScreenWidth() * fabs(scaleX) - 1.0f) * math::fsign(scaleX);
+            lb.x = (2.0f * dpiKoeffX * lb.x / _platform->getScreenWidth() * fabs(scaleX) - 1.0f) * math::fsign(scaleX);
+            rt.x = (2.0f * dpiKoeffX * rt.x / _platform->getScreenWidth() * fabs(scaleX) - 1.0f) * math::fsign(scaleX);
+            rb.x = (2.0f * dpiKoeffX * rb.x / _platform->getScreenWidth() * fabs(scaleX) - 1.0f) * math::fsign(scaleX);
 
-            lt.y = (1.0f - 2.0f * lt.y / _platform->getScreenHeight() * fabs(scaleY)) * math::fsign(scaleY);
-            lb.y = (1.0f - 2.0f * lb.y / _platform->getScreenHeight() * fabs(scaleY)) * math::fsign(scaleY);
-            rt.y = (1.0f - 2.0f * rt.y / _platform->getScreenHeight() * fabs(scaleY)) * math::fsign(scaleY);
-            rb.y = (1.0f - 2.0f * rb.y / _platform->getScreenHeight() * fabs(scaleY)) * math::fsign(scaleY);
+            lt.y = (1.0f - 2.0f * dpiKoeffY * lt.y / _platform->getScreenHeight() * fabs(scaleY)) * math::fsign(scaleY);
+            lb.y = (1.0f - 2.0f * dpiKoeffY * lb.y / _platform->getScreenHeight() * fabs(scaleY)) * math::fsign(scaleY);
+            rt.y = (1.0f - 2.0f * dpiKoeffY * rt.y / _platform->getScreenHeight() * fabs(scaleY)) * math::fsign(scaleY);
+            rb.y = (1.0f - 2.0f * dpiKoeffY * rb.y / _platform->getScreenHeight() * fabs(scaleY)) * math::fsign(scaleY);
 
             float sz = 0.0f;
             float tx = clip->frames[frame].tu;
@@ -287,19 +292,18 @@ namespace fg {
             rightDir.transform(trfm, false);
             downDir.transform(trfm, false);
 
-            rightDir.x = (2.0f * rightDir.x / _platform->getScreenWidth()) * fabs(scaleX);
-            rightDir.y = (-2.0f * rightDir.y / _platform->getScreenHeight()) * fabs(scaleY);
-            downDir.x = (2.0f * downDir.x / _platform->getScreenWidth()) * fabs(scaleX);
-            downDir.y = (-2.0f * downDir.y / _platform->getScreenHeight()) * fabs(scaleY);
+            rightDir.x = (2.0f * dpiKoeffX * rightDir.x / _platform->getScreenWidth()) * fabs(scaleX);
+            rightDir.y = (-2.0f * dpiKoeffY * rightDir.y / _platform->getScreenHeight()) * fabs(scaleY);
+            downDir.x = (2.0f * dpiKoeffX * downDir.x / _platform->getScreenWidth()) * fabs(scaleX);
+            downDir.y = (-2.0f * dpiKoeffY * downDir.y / _platform->getScreenHeight()) * fabs(scaleY);
 
-            float ltx = (2.0f * (int(trfm._31) - int(form.blur)) / _platform->getScreenWidth() * fabs(scaleX) - 1.0f) * math::fsign(scaleX);
-            float lty = (1.0f - 2.0f * (int(trfm._32) - int(form.blur)) / _platform->getScreenHeight() * fabs(scaleY)) * math::fsign(scaleY);
+            float ltx = (2.0f * dpiKoeffX * (int(trfm._31) - int(form.blur)) / _platform->getScreenWidth() * fabs(scaleX) - 1.0f) * math::fsign(scaleX);
+            float lty = (1.0f - 2.0f * dpiKoeffY * (int(trfm._32) - int(form.blur)) / _platform->getScreenHeight() * fabs(scaleY)) * math::fsign(scaleY);
             math::p2d lt (ltx, lty);
             math::p2d ltOrigin = lt;
 
             unsigned i = 0, line = 0;
             unsigned tchLen = 0;
-            unsigned realFontSize = unsigned(std::ceil(float(form.size) * dpiKoeffY));
             resources::FontCharInfo curCharData;
 
             _defDisplayObjectInstanceStruct.isGrey = 1.0f;
@@ -311,24 +315,24 @@ namespace fg {
             unsigned short *tind = nullptr; 
             
             if (align == object2d::TextAlign::RIGHT) {
-                lt -= rightDir * std::floor(font->getLineWidth(utf8text.data(), realFontSize));
+                lt -= rightDir * std::floor(font->getLineWidth(utf8text.data(), form.size));
             }
             else if (align == object2d::TextAlign::CENTER) {
-                lt -= rightDir * std::floor(0.5f * font->getLineWidth(utf8text.data(), realFontSize));
+                lt -= rightDir * std::floor(0.5f * font->getLineWidth(utf8text.data(), form.size));
             }
 
             for(const char *charPtr = utf8text.data(); *charPtr != 0; charPtr += tchLen, i++) {
                 tchLen = fg::string::utf8CharLen(charPtr);
-                font->getChar(charPtr, realFontSize, form.blur, curCharData);
+                font->getChar(charPtr, form.size, form.blur, curCharData);
 
                 if(*charPtr == '\n') {
                     lt = ltOrigin;
 
                     if (align == object2d::TextAlign::RIGHT) {
-                        lt -= rightDir * std::floor(font->getLineWidth(charPtr + 1, realFontSize));
+                        lt -= rightDir * std::floor(font->getLineWidth(charPtr + 1, form.size));
                     }
                     else if (align == object2d::TextAlign::CENTER) {
-                        lt -= rightDir * std::floor(0.5f * font->getLineWidth(charPtr + 1, realFontSize));
+                        lt -= rightDir * std::floor(0.5f * font->getLineWidth(charPtr + 1, form.size));
                     }
                     
                     line++;
@@ -482,116 +486,120 @@ namespace fg {
         }
         
         void RenderSupport::debugDrawBox(const math::m4x4 &transform, const fg::color &c) {
-            _platform->rdSetShader(_simpleShader->getPlatformObject());
+            if (_simpleShader) {
+                _platform->rdSetShader(_simpleShader->getPlatformObject());
 
-            math::p2d offs[5] = {
-                math::p2d(-0.5f, -0.5f),
-                math::p2d(0.5f, -0.5f),
-                math::p2d(0.5f, 0.5f),
-                math::p2d(-0.5f, 0.5f),
-                math::p2d(-0.5f, -0.5f),
-            };
+                math::p2d offs[5] = {
+                    math::p2d(-0.5f, -0.5f),
+                    math::p2d(0.5f, -0.5f),
+                    math::p2d(0.5f, 0.5f),
+                    math::p2d(-0.5f, 0.5f),
+                    math::p2d(-0.5f, -0.5f),
+                };
 
-            VertexSimple *tmem = (VertexSimple *)_oddVertexBufferSimple->lockVertices();
-            unsigned short *tind = (unsigned short *)_oddVertexBufferSimple->lockIndices();
+                VertexSimple *tmem = (VertexSimple *)_oddVertexBufferSimple->lockVertices();
+                unsigned short *tind = (unsigned short *)_oddVertexBufferSimple->lockIndices();
 
-            for(int i = 0; i < 4; i++) {
-                int ti = i * 6;
+                for (int i = 0; i < 4; i++) {
+                    int ti = i * 6;
 
-                tmem[ti + 0].position.x = offs[i].x;
-                tmem[ti + 0].position.y = -0.5f;
-                tmem[ti + 0].position.z = offs[i].y;
-                tind[ti + 0] = ti;
+                    tmem[ti + 0].position.x = offs[i].x;
+                    tmem[ti + 0].position.y = -0.5f;
+                    tmem[ti + 0].position.z = offs[i].y;
+                    tind[ti + 0] = ti;
 
-                tmem[ti + 1].position.x = offs[i + 1].x;
-                tmem[ti + 1].position.y = -0.5f;
-                tmem[ti + 1].position.z = offs[i + 1].y;
-                tind[ti + 1] = ti + 1;
+                    tmem[ti + 1].position.x = offs[i + 1].x;
+                    tmem[ti + 1].position.y = -0.5f;
+                    tmem[ti + 1].position.z = offs[i + 1].y;
+                    tind[ti + 1] = ti + 1;
 
-                tmem[ti + 2].position.x = offs[i].x;
-                tmem[ti + 2].position.y = -0.5f;
-                tmem[ti + 2].position.z = offs[i].y;
-                tind[ti + 2] = ti + 2;
+                    tmem[ti + 2].position.x = offs[i].x;
+                    tmem[ti + 2].position.y = -0.5f;
+                    tmem[ti + 2].position.z = offs[i].y;
+                    tind[ti + 2] = ti + 2;
 
-                tmem[ti + 3].position.x = offs[i].x;
-                tmem[ti + 3].position.y = 0.5f;
-                tmem[ti + 3].position.z = offs[i].y;
-                tind[ti + 3] = ti + 3;
+                    tmem[ti + 3].position.x = offs[i].x;
+                    tmem[ti + 3].position.y = 0.5f;
+                    tmem[ti + 3].position.z = offs[i].y;
+                    tind[ti + 3] = ti + 3;
 
-                tmem[ti + 4].position.x = offs[i].x;
-                tmem[ti + 4].position.y = 0.5f;
-                tmem[ti + 4].position.z = offs[i].y;
-                tind[ti + 4] = ti + 4;
+                    tmem[ti + 4].position.x = offs[i].x;
+                    tmem[ti + 4].position.y = 0.5f;
+                    tmem[ti + 4].position.z = offs[i].y;
+                    tind[ti + 4] = ti + 4;
 
-                tmem[ti + 5].position.x = offs[i + 1].x;
-                tmem[ti + 5].position.y = 0.5f;
-                tmem[ti + 5].position.z = offs[i + 1].y;
-                tind[ti + 5] = ti + 5;
+                    tmem[ti + 5].position.x = offs[i + 1].x;
+                    tmem[ti + 5].position.y = 0.5f;
+                    tmem[ti + 5].position.z = offs[i + 1].y;
+                    tind[ti + 5] = ti + 5;
+                }
+
+                _oddVertexBufferSimple->unlockVertices();
+                _oddVertexBufferSimple->unlockIndices();
+
+                _defInstanceStruct.modelTransform = transform;
+                _defInstanceStruct.rgba = c;
+                _defInstanceData->update(&_defInstanceStruct, 1);
+                _platform->rdDrawIndexedGeometry(_oddVertexBufferSimple, _defInstanceData, platform::PrimitiveTopology::LINE_LIST, 24);
             }
-
-            _oddVertexBufferSimple->unlockVertices();
-            _oddVertexBufferSimple->unlockIndices();
-
-            _defInstanceStruct.modelTransform = transform;
-            _defInstanceStruct.rgba = c;
-            _defInstanceData->update(&_defInstanceStruct, 1);
-            _platform->rdDrawIndexedGeometry(_oddVertexBufferSimple, _defInstanceData, platform::PrimitiveTopology::LINE_LIST, 24);
         }
 
         void RenderSupport::debugDrawBox(const math::p3d &pMin, const math::p3d &pMax, const fg::color &c) {
-            _platform->rdSetShader(_simpleShader->getPlatformObject());
+            if (_simpleShader) {
+                _platform->rdSetShader(_simpleShader->getPlatformObject());
 
-            math::p2d offs[5] = {
-                math::p2d(pMin.x, pMin.z),
-                math::p2d(pMax.x, pMin.z),
-                math::p2d(pMax.x, pMax.z),
-                math::p2d(pMin.x, pMax.z),
-                math::p2d(pMin.x, pMin.z),
-            };
+                math::p2d offs[5] = {
+                    math::p2d(pMin.x, pMin.z),
+                    math::p2d(pMax.x, pMin.z),
+                    math::p2d(pMax.x, pMax.z),
+                    math::p2d(pMin.x, pMax.z),
+                    math::p2d(pMin.x, pMin.z),
+                };
 
-            VertexSimple *tmem = (VertexSimple *)_oddVertexBufferSimple->lockVertices();
-            unsigned short *tind = (unsigned short *)_oddVertexBufferSimple->lockIndices();
+                VertexSimple *tmem = (VertexSimple *)_oddVertexBufferSimple->lockVertices();
+                unsigned short *tind = (unsigned short *)_oddVertexBufferSimple->lockIndices();
 
-            for(int i = 0; i < 4; i++) {
-                int ti = i * 6;
-                tmem[ti + 0].position.x = offs[i].x;
-                tmem[ti + 0].position.y = pMin.y;
-                tmem[ti + 0].position.z = offs[i].y;
-                tind[ti + 0] = ti;
+                for (int i = 0; i < 4; i++) {
+                    int ti = i * 6;
+                    tmem[ti + 0].position.x = offs[i].x;
+                    tmem[ti + 0].position.y = pMin.y;
+                    tmem[ti + 0].position.z = offs[i].y;
+                    tind[ti + 0] = ti;
 
-                tmem[ti + 1].position.x = offs[i + 1].x;
-                tmem[ti + 1].position.y = pMin.y;
-                tmem[ti + 1].position.z = offs[i + 1].y;
-                tind[ti + 1] = ti + 1;
+                    tmem[ti + 1].position.x = offs[i + 1].x;
+                    tmem[ti + 1].position.y = pMin.y;
+                    tmem[ti + 1].position.z = offs[i + 1].y;
+                    tind[ti + 1] = ti + 1;
 
-                tmem[ti + 2].position.x = offs[i].x;
-                tmem[ti + 2].position.y = pMin.y;
-                tmem[ti + 2].position.z = offs[i].y;
-                tind[ti + 2] = ti + 2;
+                    tmem[ti + 2].position.x = offs[i].x;
+                    tmem[ti + 2].position.y = pMin.y;
+                    tmem[ti + 2].position.z = offs[i].y;
+                    tind[ti + 2] = ti + 2;
 
-                tmem[ti + 3].position.x = offs[i].x;
-                tmem[ti + 3].position.y = pMax.y;
-                tmem[ti + 3].position.z = offs[i].y;
-                tind[ti + 3] = ti + 3;
+                    tmem[ti + 3].position.x = offs[i].x;
+                    tmem[ti + 3].position.y = pMax.y;
+                    tmem[ti + 3].position.z = offs[i].y;
+                    tind[ti + 3] = ti + 3;
 
-                tmem[ti + 4].position.x = offs[i].x;
-                tmem[ti + 4].position.y = pMax.y;
-                tmem[ti + 4].position.z = offs[i].y;
-                tind[ti + 4] = ti + 4;
+                    tmem[ti + 4].position.x = offs[i].x;
+                    tmem[ti + 4].position.y = pMax.y;
+                    tmem[ti + 4].position.z = offs[i].y;
+                    tind[ti + 4] = ti + 4;
 
-                tmem[ti + 5].position.x = offs[i + 1].x;
-                tmem[ti + 5].position.y = pMax.y;
-                tmem[ti + 5].position.z = offs[i + 1].y;
-                tind[ti + 5] = ti + 5;
+                    tmem[ti + 5].position.x = offs[i + 1].x;
+                    tmem[ti + 5].position.y = pMax.y;
+                    tmem[ti + 5].position.z = offs[i + 1].y;
+                    tind[ti + 5] = ti + 5;
+                }
+
+                _oddVertexBufferSimple->unlockVertices();
+                _oddVertexBufferSimple->unlockIndices();
+
+                _defInstanceStruct.modelTransform.identity();
+                _defInstanceStruct.rgba = c;
+                _defInstanceData->update(&_defInstanceStruct, 1);
+                _platform->rdDrawIndexedGeometry(_oddVertexBufferSimple, _defInstanceData, platform::PrimitiveTopology::LINE_LIST, 24);
             }
-
-            _oddVertexBufferSimple->unlockVertices();
-            _oddVertexBufferSimple->unlockIndices();
-
-            _defInstanceStruct.modelTransform.identity();
-            _defInstanceStruct.rgba = c;
-            _defInstanceData->update(&_defInstanceStruct, 1);
-            _platform->rdDrawIndexedGeometry(_oddVertexBufferSimple, _defInstanceData, platform::PrimitiveTopology::LINE_LIST, 24);
         }
 
         void RenderSupport::debugDrawFillBox(const math::m4x4 &transform, const fg::color &c) {
@@ -599,73 +607,77 @@ namespace fg {
         }
 
         void RenderSupport::debugDrawTriangle(const math::p3d &p1, const math::p3d &p2, const math::p3d &p3, const fg::color &c) {
-            _platform->rdSetShader(_simpleShader->getPlatformObject());
+            if (_simpleShader) {
+                _platform->rdSetShader(_simpleShader->getPlatformObject());
 
-            VertexNormal *tmem = (VertexNormal *)_oddVertexBufferNormal->lockVertices();
-            unsigned short *tind = (unsigned short *)_oddVertexBufferNormal->lockIndices();
+                VertexNormal *tmem = (VertexNormal *)_oddVertexBufferNormal->lockVertices();
+                unsigned short *tind = (unsigned short *)_oddVertexBufferNormal->lockIndices();
 
-            tmem[0].position.x = p1.x;
-            tmem[0].position.y = p1.y;
-            tmem[0].position.z = p1.z;
+                tmem[0].position.x = p1.x;
+                tmem[0].position.y = p1.y;
+                tmem[0].position.z = p1.z;
 
-            tmem[1].position.x = p2.x;
-            tmem[1].position.y = p2.y;
-            tmem[1].position.z = p2.z;
+                tmem[1].position.x = p2.x;
+                tmem[1].position.y = p2.y;
+                tmem[1].position.z = p2.z;
 
-            tmem[2].position.x = p3.x;
-            tmem[2].position.y = p3.y;
-            tmem[2].position.z = p3.z;
+                tmem[2].position.x = p3.x;
+                tmem[2].position.y = p3.y;
+                tmem[2].position.z = p3.z;
 
-            math::p3d tleft = p2 - p1;
-            math::p3d tright = p3 - p1;
-            math::p3d tnormal, tbinormal;
+                math::p3d tleft = p2 - p1;
+                math::p3d tright = p3 - p1;
+                math::p3d tnormal, tbinormal;
 
-            tleft.normalize();
-            tright.normalize();
-            tnormal.cross(tleft, tright);
-            tnormal.normalize();
-            tbinormal.cross(tleft, tnormal);
-            tbinormal.normalize();
+                tleft.normalize();
+                tright.normalize();
+                tnormal.cross(tleft, tright);
+                tnormal.normalize();
+                tbinormal.cross(tleft, tnormal);
+                tbinormal.normalize();
 
-            for(unsigned i = 0; i < 3; i++) {
-                tmem[i].normal.x = tnormal.x;
-                tmem[i].normal.y = tnormal.y;
-                tmem[i].normal.z = tnormal.z;
-                tmem[i].binormal.x = tbinormal.x;
-                tmem[i].binormal.y = tbinormal.y;
-                tmem[i].binormal.z = tbinormal.z;
-                tmem[i].tangent.x = tleft.x;
-                tmem[i].tangent.y = tleft.y;
-                tmem[i].tangent.z = tleft.z;
+                for (unsigned i = 0; i < 3; i++) {
+                    tmem[i].normal.x = tnormal.x;
+                    tmem[i].normal.y = tnormal.y;
+                    tmem[i].normal.z = tnormal.z;
+                    tmem[i].binormal.x = tbinormal.x;
+                    tmem[i].binormal.y = tbinormal.y;
+                    tmem[i].binormal.z = tbinormal.z;
+                    tmem[i].tangent.x = tleft.x;
+                    tmem[i].tangent.y = tleft.y;
+                    tmem[i].tangent.z = tleft.z;
+                }
+
+                _oddVertexBufferNormal->unlockVertices();
+                _oddVertexBufferNormal->unlockIndices();
+
+                _defInstanceStruct.modelTransform.identity();
+                _defInstanceStruct.rgba = c;
+                _defInstanceData->update(&_defInstanceStruct, 1);
+                _platform->rdDrawIndexedGeometry(_oddVertexBufferNormal, _defInstanceData, platform::PrimitiveTopology::TRIANGLE_LIST, 3);
             }
-
-            _oddVertexBufferNormal->unlockVertices();
-            _oddVertexBufferNormal->unlockIndices();
-
-            _defInstanceStruct.modelTransform.identity();
-            _defInstanceStruct.rgba = c;
-            _defInstanceData->update(&_defInstanceStruct, 1);
-            _platform->rdDrawIndexedGeometry(_oddVertexBufferNormal, _defInstanceData, platform::PrimitiveTopology::TRIANGLE_LIST, 3);
         }
 
         void RenderSupport::debugDrawLine(const math::p3d &p1, const math::p3d &p2, const fg::color &c) {
-            VertexSimple *tmem = (VertexSimple *)_oddVertexBufferSimple->lockVertices();
-            unsigned short *tind = (unsigned short *)_oddVertexBufferSimple->lockIndices();
+            if (_simpleShader) {
+                VertexSimple *tmem = (VertexSimple *)_oddVertexBufferSimple->lockVertices();
+                unsigned short *tind = (unsigned short *)_oddVertexBufferSimple->lockIndices();
 
-            tmem[0].position = p1;
-            tmem[1].position = p2;
+                tmem[0].position = p1;
+                tmem[1].position = p2;
 
-            tind[0] = 0;
-            tind[1] = 1;
+                tind[0] = 0;
+                tind[1] = 1;
 
-            _oddVertexBufferSimple->unlockVertices();
-            _oddVertexBufferSimple->unlockIndices();
-            _platform->rdSetShader(_simpleShader->getPlatformObject());
+                _oddVertexBufferSimple->unlockVertices();
+                _oddVertexBufferSimple->unlockIndices();
+                _platform->rdSetShader(_simpleShader->getPlatformObject());
 
-            _defInstanceStruct.modelTransform.identity();
-            _defInstanceStruct.rgba = c;
-            _defInstanceData->update(&_defInstanceStruct, 1);
-            _platform->rdDrawIndexedGeometry(_oddVertexBufferSimple, _defInstanceData, platform::PrimitiveTopology::LINE_LIST, 2);
+                _defInstanceStruct.modelTransform.identity();
+                _defInstanceStruct.rgba = c;
+                _defInstanceData->update(&_defInstanceStruct, 1);
+                _platform->rdDrawIndexedGeometry(_oddVertexBufferSimple, _defInstanceData, platform::PrimitiveTopology::LINE_LIST, 2);
+            }
         }
 
         void RenderSupport::debugDrawAxis() {

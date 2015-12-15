@@ -1,5 +1,6 @@
 
 #include "pch.h"
+#include <regex>
 
 #include "LuaScript.cpp"
 #include "diag.cpp"
@@ -80,20 +81,20 @@
 #include "GameAPI.cpp"
 
 const char *_binaryResources = "\
-bin/simpleModel.shader\n\
-bin/simpleSkin.shader\n\
-bin/displayObject.shader\n\
-bin/texturedModel.shader\n\
-bin/lightedModel.shader\n\
-bin/lightedNormalModel.shader\n\
-bin/lightedSkin.shader\n\
-bin/lightedNormalSkin.shader\n\
-bin/lightedTexturedModel.shader\n\
-bin/lightedTexturedNormalModel.shader\n\
-bin/lightedTexturedNormalSkin.shader\n\
-bin/texturedScreenQuad.shader\n\
-bin/texturedScreenQuadFilter.shader\n\
-bin/arial.ttf\n\
+$/simpleModel.shader\n\
+$/simpleSkin.shader\n\
+$/displayObject.shader\n\
+$/texturedModel.shader\n\
+$/lightedModel.shader\n\
+$/lightedNormalModel.shader\n\
+$/lightedSkin.shader\n\
+$/lightedNormalSkin.shader\n\
+$/lightedTexturedModel.shader\n\
+$/lightedTexturedNormalModel.shader\n\
+$/lightedTexturedNormalSkin.shader\n\
+$/texturedScreenQuad.shader\n\
+$/texturedScreenQuadFilter.shader\n\
+$/arial.ttf\n\
 "; //
 
 
@@ -115,7 +116,7 @@ namespace fg {
 
     }
     
-    bool Engine::init(const platform::InitParams &initParams, render::RenderInterface &render, const LogicalCoordSystem &coordSystem) {
+    bool Engine::init(const platform::InitParams &initParams, render::RenderInterface &render, const LogicalCoordSystem &coordSystem, const fg::string &binaryFolder) {
         _log.msgInfo("init..");
         _render = &render;
 
@@ -130,10 +131,12 @@ namespace fg {
         _updateCoordSystem();
         
         const char *renderResourceList = _render->getRenderResourceList();
+        std::string binaryResources = _binaryResources;        
+        binaryResources = std::regex_replace(binaryResources, std::regex("\\$"), binaryFolder.data());
         
         _log.msgInfo("loading resources..");
         _resMan.init();
-        _resMan.loadResourcesList(_binaryResources, nullptr, false);
+        _resMan.loadResourcesList(fg::string(binaryResources.c_str(), binaryResources.length()), nullptr, false);
         _resMan.loadResourcesList(renderResourceList, callback <void ()> (this, &Engine::_binaryResourcesLoadedCallback), false);
     
         int64 curTime = _platform.getTimeMs();

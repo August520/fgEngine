@@ -948,7 +948,7 @@ namespace fg {
 
             //-- graphics
 
-            unsigned int flags = D3D11_CREATE_DEVICE_DEBUG; //| D3D11_CREATE_DEVICE_BGRA_SUPPORT
+            unsigned int flags = D3D11_CREATE_DEVICE_SINGLETHREADED | D3D11_CREATE_DEVICE_DEBUG;// D3D11_CREATE_DEVICE_DEBUG; //| D3D11_CREATE_DEVICE_BGRA_SUPPORT
 
             _nativeWidth = params.scrWidth;
             _nativeHeight = params.scrHeight;

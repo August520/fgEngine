@@ -6,6 +6,9 @@
 #include <x3daudio.h>
 #pragma comment(lib, "xaudio2.lib")
 
+#include <dxgi1_3.h>
+#include <windows.ui.xaml.media.dxinterop.h>
+
 #include <ppltasks.h>
 #include <agile.h>
 
@@ -13,6 +16,7 @@ using namespace Platform;
 using namespace Windows::Foundation;
 using namespace Windows::Storage;
 using namespace Windows::UI::Core;
+using namespace Windows::UI::Xaml::Controls;
 using namespace Windows::Graphics::Display;
 using namespace concurrency;
 
@@ -287,6 +291,7 @@ namespace fg {
 
             platform::Texture2DInterface *getDepthBuffer() override;
             platform::Texture2DInterface *getRenderBuffer(unsigned index) override;
+            unsigned getRenderBufferCount() const override;
 
             void  release() override;
             bool  valid() const override;
@@ -305,8 +310,9 @@ namespace fg {
         //---
 
         struct UniversalInitParams : public platform::InitParams {
-            platform::Orientation   orientation;
-            Agile <CoreWindow ^>    window;           // may be null
+            platform::Orientation     orientation;
+            Agile <CoreWindow ^>      window;           // may be null
+            Agile <SwapChainPanel ^>  swapChainPanel;
         };
 
         class UniversalPlatform : public platform::EnginePlatformInterface {
@@ -386,6 +392,7 @@ namespace fg {
             UniversalSampler         *_defSampler = nullptr;
             UniversalRenderTarget    _defRenderTarget = nullptr;
             Agile                    <CoreWindow ^> _window;
+            Agile                    <SwapChainPanel ^> _swapChainPanel;
             platform::Orientation    _orientation = platform::Orientation::ALBUM;
             math::m3x3               _inputTransform;
             

@@ -198,6 +198,7 @@ namespace fg {
             virtual ~RenderTargetInterface() {}
             virtual Texture2DInterface *getDepthBuffer() = 0;
             virtual Texture2DInterface *getRenderBuffer(unsigned index) = 0;
+            virtual unsigned getRenderBufferCount() const = 0;
             
             virtual void  release() = 0;
         };
