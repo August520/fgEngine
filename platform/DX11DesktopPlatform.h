@@ -277,6 +277,7 @@ namespace fg {
 
             platform::Texture2DInterface *getDepthBuffer() override;
             platform::Texture2DInterface *getRenderBuffer(unsigned index) override;
+            unsigned getRenderBufferCount() const override;
                         
             void  release() override;
             bool  valid() const override;

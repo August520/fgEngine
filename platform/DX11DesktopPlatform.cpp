@@ -871,6 +871,10 @@ namespace fg {
             return &_renderTexture[index]; 
         }
 
+        unsigned DesktopRenderTarget::getRenderBufferCount() const {
+            return _colorTargetCount;
+        }
+
         void DesktopRenderTarget::release() {
             if(_depthView) {
                 _depthView->Release();
