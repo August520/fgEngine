@@ -247,7 +247,7 @@ namespace fg {
             virtual void  rdSetSampler(TextureSlot slot, const SamplerInterface *sampler) = 0;
             virtual void  rdSetShaderConstBuffer(const ShaderConstantBufferInterface *cbuffer) = 0;
             virtual void  rdSetTexture2D(TextureSlot slot, const Texture2DInterface *texture = nullptr) = 0;
-            virtual void  rdSetScissorRect(math::p2d &topLeft, math::p2d &bottomRight) = 0;
+            virtual void  rdSetScissorRect(const math::p2d &topLeft, const math::p2d &bottomRight) = 0;
 
             virtual void  rdDrawGeometry(const VertexBufferInterface *vbuffer, const InstanceDataInterface *instanceData, PrimitiveTopology topology, unsigned vertexCount, unsigned instanceCount = 1) = 0;
             virtual void  rdDrawIndexedGeometry(const IndexedVertexBufferInterface *ivbuffer, const InstanceDataInterface *instanceData, PrimitiveTopology topology, unsigned indexCount, unsigned instanceCount = 1) = 0;

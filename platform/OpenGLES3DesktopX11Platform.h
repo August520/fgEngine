@@ -154,7 +154,7 @@ namespace fg {
 
         class ES3DesktopX11Shader : public PlatformObject, public platform::ShaderInterface {
         public:
-            ES3DesktopX11Shader(const byteform &binary, const diag::LogInterface &log);
+            ES3DesktopX11Shader(const byteinput &binary, const diag::LogInterface &log);
             ~ES3DesktopX11Shader() override;
 
             void set();
@@ -225,6 +225,7 @@ namespace fg {
 
             platform::Texture2DInterface *getDepthBuffer() override;
             platform::Texture2DInterface *getRenderBuffer(unsigned index) override;
+            unsigned getRenderBufferCount() const override;
 
             void  release() override;
             void  set();
@@ -277,7 +278,7 @@ namespace fg {
             platform::VertexBufferInterface          *rdCreateVertexBuffer(platform::VertexType vtype, unsigned vcount, bool isDynamic, const void *data) override;
             platform::IndexedVertexBufferInterface   *rdCreateIndexedVertexBuffer(platform::VertexType vtype, unsigned vcount, unsigned ushortIndexCount, bool isDynamic, const void *vdata, const void *idata) override;
             platform::InstanceDataInterface          *rdCreateInstanceData(platform::InstanceDataType type, unsigned instanceCount) override;
-            platform::ShaderInterface                *rdCreateShader(const byteform &binary) override;
+            platform::ShaderInterface                *rdCreateShader(const byteinput &binary) override;
             platform::RasterizerParamsInterface      *rdCreateRasterizerParams(platform::CullMode cull) override;
             platform::BlenderParamsInterface         *rdCreateBlenderParams(const platform::BlendMode blendMode) override;
             platform::DepthParamsInterface           *rdCreateDepthParams(bool depthEnabled, platform::DepthFunc compareFunc, bool depthWriteEnabled) override; 
@@ -299,7 +300,7 @@ namespace fg {
             void  rdSetSampler(platform::TextureSlot slot, const platform::SamplerInterface *sampler) override;
             void  rdSetShaderConstBuffer(const platform::ShaderConstantBufferInterface *cbuffer) override;
             void  rdSetTexture2D(platform::TextureSlot, const platform::Texture2DInterface *texture) override;
-            void  rdSetScissorRect(math::p2d &topLeft, math::p2d &bottomRight) override;
+            void  rdSetScissorRect(const math::p2d &topLeft, const math::p2d &bottomRight) override; 
 
             void  rdDrawGeometry(const platform::VertexBufferInterface *vbuffer, const platform::InstanceDataInterface *instanceData, platform::PrimitiveTopology topology, unsigned vertexCount, unsigned instanceCount) override;
             void  rdDrawIndexedGeometry(const platform::IndexedVertexBufferInterface *ivbuffer, const platform::InstanceDataInterface *instanceData, platform::PrimitiveTopology topology, unsigned indexCount, unsigned instanceCount) override;

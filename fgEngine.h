@@ -77,7 +77,7 @@ namespace fg {
         virtual ~Engine();
         
         // loading/resuming
-        bool  init(const platform::InitParams &initParams, render::RenderInterface &render, const LogicalCoordSystem &coordSystem, const fg::string &binaryFolder = "bin");
+        bool  init(const platform::InitParams &initParams, render::RenderInterface &render, const LogicalCoordSystem &coordSystem, const fg::string &binaryFolder = fg::string("bin"));
 
         // unloading/uninitialize
         void  destroy();

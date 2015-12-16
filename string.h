@@ -16,15 +16,22 @@ namespace fg {
         string(const char *&utf8str);
         string(const string &str);
         string(string &&str);
-        ~string();
 
-        template <unsigned short SZ> string(const char (&utf8str)[SZ]) : _size(SZ) {
-            _size = SZ - 1;
+        explicit string(const char *utf8str) {
+            _size = (unsigned short)(strlen(utf8str));
             _allocate();
             _initmem(utf8str);
             _rehash();
         }
-        template <unsigned short SZ> string(char (&utf8str)[SZ]) : _size(SZ) {
+
+        ~string();
+
+        template <unsigned short SZ> string(const char (&utf8str)[SZ]) : _size(SZ - 1) {
+            _allocate();
+            _initmem(utf8str);
+            _rehash();
+        }
+        template <unsigned short SZ> string(char(&utf8str)[SZ]) {
             _size = (unsigned short)(strlen(utf8str));
             _allocate();
             _initmem(utf8str);

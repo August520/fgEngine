@@ -264,7 +264,7 @@ namespace fg {
                         ch += src[base + w - 1];
                         ch += src[base - w + 1];
 
-                        src[base] = unsigned char(std::min(255u, ch >> 3));
+                        src[base] = (unsigned char)(std::min(255u, ch >> 3));
                     }
                 }
             }
@@ -275,7 +275,7 @@ namespace fg {
 
             curFontForm->fontScale = stbtt_ScaleForPixelHeight(&_self, float(fontSize));
             curFontForm->height = fontSize;
-            curFontForm->blur = int(blur);
+            curFontForm->blur = (int)(blur);
 
             int ascent;
             stbtt_GetFontVMetrics(&_self, &ascent, 0, 0);

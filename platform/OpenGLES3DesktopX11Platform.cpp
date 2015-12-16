@@ -372,7 +372,7 @@ namespace fg {
 
         //---
 
-        ES3DesktopX11Shader::ES3DesktopX11Shader(const byteform &binary, const diag::LogInterface &log) {
+        ES3DesktopX11Shader::ES3DesktopX11Shader(const byteinput &binary, const diag::LogInterface &log) {
             _program = 0;
             _vShader = 0;
             _fShader = 0;
@@ -634,6 +634,10 @@ namespace fg {
 
         platform::Texture2DInterface *ES3DesktopX11RenderTarget::getRenderBuffer(unsigned index) {
             return &_renderTexture[index];
+        }
+        
+        unsigned ES3DesktopX11RenderTarget::getRenderBufferCount() const {
+            return _colorTargetCount;
         }
         
         void ES3DesktopX11RenderTarget::release() {
@@ -901,7 +905,7 @@ namespace fg {
             return new ES3DesktopX11InstanceData (type, instanceCount);
         }
 
-        platform::ShaderInterface *ES3DesktopX11Platform::rdCreateShader(const byteform &binary) {
+        platform::ShaderInterface *ES3DesktopX11Platform::rdCreateShader(const byteinput &binary) {
             return new ES3DesktopX11Shader (binary, _log);
         }
 
@@ -995,7 +999,7 @@ namespace fg {
             _lastTextureHeight[unsigned(slot)] = float(platfromObject->getHeight());
         }
         
-        void ES3DesktopX11Platform::rdSetScissorRect(math::p2d &topLeft, math::p2d &bottomRight) {
+        void ES3DesktopX11Platform::rdSetScissorRect(const math::p2d &topLeft, const math::p2d &bottomRight) { 
             glScissor(int(topLeft.x), int(topLeft.y), int(bottomRight.x - topLeft.x), int(bottomRight.y - topLeft.y));
         }
         

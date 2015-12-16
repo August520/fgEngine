@@ -4,6 +4,8 @@
 #pragma push_macro("new")
 #undef new
 
+#include <cstring>
+
 #include <new>
 #include <type_traits>
 #include <unordered_map>

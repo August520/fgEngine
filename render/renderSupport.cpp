@@ -1,6 +1,8 @@
 
 // TODO: draw* over instances
 
+#include <float.h>
+
 namespace fg {
     namespace render {
         const unsigned ODDBUFFER_SIMPLE_MAX = 32;
