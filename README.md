@@ -1,9 +1,11 @@
-#### Frenetic Game Engine v0.12
+#### Frenetic Game Engine v0.121
 News: [http://ka-decimu.github.io/](http://ka-decimu.github.io/)
 
 It is open source native C++ game framework for creating small 2D and 3D mobile games.   
-It offers code-oriented workflow, but it simple to understand, simple to prototyping, simple to experiments  
-It uses modified versions or parts of:  
+It offers code-oriented workflow, 
+But it simple to understand, simple to prototyping (especially, if you use the C# Integration) and experiments
+
+Framework uses modified versions or parts of:  
 - Lua
 - LodePNG
 - stb libraries
@@ -28,21 +30,24 @@ GCC 4.9.3:
 
 #### RoadMap 2D
 
+- Full support for different screen resolutions and DPI
 - Sound display object
-- Texture coordinates control
-- Scissor rectangle
+- Geometry display object
 - Descriptions (scene from resource)
+- Texture coordinates control
 - More examples
 
 #### RoadMap 3D
 
-- Unified render state (hello dx12)
+- Sound 3d object
+- Custom material parameters
+- Descriptions (scene from resource)
 - Dirty transform mechanism
 - Cache-friendly meshes
+- Particle improvements
+- Unified render state (hello dx12)
 - Partial resource loading
 - Partial render targets
-- Custom material params
-- Descriptions (scene from resource)
 - More examples
 
 #### Public Domain
