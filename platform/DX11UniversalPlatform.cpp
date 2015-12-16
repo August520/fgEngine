@@ -1689,7 +1689,7 @@ namespace fg {
             }
         }
 
-        void UniversalPlatform::rdSetScissorRect(math::p2d &topLeft, math::p2d &bottomRight) {
+        void UniversalPlatform::rdSetScissorRect(const math::p2d &topLeft, const math::p2d &bottomRight) {
             D3D11_RECT rect;
             rect.left = int(topLeft.x);
             rect.top = int(topLeft.y);

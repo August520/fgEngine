@@ -376,7 +376,7 @@ namespace fg {
             void  rdSetSampler(platform::TextureSlot slot, const platform::SamplerInterface *sampler) override;
             void  rdSetShaderConstBuffer(const platform::ShaderConstantBufferInterface *cbuffer) override;
             void  rdSetTexture2D(platform::TextureSlot slot, const platform::Texture2DInterface *texture) override;
-            void  rdSetScissorRect(math::p2d &topLeft, math::p2d &bottomRight) override;
+            void  rdSetScissorRect(const math::p2d &topLeft, const math::p2d &bottomRight) override;
             
             void  rdDrawGeometry(const platform::VertexBufferInterface *vbuffer, const platform::InstanceDataInterface *instanceData, platform::PrimitiveTopology topology, unsigned vertexCount, unsigned instanceCount) override;
             void  rdDrawIndexedGeometry(const platform::IndexedVertexBufferInterface *ivbuffer, const platform::InstanceDataInterface *instanceData, platform::PrimitiveTopology topology, unsigned indexCount, unsigned instanceCount) override;
