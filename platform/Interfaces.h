@@ -33,6 +33,9 @@ namespace fg {
         enum class TextureFormat {
             RGBA8   = 0,
             RED8    = 1,
+            DXT1    = 2,
+            DXT3    = 3,
+            DXT5    = 4,
             UNKNOWN = -1,
         };
 
@@ -231,7 +234,7 @@ namespace fg {
             virtual DepthParamsInterface          *rdCreateDepthParams(bool depthEnabled, DepthFunc compareFunc, bool depthWriteEnabled) = 0;
             virtual SamplerInterface              *rdCreateSampler(TextureFilter filter, TextureAddressMode addrMode) = 0;
             virtual ShaderConstantBufferInterface *rdCreateShaderConstantBuffer(ShaderConstBufferUsing appoint, unsigned byteWidth) = 0;
-            virtual Texture2DInterface            *rdCreateTexture2D(unsigned char * const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount) = 0;
+            virtual Texture2DInterface            *rdCreateTexture2D(unsigned char * const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount, platform::TextureFormat fmt = platform::TextureFormat::RGBA8) = 0;
             virtual Texture2DInterface            *rdCreateTexture2D(TextureFormat format, unsigned originWidth, unsigned originHeight, unsigned mipCount) = 0;
             virtual RenderTargetInterface         *rdCreateRenderTarget(unsigned colorTargetCount, unsigned originWidth, unsigned originHeight) = 0;
             virtual RenderTargetInterface         *rdGetDefaultRenderTarget() = 0;

@@ -14,6 +14,7 @@ namespace fg {
 
             if(*(unsigned *)data.getPtr() == 0xf0fa5566) {
                 data.readDword();
+                _format = platform::TextureFormat::RGBA8;
 
                 unsigned char type = data.readByte();
                 unsigned int  flags = data.readDword();
@@ -21,6 +22,7 @@ namespace fg {
                 _szy = data.readDword();
                 _mipsCount = data.readDword();
 
+                _imgDataIsDynamic = true;
                 _imgData = new unsigned char *[_mipsCount];
 
                 for(unsigned i = 0; i < _mipsCount; i++) {
@@ -36,15 +38,42 @@ namespace fg {
                     }
                 }
             }
+            else if (memcmp(data.getPtr(), "DDS ", 4) == 0) {
+                tools::DDS_HEADER ddsh;
+                data.readDword();
+                data.readBytes((char *)&ddsh, sizeof(tools::DDS_HEADER));
+
+                _szx = ddsh.dwWidth;
+                _szy = ddsh.dwHeight;
+                _mipsCount = ddsh.dwMipMapCount;
+                _format = tools::getDDSFormat(ddsh);
+
+                if (_format != platform::TextureFormat::UNKNOWN && (ddsh.dwCaps2 & tools::DDSF_CUBEMAP) == 0 && (ddsh.dwCaps2 & tools::DDSF_VOLUME) == 0) {
+                    _imgData = new unsigned char *[_mipsCount];
+                    
+                    unsigned tw = _szx;
+                    unsigned th = _szy;
+                    unsigned mipOffset = 0; 
+
+                    for (unsigned i = 0; i < _mipsCount; i++) {
+                        _imgData[i] = (unsigned char *)(data.getCurrentPtr() + mipOffset);
+
+                        tw >>= 1;
+                        th >>= 1;
+
+                        mipOffset += tools::getDDSImageSize(_format, tw, th);
+                    }
+                }
+                else {
+                    log.msgError("ResTexture::_loadedCallback %s bad format", _loadPath.data());
+                    _loadingState = ResourceLoadingState::INVALID;
+                }
+            }
             else {
                 _imgData = new unsigned char *[1];
 
                 if(!tools::lodepng_decode32(&_imgData[0], &_szx, &_szy, (unsigned char *)(data.getPtr() + data.getOffset()), data.getSize())) {
-                    unsigned char cR = _imgData[0][0];
-                    unsigned char cG = _imgData[0][1];
-                    unsigned char cB = _imgData[0][2];
-                    unsigned char cA = _imgData[0][3];
-
+                    _format = platform::TextureFormat::RGBA8;
                     _mipsCount = 1;
                 }
                 else {
@@ -55,11 +84,13 @@ namespace fg {
         }
 
         bool Texture2DResource::constructed(const diag::LogInterface &log, platform::PlatformInterface &api) {
-            _self = api.rdCreateTexture2D(_imgData, _szx, _szy, _mipsCount);
+            _self = api.rdCreateTexture2D(_imgData, _szx, _szy, _mipsCount, _format);
 
-            for(unsigned i = 0; i < _mipsCount; i++) {
-                free(_imgData[i]);
-            }
+            if (_imgDataIsDynamic) {
+                for (unsigned i = 0; i < _mipsCount; i++) {
+                    free(_imgData[i]);
+                }
+            }            
 
             delete[] _imgData;
             _imgData = nullptr;

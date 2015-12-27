@@ -59,6 +59,9 @@ namespace fg {
             _creators.add("png", [](const char *path, bool unloadable) {
                 return static_cast <ManagedResourceInterface *> (new Texture2DResource(path, unloadable));
             });
+            _creators.add("dds", [](const char *path, bool unloadable) {
+                return static_cast <ManagedResourceInterface *> (new Texture2DResource(path, unloadable));
+            });
             _creators.add("ttf", [](const char *path, bool unloadable) {
                 return static_cast <ManagedResourceInterface *> (new FontResource(path, unloadable));
             });

@@ -241,7 +241,7 @@ namespace fg {
 
         public:
             DesktopTexture2D();
-            DesktopTexture2D(DesktopPlatform *owner, unsigned char * const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount);
+            DesktopTexture2D(DesktopPlatform *owner, unsigned char * const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount, platform::TextureFormat format);
             DesktopTexture2D(DesktopPlatform *owner, platform::TextureFormat fmt, unsigned originWidth, unsigned originHeight, unsigned mipCount);
             ~DesktopTexture2D() override;
 
@@ -259,8 +259,8 @@ namespace fg {
             unsigned  _width;
             unsigned  _height;
             unsigned  _mipCount;
-            unsigned  _pixelsz;
-            
+
+            platform::TextureFormat   _format;            
             ID3D11Texture2D           *_self;
             ID3D11ShaderResourceView  *_view;
         };
@@ -345,7 +345,7 @@ namespace fg {
             platform::DepthParamsInterface           *rdCreateDepthParams(bool depthEnabled, platform::DepthFunc compareFunc, bool depthWriteEnabled) override; 
             platform::SamplerInterface               *rdCreateSampler(platform::TextureFilter filter, platform::TextureAddressMode addrMode) override; //!
             platform::ShaderConstantBufferInterface  *rdCreateShaderConstantBuffer(platform::ShaderConstBufferUsing appoint, unsigned byteWidth) override;
-            platform::Texture2DInterface             *rdCreateTexture2D(unsigned char * const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount) override;
+            platform::Texture2DInterface             *rdCreateTexture2D(unsigned char *const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount, platform::TextureFormat fmt) override;
             platform::Texture2DInterface             *rdCreateTexture2D(platform::TextureFormat format, unsigned originWidth, unsigned originHeight, unsigned mipCount) override;
             platform::RenderTargetInterface          *rdCreateRenderTarget(unsigned colorTargetCount, unsigned originWidth, unsigned originHeight) override;
             platform::RenderTargetInterface          *rdGetDefaultRenderTarget() override;

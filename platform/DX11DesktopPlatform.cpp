@@ -20,8 +20,6 @@ namespace fg {
             sizeof(InstanceDataDisplayObject),
         };
 
-        unsigned __texturePixelSizes[] = {4, 1};
-
         struct NativeLayoutComponent {
             DXGI_FORMAT  format;
             unsigned int size;
@@ -40,8 +38,24 @@ namespace fg {
         D3D11_CULL_MODE             __nativeCullMode[] = {D3D11_CULL_NONE, D3D11_CULL_BACK, D3D11_CULL_FRONT};
         D3D11_COMPARISON_FUNC       __nativeCmpFunc[] = {D3D11_COMPARISON_NEVER, D3D11_COMPARISON_LESS, D3D11_COMPARISON_EQUAL, D3D11_COMPARISON_LESS_EQUAL, D3D11_COMPARISON_GREATER, D3D11_COMPARISON_NOT_EQUAL, D3D11_COMPARISON_GREATER_EQUAL, D3D11_COMPARISON_ALWAYS};
         D3D11_FILTER                __nativeFilter[] = {D3D11_FILTER_MIN_MAG_MIP_POINT, D3D11_FILTER_MIN_MAG_MIP_LINEAR, D3D11_FILTER_ANISOTROPIC, D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT};
-        DXGI_FORMAT                 __nativeTextureFormat[] = {DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8_UNORM, DXGI_FORMAT_A8_UNORM};
+        DXGI_FORMAT                 __nativeTextureFormat[] = {DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8_UNORM, DXGI_FORMAT_BC1_UNORM, DXGI_FORMAT_BC2_UNORM, DXGI_FORMAT_BC3_UNORM};
         D3D_PRIMITIVE_TOPOLOGY      __nativeTopology[] = {D3D_PRIMITIVE_TOPOLOGY_LINELIST, D3D_PRIMITIVE_TOPOLOGY_LINESTRIP, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP};
+
+        unsigned __getTexture2DPitch(fg::platform::TextureFormat fmt, unsigned width) {
+            switch (fmt) {
+            case fg::platform::TextureFormat::RGBA8:
+                return width * 4;
+            case fg::platform::TextureFormat::RED8:
+                return width;
+            case fg::platform::TextureFormat::DXT1:
+                return std::max(1u, ((width + 3) / 4)) * 8;
+            case fg::platform::TextureFormat::DXT3:
+            case fg::platform::TextureFormat::DXT5:
+                return std::max(1u, ((width + 3) / 4)) * 16;
+            }
+
+            return 0;
+        }
 
         //---
 
@@ -641,23 +655,23 @@ namespace fg {
             _width = 0;
             _height = 0;
             _mipCount = 0;
-            _pixelsz = 0;
+            _format = platform::TextureFormat::UNKNOWN;
         }
 
-        DesktopTexture2D::DesktopTexture2D(DesktopPlatform *owner, unsigned char * const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount) : PlatformObject(owner) {
+        DesktopTexture2D::DesktopTexture2D(DesktopPlatform *owner, unsigned char * const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount, platform::TextureFormat format) : PlatformObject(owner) {
             _self = nullptr;
             _view = nullptr;
             _width = originWidth;
             _height = originHeight;
             _mipCount = mipCount;
-            _pixelsz = 4;
+            _format = format;
 
             D3D11_TEXTURE2D_DESC      texDesc = {0};
             D3D11_SUBRESOURCE_DATA    subResData[32] = {0};
 
             texDesc.Width = originWidth;
             texDesc.Height = originHeight;
-            texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+            texDesc.Format = __nativeTextureFormat[unsigned(format)];
             texDesc.Usage = D3D11_USAGE_IMMUTABLE;
             texDesc.CPUAccessFlags = 0;
             texDesc.MiscFlags = 0;
@@ -667,13 +681,13 @@ namespace fg {
             texDesc.SampleDesc.Quality = 0;
             texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 
-            for(unsigned i = 0; i < mipCount; i++) {
+            for (unsigned i = 0; i < mipCount; i++) {
                 subResData[i].pSysMem = imgMipsBinaryData[i];
-                subResData[i].SysMemPitch = (originWidth >> i) * 4;
+                subResData[i].SysMemPitch = __getTexture2DPitch(format, originWidth >> i);
                 subResData[i].SysMemSlicePitch = 0;
             }
 
-            if(_owner->_device->CreateTexture2D(&texDesc, subResData, &_self) == S_OK) {
+            if (_owner->_device->CreateTexture2D(&texDesc, subResData, &_self) == S_OK) {
                 D3D11_SHADER_RESOURCE_VIEW_DESC texViewDesc = {texDesc.Format};
                 texViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
                 texViewDesc.Texture2D.MipLevels = texDesc.MipLevels;
@@ -689,7 +703,7 @@ namespace fg {
             _width = originWidth;
             _height = originHeight;
             _mipCount = mipCount;
-            _pixelsz = __texturePixelSizes[unsigned(fmt)];
+            _format = fmt;
             
             D3D11_TEXTURE2D_DESC texDesc = {0};
             texDesc.Width = originWidth;
@@ -738,7 +752,7 @@ namespace fg {
             tbox.right = x + w;
             tbox.top = y;
             tbox.bottom = y + h;
-            _owner->_context->UpdateSubresource(_self, mip, &tbox, src, w * _pixelsz, 0);
+            _owner->_context->UpdateSubresource(_self, mip, &tbox, src, __getTexture2DPitch(_format, w), 0);
         }
 
         void DesktopTexture2D::release() {
@@ -816,13 +830,13 @@ namespace fg {
             _depthTexture._width = originWidth;
             _depthTexture._height = originHeight;
             _depthTexture._mipCount = 1;
-            _depthTexture._pixelsz = 4;
+            _depthTexture._format = platform::TextureFormat::UNKNOWN;
 
             for(unsigned i = 0; i < _colorTargetCount; i++) {
                 _renderTexture[i]._width = originWidth;
                 _renderTexture[i]._height = originHeight;
                 _renderTexture[i]._mipCount = 1;
-                _renderTexture[i]._pixelsz = 4;
+                _renderTexture[i]._format = platform::TextureFormat::RGBA8;
 
                 if(_owner->_device->CreateTexture2D(&texDesc, nullptr, &_renderTexture[i]._self) == S_OK) {
                     _owner->_device->CreateRenderTargetView(_renderTexture[i]._self, &renderTargetViewDesc, &_rtView[i]);                    
@@ -1364,8 +1378,8 @@ namespace fg {
             }
         }
 
-        platform::Texture2DInterface *DesktopPlatform::rdCreateTexture2D(unsigned char * const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount) {
-            DesktopTexture2D *r = new DesktopTexture2D(this, imgMipsBinaryData, originWidth, originHeight, mipCount);
+        platform::Texture2DInterface *DesktopPlatform::rdCreateTexture2D(unsigned char * const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount, platform::TextureFormat format) {
+            DesktopTexture2D *r = new DesktopTexture2D(this, imgMipsBinaryData, originWidth, originHeight, mipCount, format);
 
             if(r->valid()) {
                 return r;

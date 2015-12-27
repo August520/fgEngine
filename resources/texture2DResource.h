@@ -16,12 +16,15 @@ namespace fg {
             virtual const platform::Texture2DInterface *getPlatformObject() const override;
 
         private:
-            unsigned _szx;
-            unsigned _szy;
-            unsigned _mipsCount;
+            bool _imgDataIsDynamic = false;
+
+            unsigned _szx = 1;
+            unsigned _szy = 1;
+            unsigned _mipsCount = 1;
             
             unsigned char  **_imgData;
-            platform::Texture2DInterface  *_self;
+            platform::TextureFormat _format = platform::TextureFormat::UNKNOWN;
+            platform::Texture2DInterface  *_self = nullptr;
         };
     }
 }
