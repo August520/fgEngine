@@ -71,6 +71,7 @@ namespace fg {
             }
             else {
                 _imgData = new unsigned char *[1];
+                _imgDataIsDynamic = true;
 
                 if(!tools::lodepng_decode32(&_imgData[0], &_szx, &_szy, (unsigned char *)(data.getPtr() + data.getOffset()), data.getSize())) {
                     _format = platform::TextureFormat::RGBA8;
@@ -84,22 +85,24 @@ namespace fg {
         }
 
         bool Texture2DResource::constructed(const diag::LogInterface &log, platform::PlatformInterface &api) {
-            _self = api.rdCreateTexture2D(_imgData, _szx, _szy, _mipsCount, _format);
+            if (_loadingState != ResourceLoadingState::INVALID) {
+                _self = api.rdCreateTexture2D(_imgData, _szx, _szy, _mipsCount, _format);
 
-            if (_imgDataIsDynamic) {
-                for (unsigned i = 0; i < _mipsCount; i++) {
-                    free(_imgData[i]);
+                if (_imgDataIsDynamic) {
+                    for (unsigned i = 0; i < _mipsCount; i++) {
+                        free(_imgData[i]);
+                    }
                 }
-            }            
 
-            delete[] _imgData;
-            _imgData = nullptr;
-
+                delete[] _imgData;
+                _imgData = nullptr;
+            }
+            
             return false;
         }
 
-        void Texture2DResource::unloaded(){ 
-            delete _self;
+        void Texture2DResource::unloaded(){
+            _self->release();
             _self = nullptr;
         }
 

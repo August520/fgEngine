@@ -154,6 +154,13 @@ namespace fg {
 
         //---
 
+        class TextureCubeResourceInterface : virtual public ResourceInterface {
+        public:
+            virtual const platform::TextureCubeInterface *getPlatformObject() const = 0;
+        };
+
+        //---
+
         struct FontCharInfo {
             platform::Texture2DInterface *texture;
 

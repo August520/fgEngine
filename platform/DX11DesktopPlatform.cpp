@@ -775,6 +775,71 @@ namespace fg {
 
         //---
 
+        DesktopTextureCube::DesktopTextureCube(DesktopPlatform *owner, unsigned char **imgMipsBinaryData[6], unsigned originSize, unsigned mipCount, platform::TextureFormat format) : PlatformObject(owner) {
+            _self = nullptr;
+            _view = nullptr;
+            _format = format;
+
+            D3D11_TEXTURE2D_DESC      texDesc = {0};
+            D3D11_SUBRESOURCE_DATA    subResData[96] = {0};
+
+            texDesc.Width = originSize;
+            texDesc.Height = originSize;
+            texDesc.Format = __nativeTextureFormat[unsigned(format)];
+            texDesc.Usage = D3D11_USAGE_IMMUTABLE;
+            texDesc.CPUAccessFlags = 0;
+            texDesc.MiscFlags = D3D11_RESOURCE_MISC_TEXTURECUBE;
+            texDesc.MipLevels = mipCount;
+            texDesc.ArraySize = 6;
+            texDesc.SampleDesc.Count = 1;
+            texDesc.SampleDesc.Quality = 0;
+            texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+
+            //unsigned faceMapping[] = {1, 3, 4, 5, 0, 2};
+            unsigned faceMapping[] = {0, 1, 2, 3, 4, 5};
+
+            for (unsigned c = 0; c < 6; c++) {
+                for (unsigned i = 0; i < mipCount; i++) {
+                    subResData[c * mipCount + i].pSysMem = imgMipsBinaryData[faceMapping[c]][i]; 
+                    subResData[c * mipCount + i].SysMemPitch = __getTexture2DPitch(format, originSize >> i);
+                    subResData[c * mipCount + i].SysMemSlicePitch = 0;
+                }
+            }            
+
+            if (_owner->_device->CreateTexture2D(&texDesc, subResData, &_self) == S_OK) {
+                D3D11_SHADER_RESOURCE_VIEW_DESC texViewDesc = {texDesc.Format};
+                texViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
+                texViewDesc.TextureCube.MipLevels = texDesc.MipLevels;
+                texViewDesc.TextureCube.MostDetailedMip = 0;
+
+                _owner->_device->CreateShaderResourceView(_self, &texViewDesc, &_view);
+            }
+        }
+
+        DesktopTextureCube::~DesktopTextureCube() {
+
+        }
+
+        void DesktopTextureCube::release() {
+            if (_view) {
+                _view->Release();
+            }
+            if (_self) {
+                _self->Release();
+            }
+            delete this;
+        }
+        
+        bool DesktopTextureCube::valid() const {
+            return _view != nullptr;
+        }
+
+        void DesktopTextureCube::set(platform::TextureSlot slot) {
+            _owner->_context->PSSetShaderResources(unsigned(slot), 1, &_view);
+        }
+
+        //---
+
         DesktopRenderTarget::DesktopRenderTarget(DesktopPlatform *owner) : PlatformObject(owner) {
             _depthView = nullptr;
             _depthTexture._owner = owner;
@@ -1406,6 +1471,19 @@ namespace fg {
             }
         }
 
+        platform::TextureCubeInterface *DesktopPlatform::rdCreateTextureCube(unsigned char **imgMipsBinaryData[6], unsigned originSize, unsigned mipCount, platform::TextureFormat fmt) {
+            DesktopTextureCube *r = new DesktopTextureCube(this, imgMipsBinaryData, originSize, mipCount, fmt);
+
+            if (r->valid()) {
+                return r;
+            }
+            else {
+                _log.msgError("can't create textureCube from memory");
+                delete r;
+                return nullptr;
+            }
+        }
+
         platform::RenderTargetInterface *DesktopPlatform::rdCreateRenderTarget(unsigned colorTargetCount, unsigned originWidth, unsigned originHeight) {
             DesktopRenderTarget *r = new DesktopRenderTarget (this, colorTargetCount, originWidth, originHeight);
 
@@ -1475,6 +1553,17 @@ namespace fg {
                 dxObj->set(slot);
                 _lastTextureWidth[unsigned(slot)] = float(dxObj->getWidth());
                 _lastTextureHeight[unsigned(slot)] = float(dxObj->getHeight());
+            }
+            else {
+                ID3D11ShaderResourceView *tnull = nullptr;
+                _context->PSSetShaderResources(unsigned(slot), 1, &tnull);
+            }
+        }
+
+        void DesktopPlatform::rdSetTextureCube(platform::TextureSlot slot, const platform::TextureCubeInterface *texture) {
+            if (texture) {
+                DesktopTextureCube *dxObj = (DesktopTextureCube *)texture;
+                dxObj->set(slot);
             }
             else {
                 ID3D11ShaderResourceView *tnull = nullptr;

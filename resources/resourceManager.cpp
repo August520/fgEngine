@@ -110,8 +110,8 @@ namespace fg {
                                 
                                 if(platform.fsLoadFile(curResource->getFilePath().data(), &binaryData, &binarySize)){
                                     curResource->setBinary(binaryData, binarySize);
-                                    curResource->loaded(log);
                                     curResource->setLoadingState(ResourceLoadingState::LOADED);
+                                    curResource->loaded(log);
                                 }
                                 else{
                                     curResource->setLoadingState(ResourceLoadingState::INVALID);

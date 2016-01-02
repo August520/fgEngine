@@ -18,6 +18,9 @@ namespace fg {
         template <> struct ResourceInterfaceTable <Texture2DResourceInterface> {
             typedef Texture2DResource type;
         };
+        template <> struct ResourceInterfaceTable <TextureCubeResourceInterface> {
+            typedef TextureCubeResource type;
+        };
         template <> struct ResourceInterfaceTable <FontResourceInterface> {
             typedef FontResource type;
         };
@@ -62,6 +65,9 @@ namespace fg {
             _creators.add("dds", [](const char *path, bool unloadable) {
                 return static_cast <ManagedResourceInterface *> (new Texture2DResource(path, unloadable));
             });
+            _creators.add("cubemap", [](const char *path, bool unloadable) {
+                return static_cast <ManagedResourceInterface *> (new TextureCubeResource(path, unloadable));
+            });
             _creators.add("ttf", [](const char *path, bool unloadable) {
                 return static_cast <ManagedResourceInterface *> (new FontResource(path, unloadable));
             });
@@ -99,6 +105,7 @@ namespace fg {
         template ShaderResourceInterface *ResourcePtr::_to <ShaderResourceInterface>() const;
         template ModelResourceInterface *ResourcePtr::_to <ModelResourceInterface>() const;
         template Texture2DResourceInterface *ResourcePtr::_to <Texture2DResourceInterface>() const;
+        template TextureCubeResourceInterface *ResourcePtr::_to <TextureCubeResourceInterface>() const;
         template FontResourceInterface *ResourcePtr::_to <FontResourceInterface>() const;
         template MaterialResourceInterface *ResourcePtr::_to <MaterialResourceInterface>() const;
         template ClipSetResourceInterface *ResourcePtr::_to <ClipSetResourceInterface>() const;
@@ -110,6 +117,7 @@ namespace fg {
         template const ShaderResourceInterface *ResourcePtr::_to <const ShaderResourceInterface>() const;
         template const ModelResourceInterface *ResourcePtr::_to <const ModelResourceInterface>() const;
         template const Texture2DResourceInterface *ResourcePtr::_to <const Texture2DResourceInterface>() const;
+        template const TextureCubeResourceInterface *ResourcePtr::_to <const TextureCubeResourceInterface>() const;
         template const FontResourceInterface *ResourcePtr::_to <const FontResourceInterface>() const;
         template const MaterialResourceInterface *ResourcePtr::_to <const MaterialResourceInterface>() const;
         template const ClipSetResourceInterface *ResourcePtr::_to <const ClipSetResourceInterface>() const;

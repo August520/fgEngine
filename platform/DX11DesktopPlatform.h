@@ -241,7 +241,7 @@ namespace fg {
 
         public:
             DesktopTexture2D();
-            DesktopTexture2D(DesktopPlatform *owner, unsigned char * const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount, platform::TextureFormat format);
+            DesktopTexture2D(DesktopPlatform *owner, unsigned char *const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount, platform::TextureFormat format);
             DesktopTexture2D(DesktopPlatform *owner, platform::TextureFormat fmt, unsigned originWidth, unsigned originHeight, unsigned mipCount);
             ~DesktopTexture2D() override;
 
@@ -261,6 +261,26 @@ namespace fg {
             unsigned  _mipCount;
 
             platform::TextureFormat   _format;            
+            ID3D11Texture2D           *_self;
+            ID3D11ShaderResourceView  *_view;
+        };
+
+        //---
+
+        class DesktopTextureCube : public PlatformObject, public platform::TextureCubeInterface {
+            friend class DesktopRenderTarget;
+            friend class DesktopPlatform;
+
+        public:
+            DesktopTextureCube(DesktopPlatform *owner, unsigned char **imgMipsBinaryData[6], unsigned originSize, unsigned mipCount, platform::TextureFormat format);
+            ~DesktopTextureCube() override;
+
+            void  release() override;
+            bool  valid() const override;
+            void  set(platform::TextureSlot slot);
+
+        protected:
+            platform::TextureFormat   _format;
             ID3D11Texture2D           *_self;
             ID3D11ShaderResourceView  *_view;
         };
@@ -347,6 +367,7 @@ namespace fg {
             platform::ShaderConstantBufferInterface  *rdCreateShaderConstantBuffer(platform::ShaderConstBufferUsing appoint, unsigned byteWidth) override;
             platform::Texture2DInterface             *rdCreateTexture2D(unsigned char *const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount, platform::TextureFormat fmt) override;
             platform::Texture2DInterface             *rdCreateTexture2D(platform::TextureFormat format, unsigned originWidth, unsigned originHeight, unsigned mipCount) override;
+            platform::TextureCubeInterface           *rdCreateTextureCube(unsigned char **imgMipsBinaryData[6], unsigned originSize, unsigned mipCount, platform::TextureFormat fmt) override;
             platform::RenderTargetInterface          *rdCreateRenderTarget(unsigned colorTargetCount, unsigned originWidth, unsigned originHeight) override;
             platform::RenderTargetInterface          *rdGetDefaultRenderTarget() override;
 
@@ -361,6 +382,7 @@ namespace fg {
             void  rdSetSampler(platform::TextureSlot slot, const platform::SamplerInterface *sampler) override;
             void  rdSetShaderConstBuffer(const platform::ShaderConstantBufferInterface *cbuffer) override;
             void  rdSetTexture2D(platform::TextureSlot slot, const platform::Texture2DInterface *texture) override;
+            void  rdSetTextureCube(platform::TextureSlot slot, const platform::TextureCubeInterface *texture) override;
             void  rdSetScissorRect(const math::p2d &topLeft, const math::p2d &bottomRight) override;
 
             void  rdDrawGeometry(const platform::VertexBufferInterface *vbuffer, const platform::InstanceDataInterface *instanceData, platform::PrimitiveTopology topology, unsigned vertexCount, unsigned instanceCount) override;
