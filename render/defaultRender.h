@@ -17,6 +17,7 @@ namespace fg {
             const char *getRenderResourceList() const override;
 
         protected:
+            const platform::TextureCubeInterface *_envCubes[6];
             fg::render::TransparentDrawer <1024> _transparentDrawer;
 
             float _frameCount = 0.0f;

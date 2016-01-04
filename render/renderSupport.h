@@ -21,16 +21,19 @@ namespace fg {
             platform::SamplerInterface           *getDefaultPointSampler() override;
             platform::SamplerInterface           *getDefaultLinearSampler() override;
 
-            DefaultFrameConstants  &defFrameConst() override;
-            InstanceDataDefault    &defInstanceData() override;
+            DefaultFrameConstants     &defFrameConst() override;
+            DefaultMaterialConstants  &defMaterialConst() override;
+            InstanceDataDefault       &defInstanceData() override;
             
             void defFrameConstApplyChanges() override;
+            void defMaterialConstApplyChanges() override;
             void defInstanceDataApplyChanges() override;
 
             void setShader(const resources::ShaderResourceInterface *shader) override;
             void setTexture(platform::TextureSlot slot, const resources::Texture2DResourceInterface *texture) override;
             void setScissorRect(const math::p2d &center, const math::p2d &lt, const math::p2d &rb, bool resolutionDepended) override;
-            
+            void setMaterialParams(const math::p3d &metalness, float gloss, const platform::TextureCubeInterface *const *env, unsigned envCount) override;
+
             void drawQuad2D(const math::m3x3 &trfm, const resources::ClipData *clip, unsigned frame, const fg::color &c, bool resolutionDepended) override;
             void drawText2D(const std::string &utf8text, const math::m3x3 &trfm, const resources::FontResourceInterface *font, const object2d::FontForm &form, object2d::TextAlign align, bool resolutionDepended) override;
             void drawScreenQuad(float x, float y, float width, float height) override; 
@@ -64,6 +67,7 @@ namespace fg {
             platform::InstanceDataInterface      *_defDisplayObjectInstanceData = nullptr;
 
             ShaderConstantBufferStruct           <DefaultFrameConstants> *_frameConstants = nullptr;
+            ShaderConstantBufferStruct           <DefaultMaterialConstants>  *_materialConstants = nullptr;
             
             const resources::ShaderResourceInterface *_simpleShader = nullptr;
             const resources::ShaderResourceInterface *_ifaceShader = nullptr;

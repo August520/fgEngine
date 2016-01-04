@@ -97,6 +97,9 @@ namespace fg {
                 virtual unsigned getSkinMatrixCount() const = 0;
                 virtual unsigned getTextureBindCount() const = 0;
 
+                virtual const math::p3d &getMaterialMetalness() const = 0;
+                virtual float getMaterialGloss() const = 0;
+
                 virtual const math::m4x4 *getSkinMatrixArray() const = 0;
                 virtual const resources::Texture2DResourceInterface *getTextureBind(unsigned bindIndex) const = 0;
                 virtual const resources::ShaderResourceInterface *getShader() const = 0;

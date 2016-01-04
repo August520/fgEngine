@@ -201,6 +201,14 @@ namespace fg {
         const math::m4x4 *Model3D::MeshData::getSkinMatrixArray() const {
             return _skinMatrixes;
 		}
+
+        const math::p3d &Model3D::MeshData::getMaterialMetalness() const {
+            return _materialParams->metalness;
+        }
+
+        float Model3D::MeshData::getMaterialGloss() const {
+            return _materialParams->gloss;
+        }
         
         unsigned Model3D::MeshData::getSkinMatrixCount() const {
             return _skinMatrixCount;

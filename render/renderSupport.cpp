@@ -1,6 +1,4 @@
 
-// TODO: draw* over instances
-
 #include <float.h>
 
 namespace fg {
@@ -37,6 +35,7 @@ namespace fg {
 
             _camera = new Camera (iplatform);
             _frameConstants = new ShaderConstantBufferStruct <DefaultFrameConstants> (iplatform, platform::ShaderConstBufferUsing::FRAME_DATA);
+            _materialConstants = new ShaderConstantBufferStruct <DefaultMaterialConstants>(iplatform, platform::ShaderConstBufferUsing::MATERIAL_DATA);
             
             _simpleShader = iresMan.getResource(FG_SIMPLE_SHADER);
             _ifaceShader = iresMan.getResource(FG_IFACE_SHADER);
@@ -50,7 +49,7 @@ namespace fg {
 
             _frameConstants->data.camPosition = _camera->getPosition();
             _frameConstants->data.camViewProj = _camera->getVPMatrix();
-            _frameConstants->data.globalSunDirection = math::p3d(1.5f, 2.0f, 1.0f).normalize();
+            _frameConstants->data.globalSunDirection = math::p3d(0.0f, 0.1f, 1.0f).normalize();
             _frameConstants->data.scrWidth = _platform->getScreenWidth();
             _frameConstants->data.scrHeight = _platform->getScreenHeight();
             _frameConstants->updateAndApply();
@@ -79,9 +78,11 @@ namespace fg {
         void RenderSupport::destroy() {
             delete _camera;
             delete _frameConstants;
+            delete _materialConstants;
             
             _camera = nullptr;
             _frameConstants = nullptr;
+            _materialConstants = nullptr;
             _platform = nullptr;
             _simpleShader = nullptr;
             _ifaceShader = nullptr;
@@ -146,6 +147,10 @@ namespace fg {
         DefaultFrameConstants &RenderSupport::defFrameConst() {
             return _frameConstants->data;
         }
+
+        DefaultMaterialConstants &RenderSupport::defMaterialConst() {
+            return _materialConstants->data;
+        }
         
         InstanceDataDefault &RenderSupport::defInstanceData() {
             return _defInstanceStruct;
@@ -153,6 +158,10 @@ namespace fg {
 
         void RenderSupport::defFrameConstApplyChanges() {
             _frameConstants->updateAndApply();
+        }
+
+        void RenderSupport::defMaterialConstApplyChanges() {
+            _materialConstants->updateAndApply();
         }
 
         void RenderSupport::defInstanceDataApplyChanges() {
@@ -192,6 +201,13 @@ namespace fg {
             else {
                 _platform->rdSetScissorRect(math::p2d(0, 0), math::p2d(_platform->getScreenWidth(), _platform->getScreenHeight()));
             }
+        }
+
+        void RenderSupport::setMaterialParams(const math::p3d &metalness, float gloss, const platform::TextureCubeInterface *const *env, unsigned envCount) {
+            _platform->rdSetTextureCube(fg::platform::TextureSlot::TEXTURE7, env[int(std::max(std::min(gloss, 0.99f), 0.0f) * float(envCount))]);
+            _materialConstants->data.metalness = metalness;
+            _materialConstants->data.gloss = gloss;
+            _materialConstants->updateAndApply();
         }
         
         void RenderSupport::drawQuad2D(const math::m3x3 &trfm, const resources::ClipData *clip, unsigned frame, const fg::color &c, bool resolutionDepended) {

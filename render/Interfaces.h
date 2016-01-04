@@ -1,8 +1,6 @@
 
 namespace fg {    
     namespace render {
-        // TODO: all DRAW constants -> instance data (+ texture index too)
-
         const unsigned FG_SKIN_MATRIX_MAX = 32;
 
         struct DefaultFrameConstants {
@@ -11,6 +9,11 @@ namespace fg {
             float       scrWidth;
             math::p3d   globalSunDirection;
             float       scrHeight;
+        };
+
+        struct DefaultMaterialConstants {
+            math::p3d   metalness;
+            float       gloss;
         };
         
         class CameraInterface {
@@ -54,16 +57,19 @@ namespace fg {
             virtual platform::SamplerInterface           *getDefaultPointSampler() = 0;
             virtual platform::SamplerInterface           *getDefaultLinearSampler() = 0;
             
-            virtual DefaultFrameConstants  &defFrameConst() = 0;
-            virtual InstanceDataDefault    &defInstanceData() = 0;
+            virtual DefaultFrameConstants     &defFrameConst() = 0;
+            virtual DefaultMaterialConstants  &defMaterialConst() = 0;
+            virtual InstanceDataDefault       &defInstanceData() = 0;
             
             virtual void defFrameConstApplyChanges() = 0;
+            virtual void defMaterialConstApplyChanges() = 0;
             virtual void defInstanceDataApplyChanges() = 0;
 
             virtual void setShader(const resources::ShaderResourceInterface *shader) = 0;
             virtual void setTexture(platform::TextureSlot slot, const resources::Texture2DResourceInterface *texture) = 0;
             virtual void setScissorRect(const math::p2d &center, const math::p2d &lt, const math::p2d &rb, bool resolutionDepended = false) = 0;
-
+            virtual void setMaterialParams(const math::p3d &metalness, float gloss, const platform::TextureCubeInterface *const *env, unsigned envCount) = 0;
+            
             virtual void drawQuad2D(const math::m3x3 &trfm, const resources::ClipData *clip, unsigned frame, const fg::color &c, bool resolutionDepended = false) = 0;
             virtual void drawText2D(const std::string &utf8text, const math::m3x3 &trfm, const resources::FontResourceInterface *font, const object2d::FontForm &form = object2d::FontForm(), object2d::TextAlign align = object2d::TextAlign::LEFT, bool resolutionDepended = false) = 0;
             virtual void drawScreenQuad(float x, float y, float width, float height) = 0;

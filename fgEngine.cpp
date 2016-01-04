@@ -96,6 +96,12 @@ $/lightedTexturedNormalModel.shader\n\
 $/lightedTexturedNormalSkin.shader\n\
 $/texturedScreenQuad.shader\n\
 $/texturedScreenQuadFilter.shader\n\
+$/defaultCube0.cubemap\n\
+$/defaultCube1.cubemap\n\
+$/defaultCube2.cubemap\n\
+$/defaultCube3.cubemap\n\
+$/defaultCube4.cubemap\n\
+$/defaultCube5.cubemap\n\
 $/arial.ttf\n\
 "; //
 

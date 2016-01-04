@@ -10,7 +10,12 @@ namespace fg {
         }
 
         void DefaultRender::init(RenderAPI &api) {
-            
+            _envCubes[0] = ((resources::TextureCubeResourceInterface *)api.resources.getResource("defaultCube0.cubemap"))->getPlatformObject();
+            _envCubes[1] = ((resources::TextureCubeResourceInterface *)api.resources.getResource("defaultCube1.cubemap"))->getPlatformObject();
+            _envCubes[2] = ((resources::TextureCubeResourceInterface *)api.resources.getResource("defaultCube2.cubemap"))->getPlatformObject();
+            _envCubes[3] = ((resources::TextureCubeResourceInterface *)api.resources.getResource("defaultCube3.cubemap"))->getPlatformObject();
+            _envCubes[4] = ((resources::TextureCubeResourceInterface *)api.resources.getResource("defaultCube4.cubemap"))->getPlatformObject();
+            _envCubes[5] = ((resources::TextureCubeResourceInterface *)api.resources.getResource("defaultCube5.cubemap"))->getPlatformObject();
         }
 
         void DefaultRender::destroy() {
@@ -33,7 +38,7 @@ namespace fg {
             api.platform.rdClearCurrentDepthBuffer();
             api.platform.rdClearCurrentColorBuffer(fg::color(0.5f, 0.5f, 0.5f, 1.0f));
             api.rendering.debugDrawAxis();
-
+            
             while(iterator.next()) {
                 if (iterator.type() == object3d::RenderObjectType::MODEL) {
                     const object3d::Model3DInterface *mdl = iterator.object();
@@ -50,7 +55,8 @@ namespace fg {
                             api.platform.rdSetShaderConstBuffer(skinTable);
                         }
 
-                        api.rendering.defInstanceData().rgba = mdl->getColor(); 
+                        api.rendering.setMaterialParams(component->getMaterialMetalness(), component->getMaterialGloss(), _envCubes, 6);
+                        api.rendering.defInstanceData().rgba = mdl->getColor();
                         api.rendering.defInstanceData().modelTransform = component->getFullTransform();
                         api.rendering.defInstanceDataApplyChanges();
                         api.rendering.setShader(component->getShader());

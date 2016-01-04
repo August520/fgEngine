@@ -194,6 +194,8 @@ namespace fg {
             fg::string      shaderPath;
             fg::string      textureBinds[FG_MATERIAL_TEXTURE_MAX];
             unsigned        textureBindCount;
+            math::p3d       metalness;
+            float           gloss;
         };
 
         class MaterialResourceInterface : virtual public ResourceInterface {

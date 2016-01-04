@@ -64,6 +64,17 @@ namespace fg {
                         }
                     }
 
+                    const luaObj &metalness = params.get("metalness");
+                    
+                    if (metalness.type() == LUATYPE_TABLE) {
+                        curParams->metalness = math::p3d(metalness.get(1), metalness.get(2), metalness.get(3));
+                    }
+                    else {
+                        curParams->metalness = math::p3d(metalness, metalness, metalness);
+                    }
+
+                    curParams->gloss = params.get("gloss");
+                    
                     target.add(meshName, curParams);
                     return true; // continue cycle
                 });

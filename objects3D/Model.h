@@ -73,6 +73,9 @@ namespace fg {
                 unsigned getSkinMatrixCount() const override;
                 unsigned getTextureBindCount() const override;
 
+                const math::p3d &getMaterialMetalness() const override;
+                float getMaterialGloss() const override;
+
                 const resources::Texture2DResourceInterface *getTextureBind(unsigned bindIndex) const override;
                 const resources::ShaderResourceInterface *getShader() const override;
                 const resources::MeshInterface *getMesh() const override;
