@@ -37,8 +37,6 @@ namespace fg {
             void setTransform(const math::m4x4 &transform) override;
 
             void setVisible(bool visible) override;
-            void setColor(float r, float g, float b, float a) override;
-            void setColor(const fg::color &rgba) override;
 
             void appendPosition(float xInc, float yInc, float zInc) override;
             void appendPosition(const math::p3d &posInc) override;
@@ -50,11 +48,11 @@ namespace fg {
             const math::m4x4  &getTransform() const override;
             const math::m4x4  &getFullTransform() const override;
 
-            const fg::color &getColor() const override;
             bool  isVisible() const override;
 
             void  updateCoordinates(float frameTimeMs, resources::ResourceManagerInterface &resMan) override;
             bool  isResourcesReady(platform::PlatformInterface &platform, resources::ResourceManagerInterface &resMan) override;
+            bool  isComposite() const override;
 
             unsigned  getComponentCount() const override;
             ComponentInterface *getComponentInterface(unsigned index) override;
@@ -73,7 +71,6 @@ namespace fg {
             math::p3d    _localPosition;
             math::p3d    _localScale;
             math::quat   _localRotation;
-            fg::color    _rgba;
 
             callback     <void ()> _addHandler;
             callback     <void (float)> _updateHandler;

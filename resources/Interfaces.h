@@ -195,7 +195,7 @@ namespace fg {
             fg::string      textureBinds[FG_MATERIAL_TEXTURE_MAX];
             unsigned        textureBindCount;
             math::p3d       metalness;
-            float           gloss;
+            float           glossiness;
         };
 
         class MaterialResourceInterface : virtual public ResourceInterface {

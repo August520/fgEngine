@@ -73,7 +73,7 @@ namespace fg {
                         curParams->metalness = math::p3d(metalness, metalness, metalness);
                     }
 
-                    curParams->gloss = params.get("gloss");
+                    curParams->glossiness = params.get("glossiness");
                     
                     target.add(meshName, curParams);
                     return true; // continue cycle

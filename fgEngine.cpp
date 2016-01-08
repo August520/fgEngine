@@ -73,12 +73,12 @@
 #include "objects3D/RenderObject.h"
 #include "objects3D/Model.h"
 #include "objects3D/Particles.h"
-#include "objects3D/Billboard.h"
+#include "objects3D/PointLight.h"
 
 #include "objects3D/RenderObject.cpp"
 #include "objects3D/Model.cpp"
 #include "objects3D/Particles.cpp"
-#include "objects3D/Billboard.cpp"
+#include "objects3D/PointLight.cpp"
 
 #include "GameAPI.cpp"
 
@@ -102,6 +102,7 @@ $/defaultCube2.cubemap\n\
 $/defaultCube3.cubemap\n\
 $/defaultCube4.cubemap\n\
 $/defaultCube5.cubemap\n\
+$/defaultIrradiance.cubemap\n\
 $/arial.ttf\n\
 "; //
 

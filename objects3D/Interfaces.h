@@ -58,8 +58,6 @@ namespace fg {
             virtual void setTransform(const math::m4x4 &transform) = 0;
 
             virtual void setVisible(bool visible) = 0;
-            virtual void setColor(float r, float g, float b, float a) = 0;
-            virtual void setColor(const fg::color &rgba) = 0;
 
             virtual void appendPosition(float xInc, float yInc, float zInc) = 0;
             virtual void appendPosition(const math::p3d &posInc) = 0;
@@ -71,12 +69,12 @@ namespace fg {
             virtual const math::m4x4  &getTransform() const = 0;
             virtual const math::m4x4  &getFullTransform() const = 0;
             
-            virtual const fg::color &getColor() const = 0;
             virtual bool  isVisible() const = 0;
                         
             virtual void  updateCoordinates(float frameTimeMs, resources::ResourceManagerInterface &resMan) = 0;
             virtual bool  isResourcesReady(platform::PlatformInterface &platform, resources::ResourceManagerInterface &resMan) = 0;
-            
+            virtual bool  isComposite() const = 0;
+
             virtual unsigned  getComponentCount() const = 0;
             virtual ComponentInterface *getComponentInterface(unsigned index) = 0;
         };
@@ -98,7 +96,7 @@ namespace fg {
                 virtual unsigned getTextureBindCount() const = 0;
 
                 virtual const math::p3d &getMaterialMetalness() const = 0;
-                virtual float getMaterialGloss() const = 0;
+                virtual float getMaterialGlossiness() const = 0;
 
                 virtual const math::m4x4 *getSkinMatrixArray() const = 0;
                 virtual const resources::Texture2DResourceInterface *getTextureBind(unsigned bindIndex) const = 0;
@@ -110,6 +108,9 @@ namespace fg {
             };
 
             virtual ~Model3DBase() {}
+
+            virtual void  setColor(float r, float g, float b, float a) = 0;
+            virtual void  setColor(const fg::color &rgba) = 0;
 
             virtual void  setModelAndMaterial(const fg::string &mdlResourcePath, const fg::string &materialResourcePath) = 0;
             virtual void  setMaterial(const fg::string &materialResourcePath) = 0;
@@ -125,6 +126,7 @@ namespace fg {
             virtual const math::p3d  *getMeshBBoxMaxPoint(const fg::string &meshName) const = 0;
 
             virtual bool  isMeshVisible(const fg::string &meshName) = 0;
+            virtual const fg::color &getColor() const = 0;
 
             virtual void  playAnim(const fg::string &animResourcePath, float animLenMs, float animOffsetMs, float smoothTimeMs, bool cycled, AnimationLayer layer = AnimationLayer::LAYER0) = 0;
             virtual void  setAnimFinishCallback(const callback <void()> &cb, AnimationLayer layer = AnimationLayer::LAYER0) = 0;
@@ -162,6 +164,25 @@ namespace fg {
         class Particles3DInterface : public RenderObjectInterface, virtual public Particles3DBase {
         public:
             virtual ~Particles3DInterface() {}
+        };
+
+        //---
+
+        class PointLightBase {
+        public:
+            virtual ~PointLightBase() {}
+
+            virtual void  setDistance(float dist) = 0;
+            virtual void  setColor(float r, float g, float b, float a) = 0;
+            virtual void  setColor(const fg::color &rgba) = 0;
+
+            virtual float getDistance() const = 0;
+            virtual const fg::color &getColor() const = 0;
+        };
+
+        class PointLightInterface : public RenderObjectInterface, virtual public PointLightBase {
+        public:
+            virtual ~PointLightInterface() {}
         };
 
         //---

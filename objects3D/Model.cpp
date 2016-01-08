@@ -206,8 +206,8 @@ namespace fg {
             return _materialParams->metalness;
         }
 
-        float Model3D::MeshData::getMaterialGloss() const {
-            return _materialParams->gloss;
+        float Model3D::MeshData::getMaterialGlossiness() const {
+            return _materialParams->glossiness;
         }
         
         unsigned Model3D::MeshData::getSkinMatrixCount() const {
@@ -280,6 +280,14 @@ namespace fg {
             delete [] _meshes;
             delete _root;
 		}
+
+        void Model3D::setColor(float r, float g, float b, float a) {
+            _rgba = fg::color(r, g, b, a);
+        }
+
+        void Model3D::setColor(const fg::color &rgba) {
+            _rgba = rgba;
+        }
         
         void Model3D::setModelAndMaterial(const fg::string &mdlResourcePath, const fg::string &materialResourcePath) {
             _modelResourcePath = mdlResourcePath;
@@ -367,6 +375,10 @@ namespace fg {
             }
             return nullptr;
 		}
+
+        const fg::color &Model3D::getColor() const {
+            return _rgba;
+        }
         
         bool Model3D::isMeshVisible(const fg::string &meshName) {
             MeshData *mesh = _getOrCreateMeshByName(meshName);
@@ -571,6 +583,10 @@ namespace fg {
             
             return false;
 		}
+
+        bool Model3D::isComposite() const {
+            return true;
+        }
         
         unsigned Model3D::getComponentCount() const {
             return _meshCount;

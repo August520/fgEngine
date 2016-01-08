@@ -163,6 +163,10 @@ namespace fg {
             return false;
         }
 
+        bool Particles3D::isComposite() const {
+            return true;
+        }
+
         unsigned Particles3D::getComponentCount() const {
             return unsigned(_emitters.size());
         }

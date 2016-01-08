@@ -23,6 +23,8 @@ namespace fg {
             return static_cast <object3d::Model3DInterface *> (new object3d::Model3D());
         case fg::object3d::RenderObjectType::PARTICLES:
             return static_cast <object3d::Particles3DInterface *> (new object3d::Particles3D());
+        case fg::object3d::RenderObjectType::LIGHT:
+            return static_cast <object3d::PointLightInterface *> (new object3d::PointLight());
         default:
             return nullptr;
         }

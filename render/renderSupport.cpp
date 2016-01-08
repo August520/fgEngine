@@ -203,10 +203,11 @@ namespace fg {
             }
         }
 
-        void RenderSupport::setMaterialParams(const math::p3d &metalness, float gloss, const platform::TextureCubeInterface *const *env, unsigned envCount) {
-            _platform->rdSetTextureCube(fg::platform::TextureSlot::TEXTURE7, env[int(std::max(std::min(gloss, 0.99f), 0.0f) * float(envCount))]);
+        void RenderSupport::setMaterialParams(const math::p3d &metalness, float glossiness, const platform::TextureCubeInterface *irradiance, const platform::TextureCubeInterface *const *env, unsigned envCount) {
+            _platform->rdSetTextureCube(fg::platform::TextureSlot::TEXTURE6, irradiance);
+            _platform->rdSetTextureCube(fg::platform::TextureSlot::TEXTURE7, env[int(std::max(std::min(glossiness, 0.99f), 0.0f) * float(envCount))]);
             _materialConstants->data.metalness = metalness;
-            _materialConstants->data.gloss = gloss;
+            _materialConstants->data.glossiness = glossiness;
             _materialConstants->updateAndApply();
         }
         

@@ -41,14 +41,18 @@ namespace fg {
             while(_current = _current->getNext()) {                
                 if(_current->isResourcesReady(_platform, _resMan)) {
                     _current->updateCoordinates(_frameTimeMs, _resMan);
-                    _componentIndex = 0;
-                    _componentCount = _current->getComponentCount();
+                    
+                    if (_current->isComposite()) {
+                        _componentIndex = 0;
+                        _componentCount = _current->getComponentCount();
 
-                    while(_componentIndex < _componentCount) {
-                        _curComponent = _current->getComponentInterface(_componentIndex++);
 
-                        if(_curComponent->isResourcesReady(_platform, _resMan)) {
-                            return true;
+                        while (_componentIndex < _componentCount) {
+                            _curComponent = _current->getComponentInterface(_componentIndex++);
+
+                            if (_curComponent->isResourcesReady(_platform, _resMan)) {
+                                return true;
+                            }
                         }
                     }
                 }

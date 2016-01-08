@@ -229,14 +229,6 @@ namespace fg {
             _visible = visible;
         }
 
-        void RenderObject::setColor(float r, float g, float b, float a) {
-            _rgba = fg::color(r, g, b, a);
-        }
-
-        void RenderObject::setColor(const fg::color &rgba) {
-            _rgba = rgba;
-        }
-
         void RenderObject::appendPosition(float xInc, float yInc, float zInc) {
             _localTransform._41 = _localPosition.x += xInc;
             _localTransform._42 = _localPosition.y += yInc;
@@ -288,10 +280,6 @@ namespace fg {
             return _fullTransform;
         }
 
-        const fg::color &RenderObject::getColor() const {
-            return _rgba;
-        }
-
         bool RenderObject::isVisible() const {
             return _visible;
         }
@@ -310,6 +298,10 @@ namespace fg {
         }
 
         bool RenderObject::isResourcesReady(platform::PlatformInterface &platform, resources::ResourceManagerInterface &resMan) {
+            return false;
+        }
+
+        bool RenderObject::isComposite() const {
             return false;
         }
 

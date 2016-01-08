@@ -19,7 +19,7 @@ namespace fg {
             
             virtual unsigned removeChild(DisplayObjectInterface *obj) = 0;
             virtual unsigned removeChild(unsigned index) = 0;
-            virtual void     removeAllChilds() = 0;            
+            virtual void     removeAllChilds() = 0;
             virtual unsigned getChildCount() const = 0;
                         
             virtual DisplayObjectInterface *getChildAt(unsigned index) const = 0;

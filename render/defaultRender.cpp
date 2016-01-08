@@ -16,6 +16,7 @@ namespace fg {
             _envCubes[3] = ((resources::TextureCubeResourceInterface *)api.resources.getResource("defaultCube3.cubemap"))->getPlatformObject();
             _envCubes[4] = ((resources::TextureCubeResourceInterface *)api.resources.getResource("defaultCube4.cubemap"))->getPlatformObject();
             _envCubes[5] = ((resources::TextureCubeResourceInterface *)api.resources.getResource("defaultCube5.cubemap"))->getPlatformObject();
+            _irradiance = ((resources::TextureCubeResourceInterface *)api.resources.getResource("defaultIrradiance.cubemap"))->getPlatformObject();
         }
 
         void DefaultRender::destroy() {
@@ -36,7 +37,7 @@ namespace fg {
         void DefaultRender::draw3D(object3d::RenderObjectIteratorInterface &iterator, RenderAPI &api) {
             api.platform.rdSetRenderTarget(api.platform.rdGetDefaultRenderTarget());
             api.platform.rdClearCurrentDepthBuffer();
-            api.platform.rdClearCurrentColorBuffer(fg::color(0.5f, 0.5f, 0.5f, 1.0f));
+            api.platform.rdClearCurrentColorBuffer(fg::color(0.9f, 0.9f, 0.9f, 1.0f));
             api.rendering.debugDrawAxis();
             
             while(iterator.next()) {
@@ -55,7 +56,7 @@ namespace fg {
                             api.platform.rdSetShaderConstBuffer(skinTable);
                         }
 
-                        api.rendering.setMaterialParams(component->getMaterialMetalness(), component->getMaterialGloss(), _envCubes, 6);
+                        api.rendering.setMaterialParams(component->getMaterialMetalness(), component->getMaterialGlossiness(), _irradiance, _envCubes, 6);                        
                         api.rendering.defInstanceData().rgba = mdl->getColor();
                         api.rendering.defInstanceData().modelTransform = component->getFullTransform();
                         api.rendering.defInstanceDataApplyChanges();
