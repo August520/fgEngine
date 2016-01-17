@@ -110,6 +110,7 @@ namespace fg {
             }
             
             for(auto index = _emitters.begin(); index != _emitters.end(); ++index) {
+                (*index)->_fullTransform = _fullTransform;
                 (*index)->getEmitter()->setTimeStamp(_timeElapsed);
             }
         }
@@ -163,15 +164,11 @@ namespace fg {
             return false;
         }
 
-        bool Particles3D::isComposite() const {
-            return true;
-        }
-
         unsigned Particles3D::getComponentCount() const {
             return unsigned(_emitters.size());
         }
 
-        RenderObject::ComponentInterface *Particles3D::getComponentInterface(unsigned index) {
+        RenderObjectComponentInterface *Particles3D::getComponentInterface(unsigned index) {
             return _emitters[index];
         }
     }

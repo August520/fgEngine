@@ -1,15 +1,12 @@
 
 namespace fg {
     namespace object3d {
-        RenderObject::RenderObject() : 
-            _type(RenderObjectType::NONE),
-            _parent(nullptr),
-            _next(nullptr),
-            _back(nullptr),
-            _localScale(1.0f, 1.0f, 1.0f),
-            _visible(true) 
-        {
+        RenderObject::RenderObject() : _localScale(1.0f, 1.0f, 1.0f) {
         
+        }
+
+        RenderObject::RenderObject(render::EngineSceneCompositionInterface *sceneComposition) : _localScale(1.0f, 1.0f, 1.0f), _sceneComposition(sceneComposition) {
+
         }
 
         RenderObject::~RenderObject() {
@@ -18,37 +15,21 @@ namespace fg {
 
         RenderObjectInterface *RenderObject::addChild(RenderObjectInterface *obj) {
             RenderObjectInterface *objParent = obj->getParent();
+            render::EngineSceneCompositionInterface *objSceneComposition = obj->getSceneComposition();
 
-            if(objParent) {
+            if (objParent) {
+                obj->callRemoveHandler();
                 objParent->removeChild(obj);
             }
 
-            obj->getParent() = this;
-            RenderObjectInterface *last = obj;
-
-            while(last->getChildCount()) {
-                last = last->getChildBack();
+            if (objSceneComposition == nullptr && _sceneComposition) {
+                _sceneComposition->addRenderObject(obj);
+            }
+            if (objSceneComposition && _sceneComposition == nullptr) {
+                objSceneComposition->removeRenderObject(obj);
             }
 
-            if(_childs.size() == 0) {
-                last->getNext() = _next;
-                _next = obj;
-                obj->getBack() = this;
-            }
-            else {
-                RenderObjectInterface *tchild = this;
-
-                while(tchild->getChildCount()) {
-                    tchild = tchild->getChildBack();
-                }
-
-                last->getNext() = tchild->getNext();
-                tchild->getNext() = obj;
-                obj->getBack() = tchild;
-            }
-
-            _childs.push_back(obj);
-
+            _childs.emplace(obj);
             obj->callAddHandler();
             return obj;
         }
@@ -58,67 +39,35 @@ namespace fg {
         }
 
         unsigned RenderObject::removeChild(RenderObjectInterface *obj) {
-            for(unsigned i = 0; i < _childs.size(); i++) {
-                if(_childs[i] == obj) {
-                    removeChild(i);
-                    break;
-                }
-            }
-            return _childs.size();
-        }
+            obj->callRemoveHandler();
+            _childs.erase(obj);
 
-        unsigned RenderObject::removeChild(unsigned index) {
-            if(index < _childs.size()) {
-                RenderObjectInterface *obj = _childs[index];
-                obj->getParent() = nullptr;
-
-                RenderObjectInterface *last = obj;
-                while(last->getChildCount()) {
-                    last = last->getChildBack();
-                }
-
-                obj->getBack()->getNext() = last->getNext();
-                if(last->getNext()) {
-                    last->getNext()->getBack() = obj->getBack();
-                }
-
-                last->getNext() = nullptr;
-                obj->getBack() = nullptr;
-                
-                // TODO: optimize
-                _childs.erase(_childs.begin() + index);
-                obj->callRemoveHandler();
+            if (_sceneComposition) {
+                _sceneComposition->removeRenderObject(obj);
             }
 
             return _childs.size();
         }
 
         void RenderObject::removeAllChilds() {
-            while(removeChild(unsigned(0)));
+            for (auto index = std::begin(_childs); index != std::end(_childs); ++index) {
+                RenderObjectInterface *cur = *index;
+                cur->callRemoveHandler();
+                
+                if (_sceneComposition) {
+                    _sceneComposition->removeRenderObject(cur);
+                }
+            }
+
+            _childs.clear();
         }
 
         unsigned RenderObject::getChildCount() const {
             return unsigned(_childs.size());
         }
 
-        RenderObjectInterface *RenderObject::getChildAt(unsigned index) const {
-            return _childs[index];
-        }
-
-        RenderObjectInterface *RenderObject::getChildBack() const {
-            return _childs.back();
-        }
-
         RenderObjectInterface *&RenderObject::getParent() {
             return _parent;
-        }
-
-        RenderObjectInterface *&RenderObject::getNext() {
-            return _next;
-        }
-
-        RenderObjectInterface *&RenderObject::getBack() {
-            return _back;
         }
 
         void RenderObject::setAddHandler(const callback <void()> &cb) {
@@ -301,16 +250,16 @@ namespace fg {
             return false;
         }
 
-        bool RenderObject::isComposite() const {
-            return false;
-        }
-
         unsigned RenderObject::getComponentCount() const {
             return 0;
         }
 
-        RenderObjectInterface::ComponentInterface *RenderObject::getComponentInterface(unsigned index) {
+        RenderObjectComponentInterface *RenderObject::getComponentInterface(unsigned index) {
             return nullptr;
+        }
+
+        render::EngineSceneCompositionInterface *RenderObject::getSceneComposition() {
+            return _parent ? _parent->getSceneComposition() : _sceneComposition;
         }
     }
 }

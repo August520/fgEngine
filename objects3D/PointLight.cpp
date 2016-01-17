@@ -32,8 +32,20 @@ namespace fg {
             return _rgba;
         }
 
+        const math::m4x4 &PointLight::getFullTransform() const {
+            return _fullTransform;
+        }
+
         bool PointLight::isResourcesReady(platform::PlatformInterface &platform, resources::ResourceManagerInterface &resMan) {
             return true;
+        }
+
+        unsigned PointLight::getComponentCount() const {
+            return 0;
+        }
+
+        RenderObjectComponentInterface *PointLight::getComponentInterface(unsigned index) {
+            return nullptr;
         }
     }
 }

@@ -16,6 +16,8 @@ namespace fg {
             float       glossiness;
         };
         
+        //---
+
         class CameraInterface {
         public:
             virtual ~CameraInterface() {}
@@ -42,7 +44,39 @@ namespace fg {
             virtual math::p2d   worldToScreen(const math::p3d &pointInWorld) const = 0;
 
             virtual void updateMatrix() = 0;
+
+        protected:
+            friend class ::fg::object3d::RenderObjectComponentCmp;  // optimization
+            math::p3d  _position;                                   // optimization
         };
+
+        //---
+
+        class SceneCompositionInterface {
+        public:
+            virtual ~SceneCompositionInterface() {}
+
+            virtual OrderedCollection <object3d::Model3DInterface::MeshComponentInterface> &getRegularMeshEnumerator() = 0;
+            virtual OrderedCollection <object3d::Model3DInterface::MeshComponentInterface> &getTransparentMeshEnumerator() = 0;
+            virtual OrderedCollection <object3d::Particles3DInterface::EmitterComponentInterface> &getParticleEmitterEnumerator() = 0;
+            virtual OrderedCollection <object3d::PointLightInterface> &getPointLightEnumerator() = 0;
+            virtual OrderedCollection <object2d::Sprite2DInterface> &getSprite2DEnumerator() = 0;
+            virtual OrderedCollection <object2d::TextFieldInterface> &getTextFieldEnumerator() = 0;
+        };
+
+        class EngineSceneCompositionInterface : public SceneCompositionInterface {
+        public:
+            virtual ~EngineSceneCompositionInterface() {}
+
+            virtual void addRenderObject(object3d::RenderObjectInterface *ptr) = 0;
+            virtual void addDisplayObject(object2d::DisplayObjectInterface *ptr) = 0;
+            virtual void removeRenderObject(object3d::RenderObjectInterface *ptr) = 0;
+            virtual void removeDisplayObject(object2d::DisplayObjectInterface *ptr) = 0;
+
+            virtual void update(float frameTimeMs) = 0;
+        };
+
+        //---
 
         class RenderSupportInterface {
         public:
@@ -73,7 +107,7 @@ namespace fg {
             virtual void drawQuad2D(const math::m3x3 &trfm, const resources::ClipData *clip, unsigned frame, const fg::color &c, bool resolutionDepended = false) = 0;
             virtual void drawText2D(const std::string &utf8text, const math::m3x3 &trfm, const resources::FontResourceInterface *font, const object2d::FontForm &form = object2d::FontForm(), object2d::TextAlign align = object2d::TextAlign::LEFT, bool resolutionDepended = false) = 0;
             virtual void drawScreenQuad(float x, float y, float width, float height) = 0;
-            virtual void drawMesh(const resources::MeshInterface *mesh, const platform::InstanceDataInterface *instanceData = nullptr) = 0;
+            virtual void drawMesh(const resources::MeshInterface *mesh, const platform::InstanceDataInterface *instanceData = nullptr) = 0; //TODO: instances
             
             virtual void debugDrawBox(const math::m4x4 &transform, const fg::color &c) = 0;
             virtual void debugDrawBox(const math::p3d &pMin, const math::p3d &pMax, const fg::color &c) = 0;
@@ -109,8 +143,8 @@ namespace fg {
             virtual void init(RenderAPI &api) = 0;
             virtual void destroy() = 0;
             virtual void update(float frameTimeMs, RenderAPI &api) = 0;
-            virtual void draw3D(object3d::RenderObjectIteratorInterface &iterator, RenderAPI &api) = 0;
-            virtual void draw2D(object2d::DisplayObjectIteratorInterface &iterator, RenderAPI &api) = 0;
+            virtual void draw3D(SceneCompositionInterface &sceneComposition, RenderAPI &api) = 0;
+            virtual void draw2D(SceneCompositionInterface &sceneComposition, RenderAPI &api) = 0;
 
             virtual const char *getRenderResourceList() const = 0;
         };

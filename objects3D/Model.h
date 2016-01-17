@@ -93,7 +93,7 @@ namespace fg {
                 unsigned  _childCount = 0;
                 unsigned  _skinMatrixCount = 0;
 
-                math::m4x4  _fullTransform;
+                //math::m4x4  _fullTransform;
                 math::m4x4  _additionalTransform;                
                 math::m4x4  *_skinMatrixes = nullptr;
 
@@ -136,10 +136,9 @@ namespace fg {
 
             void  updateCoordinates(float frameTimeMs, resources::ResourceManagerInterface &resMan) override;
             bool  isResourcesReady(platform::PlatformInterface &platform, resources::ResourceManagerInterface &resMan) override;
-            bool  isComposite() const override;
-
+            
             unsigned  getComponentCount() const override;
-            RenderObjectInterface::ComponentInterface *getComponentInterface(unsigned index) override;
+            RenderObjectComponentInterface *getComponentInterface(unsigned index) override;
 
         protected:
             Animator _animator;

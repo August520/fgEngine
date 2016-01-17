@@ -129,6 +129,8 @@ namespace fg {
             fg::color rgba;
             unsigned  size = 20;
             unsigned  blur = 0;
+
+            FontForm() {}
         };
 
         class TextFieldBase {
@@ -155,7 +157,7 @@ namespace fg {
         };
         //---
 
-        class DisplayObjectIteratorInterface;
+        //class DisplayObjectIteratorInterface;
 
     }
 }

@@ -8,6 +8,7 @@
 
 #include <new>
 #include <type_traits>
+#include <unordered_set>
 #include <unordered_map>
 
 typedef long long int64;

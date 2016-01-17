@@ -4,22 +4,18 @@ namespace fg {
         class RenderObject : public RenderObjectInterface {
         public:
             RenderObject();
+            RenderObject(render::EngineSceneCompositionInterface *sceneComposition);
             ~RenderObject() override;
 
             RenderObjectInterface *addChild(RenderObjectInterface *obj) override;
             RenderObjectType getType() const override;
 
             unsigned removeChild(RenderObjectInterface *obj) override;
-            unsigned removeChild(unsigned index) override;
             void     removeAllChilds() override;
             unsigned getChildCount() const override;
 
-            RenderObjectInterface *getChildAt(unsigned index) const override;
-            RenderObjectInterface *getChildBack() const override;
             RenderObjectInterface *&getParent() override;
-            RenderObjectInterface *&getNext() override;
-            RenderObjectInterface *&getBack() override;
-
+            
             void setAddHandler(const callback <void ()> &cb) override;
             void setUpdateHandler(const callback <void (float)> &cb) override;
             void setRemoveHandler(const callback <void ()> &cb) override;
@@ -52,20 +48,18 @@ namespace fg {
 
             void  updateCoordinates(float frameTimeMs, resources::ResourceManagerInterface &resMan) override;
             bool  isResourcesReady(platform::PlatformInterface &platform, resources::ResourceManagerInterface &resMan) override;
-            bool  isComposite() const override;
-
+            
             unsigned  getComponentCount() const override;
-            ComponentInterface *getComponentInterface(unsigned index) override;
+            RenderObjectComponentInterface *getComponentInterface(unsigned index) override;
 
         protected:
-            RenderObjectType       _type;
-            RenderObjectInterface  *_parent;
-            RenderObjectInterface  *_next;
-            RenderObjectInterface  *_back;
+            RenderObjectType       _type = RenderObjectType::NONE;
+            RenderObjectInterface  *_parent = nullptr;
             
-            std::vector  <RenderObjectInterface *> _childs;
+            render::EngineSceneCompositionInterface *_sceneComposition = nullptr;
+            std::unordered_set <RenderObjectInterface *> _childs;
                         
-            bool         _visible;
+            bool         _visible = true;
             math::m4x4   _fullTransform;
             math::m4x4   _localTransform;
             math::p3d    _localPosition;
@@ -75,6 +69,8 @@ namespace fg {
             callback     <void ()> _addHandler;
             callback     <void (float)> _updateHandler;
             callback     <void ()> _removeHandler;
+
+            render::EngineSceneCompositionInterface *getSceneComposition() override;
 
         private:
             RenderObject(const RenderObject &);

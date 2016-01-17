@@ -1,5 +1,9 @@
 
 namespace fg {
+    namespace render {
+        class EngineSceneCompositionInterface;
+    }
+
     namespace object3d {
         enum class RenderObjectType {
             NONE       = 0,
@@ -15,32 +19,31 @@ namespace fg {
             LAYER3 = 3,
         };
 
+        class RenderObjectComponentInterface {
+        public:
+            virtual ~RenderObjectComponentInterface() {}
+            virtual bool isResourcesReady(platform::PlatformInterface &platform, resources::ResourceManagerInterface &resMan) = 0;
+            virtual const math::m4x4 &getFullTransform() const = 0;
+
+        protected:
+            friend class RenderObjectComponentCmp;  // optimization
+            math::m4x4 _fullTransform;              // optimization
+        };
+
         class RenderObjectInterface;
         class RenderObjectBase {
         public:
-            class ComponentInterface {
-            public:
-                virtual ~ComponentInterface() {}
-                virtual bool isResourcesReady(platform::PlatformInterface &platform, resources::ResourceManagerInterface &resMan) = 0;
-
-                virtual const math::m4x4 &getFullTransform() const = 0;
-            };
-
             virtual ~RenderObjectBase() {}
+            
             virtual RenderObjectInterface *addChild(RenderObjectInterface *obj) = 0;
             virtual RenderObjectType getType() const = 0;
             
-            virtual unsigned removeChild(RenderObjectInterface *obj) = 0;
-            virtual unsigned removeChild(unsigned index) = 0;
+            virtual unsigned removeChild(RenderObjectInterface *obj) = 0;            
             virtual void     removeAllChilds() = 0;            
             virtual unsigned getChildCount() const = 0;
-                        
-            virtual RenderObjectInterface *getChildAt(unsigned index) const = 0;
-            virtual RenderObjectInterface *getChildBack() const = 0;
+            
             virtual RenderObjectInterface *&getParent() = 0;
-            virtual RenderObjectInterface *&getNext() = 0;
-            virtual RenderObjectInterface *&getBack() = 0;
-
+            
             virtual void setAddHandler(const callback <void ()> &cb) = 0;
             virtual void setUpdateHandler(const callback <void (float)> &cb) = 0;
             virtual void setRemoveHandler(const callback <void ()> &cb) = 0;
@@ -73,10 +76,10 @@ namespace fg {
                         
             virtual void  updateCoordinates(float frameTimeMs, resources::ResourceManagerInterface &resMan) = 0;
             virtual bool  isResourcesReady(platform::PlatformInterface &platform, resources::ResourceManagerInterface &resMan) = 0;
-            virtual bool  isComposite() const = 0;
 
             virtual unsigned  getComponentCount() const = 0;
-            virtual ComponentInterface *getComponentInterface(unsigned index) = 0;
+            virtual RenderObjectComponentInterface *getComponentInterface(unsigned index) = 0;
+            virtual render::EngineSceneCompositionInterface *getSceneComposition() = 0;
         };
 
         class RenderObjectInterface : virtual public RenderObjectBase {
@@ -88,7 +91,7 @@ namespace fg {
 
         class Model3DBase {
         public:
-            class MeshComponentInterface : public RenderObjectInterface::ComponentInterface {
+            class MeshComponentInterface : public RenderObjectComponentInterface {
             public:
                 virtual ~MeshComponentInterface() {}
                 
@@ -144,7 +147,7 @@ namespace fg {
         
         class Particles3DBase {
         public:
-            class EmitterComponentInterface : public RenderObjectInterface::ComponentInterface {
+            class EmitterComponentInterface : public RenderObjectComponentInterface {
             public:
                 virtual ~EmitterComponentInterface() {}
                 virtual unsigned getTextureBindCount() const = 0;
@@ -184,10 +187,6 @@ namespace fg {
         public:
             virtual ~PointLightInterface() {}
         };
-
-        //---
-
-        class RenderObjectIteratorInterface;
     }
 }
 

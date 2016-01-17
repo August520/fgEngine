@@ -583,16 +583,12 @@ namespace fg {
             
             return false;
 		}
-
-        bool Model3D::isComposite() const {
-            return true;
-        }
         
         unsigned Model3D::getComponentCount() const {
             return _meshCount;
 		}
 
-        RenderObjectInterface::ComponentInterface *Model3D::getComponentInterface(unsigned index) {
+        RenderObjectComponentInterface *Model3D::getComponentInterface(unsigned index) {
             return _meshes[index];
 		}
 

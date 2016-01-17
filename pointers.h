@@ -19,15 +19,15 @@ namespace fg {
             }
         };
 
-        class DisplayObjectIteratorInterface {
-        public:
-            virtual ~DisplayObjectIteratorInterface() {}
+        //class DisplayObjectIteratorInterface {
+        //public:
+        //    virtual ~DisplayObjectIteratorInterface() {}
 
-            virtual DisplayObjectType      type() const = 0;
-            virtual DisplayObjectConstPtr  object() const = 0;
+        //    virtual DisplayObjectType      type() const = 0;
+        //    virtual DisplayObjectConstPtr  object() const = 0;
 
-            virtual bool next() = 0;
-        };
+        //    virtual bool next() = 0;
+        //};
     }
 
     namespace object3d {
@@ -50,24 +50,24 @@ namespace fg {
         };
 
         struct RenderObjectComponentPtr {
-            const RenderObjectInterface::ComponentInterface *_component;
-            RenderObjectComponentPtr(const RenderObjectInterface::ComponentInterface *component) : _component(component) {}
+            const RenderObjectComponentInterface *_component;
+            RenderObjectComponentPtr(const RenderObjectComponentInterface *component) : _component(component) {}
 
             template <typename DOWNTYPE> operator const DOWNTYPE *() {
                 return static_cast <const DOWNTYPE *> (_component);
             }
         };
 
-        class RenderObjectIteratorInterface {
-        public:
-            virtual ~RenderObjectIteratorInterface() {}
+        //class RenderObjectIteratorInterface {
+        //public:
+        //    virtual ~RenderObjectIteratorInterface() {}
 
-            virtual RenderObjectType          type() const = 0;
-            virtual RenderObjectConstPtr      object() const = 0;
-            virtual RenderObjectComponentPtr  component() const = 0;
+        //    virtual RenderObjectType          type() const = 0;
+        //    virtual RenderObjectConstPtr      object() const = 0;
+        //    virtual RenderObjectComponentPtr  component() const = 0;
 
-            virtual bool next() = 0;
-        };
+        //    virtual bool next() = 0;
+        //};
     }
 
 }

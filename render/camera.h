@@ -32,7 +32,6 @@ namespace fg {
         protected:
             const platform::EnginePlatformInterface  &_platform;
 
-            math::p3d   _position;
             math::p3d   _target;
 
             math::p3d   _upVector;
