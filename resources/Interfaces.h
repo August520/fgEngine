@@ -196,6 +196,7 @@ namespace fg {
             unsigned        textureBindCount;
             math::p3d       metalness;
             float           glossiness;
+            bool            isTransparent;
         };
 
         class MaterialResourceInterface : virtual public ResourceInterface {

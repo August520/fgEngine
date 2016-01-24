@@ -25,9 +25,9 @@ namespace fg {
             virtual bool isResourcesReady(platform::PlatformInterface &platform, resources::ResourceManagerInterface &resMan) = 0;
             virtual const math::m4x4 &getFullTransform() const = 0;
 
-        protected:
-            friend class RenderObjectComponentCmp;  // optimization
-            math::m4x4 _fullTransform;              // optimization
+        protected: // optimization
+            template <bool(*op)(float, float)> friend class RenderObjectComponentCmp;  
+            math::m4x4 _fullTransform;              
         };
 
         class RenderObjectInterface;
@@ -100,12 +100,13 @@ namespace fg {
 
                 virtual const math::p3d &getMaterialMetalness() const = 0;
                 virtual float getMaterialGlossiness() const = 0;
-
+                
                 virtual const math::m4x4 *getSkinMatrixArray() const = 0;
                 virtual const resources::Texture2DResourceInterface *getTextureBind(unsigned bindIndex) const = 0;
                 virtual const resources::ShaderResourceInterface *getShader() const = 0;
                 virtual const resources::MeshInterface *getMesh() const = 0;
-
+                
+                virtual bool isTransparent() const = 0;
                 virtual bool isVisible() const = 0;
                 virtual bool isSkinned() const = 0;
             };

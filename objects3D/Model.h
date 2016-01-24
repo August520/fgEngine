@@ -80,6 +80,7 @@ namespace fg {
                 const resources::ShaderResourceInterface *getShader() const override;
                 const resources::MeshInterface *getMesh() const override;
 
+                bool isTransparent() const override;
                 bool isSkinned() const override;
                 bool isVisible() const override;
 
@@ -93,7 +94,6 @@ namespace fg {
                 unsigned  _childCount = 0;
                 unsigned  _skinMatrixCount = 0;
 
-                //math::m4x4  _fullTransform;
                 math::m4x4  _additionalTransform;                
                 math::m4x4  *_skinMatrixes = nullptr;
 

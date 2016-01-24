@@ -1,19 +1,10 @@
 
 namespace fg {
     namespace object2d {
-        DisplayObject::DisplayObject() : 
-            _type(DisplayObjectType::NONE),
-            _parent(nullptr),
-            _next(nullptr),
-            _back(nullptr),
-            _localScale(1.0f, 1.0f),
-            _rotationInDegrees(0.0f),
-            _zCoord(0.0f), 
-            _alpha(1.0f),
-            _visible(true),
-            _resolutionDependent(false)
-        {
-        
+        DisplayObject::DisplayObject() : _localScale(1.0f, 1.0f) {}
+
+        DisplayObject::DisplayObject(render::EngineSceneCompositionInterface *sceneComposition) : _localScale(1.0f, 1.0f), _sceneComposition(sceneComposition) {
+
         }
 
         DisplayObject::~DisplayObject() {
@@ -22,37 +13,24 @@ namespace fg {
 
         DisplayObjectInterface *DisplayObject::addChild(DisplayObjectInterface *obj) {
             DisplayObjectInterface *objParent = obj->getParent();
+            render::EngineSceneCompositionInterface *objSceneComposition = obj->getSceneComposition();
+            render::EngineSceneCompositionInterface *mySceneComposition = getSceneComposition();
 
-            if(objParent) {
+            if (objParent) {
+                obj->callRemoveHandler();
                 objParent->removeChild(obj);
             }
 
             obj->getParent() = this;
-            DisplayObjectInterface *last = obj;
 
-            while(last->getChildCount()) {
-                last = last->getChildBack();
+            if (objSceneComposition == nullptr && mySceneComposition) {
+                mySceneComposition->addDisplayObject(obj);
+            }
+            if (objSceneComposition && mySceneComposition == nullptr) {
+                objSceneComposition->removeDisplayObject(obj);
             }
 
-            if(_childs.size() == 0) {
-                last->getNext() = _next;
-                _next = obj;
-                obj->getBack() = this;
-            }
-            else {
-                DisplayObjectInterface *tchild = this;
-
-                while(tchild->getChildCount()) {
-                    tchild = tchild->getChildBack();
-                }
-
-                last->getNext() = tchild->getNext();
-                tchild->getNext() = obj;
-                obj->getBack() = tchild;
-            }
-
-            _childs.push_back(obj);
-
+            _childs.emplace(obj);
             obj->callAddHandler();
             return obj;
         }
@@ -62,67 +40,39 @@ namespace fg {
         }
 
         unsigned DisplayObject::removeChild(DisplayObjectInterface *obj) {
-            for(unsigned i = 0; i < _childs.size(); i++) {
-                if(_childs[i] == obj) {
-                    removeChild(i);
-                    break;
-                }
-            }
-            return _childs.size();
-        }
+            render::EngineSceneCompositionInterface *mySceneComposition = getSceneComposition();
 
-        unsigned DisplayObject::removeChild(unsigned index) {
-            if(index < _childs.size()) {
-                DisplayObjectInterface *obj = _childs[index];
-                obj->getParent() = nullptr;
+            obj->callRemoveHandler();
+            _childs.erase(obj);
 
-                DisplayObjectInterface *last = obj;
-                while(last->getChildCount()) {
-                    last = last->getChildBack();
-                }
-
-                obj->getBack()->getNext() = last->getNext();
-                if(last->getNext()) {
-                    last->getNext()->getBack() = obj->getBack();
-                }
-
-                last->getNext() = nullptr;
-                obj->getBack() = nullptr;
-
-                // TODO: optimize
-                _childs.erase(_childs.begin() + index);
-                obj->callRemoveHandler();
+            if (mySceneComposition) {
+                mySceneComposition->removeDisplayObject(obj);
             }
 
             return _childs.size();
         }
 
         void DisplayObject::removeAllChilds() {
-            while(removeChild(unsigned(0)));
+            render::EngineSceneCompositionInterface *mySceneComposition = getSceneComposition();
+
+            for (auto index = std::begin(_childs); index != std::end(_childs); ++index) {
+                DisplayObjectInterface *cur = *index;
+                cur->callRemoveHandler();
+
+                if (mySceneComposition) {
+                    mySceneComposition->removeDisplayObject(cur);
+                }
+            }
+
+            _childs.clear();
         }
 
         unsigned DisplayObject::getChildCount() const {
             return unsigned(_childs.size());
         }
 
-        DisplayObjectInterface *DisplayObject::getChildAt(unsigned index) const {
-            return _childs[index];
-        }
-        
-        DisplayObjectInterface *DisplayObject::getChildBack() const {
-            return _childs.back();
-        }
-
         DisplayObjectInterface *&DisplayObject::getParent() {
             return _parent;
-        }
-
-        DisplayObjectInterface *&DisplayObject::getNext() {
-            return _next;
-        }
-
-        DisplayObjectInterface *&DisplayObject::getBack() {
-            return _back;
         }
 
         void DisplayObject::setAddHandler(const callback <void()> &cb) {
@@ -294,6 +244,10 @@ namespace fg {
 
         bool DisplayObject::isResourcesReady(platform::PlatformInterface &platform, resources::ResourceManagerInterface &resMan) {
             return false;
+        }
+
+        render::EngineSceneCompositionInterface *DisplayObject::getSceneComposition() {
+            return _parent ? _parent->getSceneComposition() : _sceneComposition;
         }
     }
 }

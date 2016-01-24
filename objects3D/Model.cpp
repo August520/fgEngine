@@ -230,6 +230,10 @@ namespace fg {
             return _mesh;
         }
         
+        bool Model3D::MeshData::isTransparent() const {
+            return _materialParams ? _materialParams->isTransparent : false;
+        }
+
         bool Model3D::MeshData::isSkinned() const {
             return _skinned;
 		}

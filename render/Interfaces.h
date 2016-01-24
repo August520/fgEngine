@@ -45,9 +45,9 @@ namespace fg {
 
             virtual void updateMatrix() = 0;
 
-        protected:
-            friend class ::fg::object3d::RenderObjectComponentCmp;  // optimization
-            math::p3d  _position;                                   // optimization
+        protected: // optimization
+            template <bool(*op)(float, float)> friend class ::fg::object3d::RenderObjectComponentCmp;  
+            math::p3d  _position;                                   
         };
 
         //---

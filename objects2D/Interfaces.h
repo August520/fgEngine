@@ -1,5 +1,9 @@
 
 namespace fg {
+    namespace render {
+        class EngineSceneCompositionInterface;
+    }
+
     namespace object2d {
         enum class DisplayObjectType {
             NONE       = 0,
@@ -18,15 +22,10 @@ namespace fg {
             virtual DisplayObjectType getType() const = 0;
             
             virtual unsigned removeChild(DisplayObjectInterface *obj) = 0;
-            virtual unsigned removeChild(unsigned index) = 0;
             virtual void     removeAllChilds() = 0;
             virtual unsigned getChildCount() const = 0;
                         
-            virtual DisplayObjectInterface *getChildAt(unsigned index) const = 0;
-            virtual DisplayObjectInterface *getChildBack() const = 0;
             virtual DisplayObjectInterface *&getParent() = 0;
-            virtual DisplayObjectInterface *&getNext() = 0;
-            virtual DisplayObjectInterface *&getBack() = 0;
             
             virtual void  setAddHandler(const callback <void ()> &cb) = 0;
             virtual void  setUpdateHandler(const callback <void (float)> &cb) = 0;
@@ -70,6 +69,8 @@ namespace fg {
             
             virtual void  updateCoordinates(float frameTimeMs, resources::ResourceManagerInterface &resMan) = 0;
             virtual bool  isResourcesReady(platform::PlatformInterface &platform, resources::ResourceManagerInterface &resMan) = 0;
+            
+            virtual render::EngineSceneCompositionInterface *getSceneComposition() = 0;
         };
 
         class DisplayObjectInterface : virtual public DisplayObjectBase {
@@ -155,9 +156,8 @@ namespace fg {
         public:
             virtual ~TextFieldInterface() {}
         };
-        //---
 
-        //class DisplayObjectIteratorInterface;
+        //---
 
     }
 }

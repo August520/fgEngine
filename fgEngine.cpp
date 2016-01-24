@@ -45,11 +45,6 @@
 
 #include "render/Camera.h"
 
-//#include "render/DisplayObjectIterator.h"
-//#include "render/DisplayObjectIterator.cpp"
-//#include "render/RenderObjectIterator.h"
-//#include "render/RenderObjectIterator.cpp"
-
 #include "render/RenderSupport.cpp"
 #include "render/Camera.cpp"
 #include "render/DefaultRender.cpp"
@@ -158,8 +153,8 @@ namespace fg {
         int64 curTime = _platform.getTimeMs();
         _lastFrameTimeStamp = curTime;
 
-        _root2D = new object2d::DisplayObject ();
-        _root3D = new object3d::RenderObject(_sceneComposition);
+        _root2D = new object2d::DisplayObject (_sceneComposition);
+        _root3D = new object3d::RenderObject (_sceneComposition);
         return true;
     }
 

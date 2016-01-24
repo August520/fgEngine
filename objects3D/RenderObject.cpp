@@ -16,16 +16,19 @@ namespace fg {
         RenderObjectInterface *RenderObject::addChild(RenderObjectInterface *obj) {
             RenderObjectInterface *objParent = obj->getParent();
             render::EngineSceneCompositionInterface *objSceneComposition = obj->getSceneComposition();
+            render::EngineSceneCompositionInterface *mySceneComposition = getSceneComposition();
 
             if (objParent) {
                 obj->callRemoveHandler();
                 objParent->removeChild(obj);
             }
 
-            if (objSceneComposition == nullptr && _sceneComposition) {
-                _sceneComposition->addRenderObject(obj);
+            obj->getParent() = this;
+
+            if (objSceneComposition == nullptr && mySceneComposition) {
+                mySceneComposition->addRenderObject(obj);
             }
-            if (objSceneComposition && _sceneComposition == nullptr) {
+            if (objSceneComposition && mySceneComposition == nullptr) {
                 objSceneComposition->removeRenderObject(obj);
             }
 
@@ -39,23 +42,27 @@ namespace fg {
         }
 
         unsigned RenderObject::removeChild(RenderObjectInterface *obj) {
+            render::EngineSceneCompositionInterface *mySceneComposition = getSceneComposition();
+
             obj->callRemoveHandler();
             _childs.erase(obj);
 
-            if (_sceneComposition) {
-                _sceneComposition->removeRenderObject(obj);
+            if (mySceneComposition) {
+                mySceneComposition->removeRenderObject(obj);
             }
 
             return _childs.size();
         }
 
         void RenderObject::removeAllChilds() {
+            render::EngineSceneCompositionInterface *mySceneComposition = getSceneComposition();
+
             for (auto index = std::begin(_childs); index != std::end(_childs); ++index) {
                 RenderObjectInterface *cur = *index;
                 cur->callRemoveHandler();
-                
-                if (_sceneComposition) {
-                    _sceneComposition->removeRenderObject(cur);
+
+                if (mySceneComposition) {
+                    mySceneComposition->removeRenderObject(cur);
                 }
             }
 

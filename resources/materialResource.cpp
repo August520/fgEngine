@@ -74,7 +74,8 @@ namespace fg {
                     }
 
                     curParams->glossiness = params.get("glossiness");
-                    
+                    curParams->isTransparent = params.get("isTransparent");
+
                     target.add(meshName, curParams);
                     return true; // continue cycle
                 });
