@@ -2,13 +2,20 @@
 namespace fg {    
     namespace render {
         const unsigned FG_SKIN_MATRIX_MAX = 32;
+        const unsigned FG_DEFAULT_LIGHTS_MAX = 3;
 
         struct DefaultFrameConstants {
             math::m4x4  camViewProj;
             math::p3d   camPosition;
-            float       scrWidth;
-            math::p3d   globalSunDirection;
-            float       scrHeight;
+            unsigned    lightsCount;
+            math::p4d   lightPosAndDistances[FG_DEFAULT_LIGHTS_MAX];
+            fg::color   lightColors[FG_DEFAULT_LIGHTS_MAX];
+            math::p3d   pointOfInterest;
+            float       screenWidth;
+            float       screenHeight;
+            float       environmentIntensity;
+            float       mipCount;
+            float       received;
         };
 
         struct DefaultMaterialConstants {
@@ -28,9 +35,11 @@ namespace fg {
             virtual void  setOrientation(const math::quat &q) = 0;
             virtual void  setTransform(const math::m4x4 &transform) = 0;
             virtual void  setPerspectiveProj(float fov, float zNear, float zFar) = 0;
+            virtual void  setInterestOffset(float offset) = 0;
 
             virtual const math::p3d &getPosition() const = 0;
             virtual const math::p3d &getTarget() const = 0;
+            virtual const math::p3d &getInterestPoint() const = 0;
 
             virtual const math::p3d &getForwardDir() const = 0;
             virtual const math::p3d &getRightDir() const = 0;
@@ -102,7 +111,7 @@ namespace fg {
             virtual void setShader(const resources::ShaderResourceInterface *shader) = 0;
             virtual void setTexture(platform::TextureSlot slot, const resources::Texture2DResourceInterface *texture) = 0;
             virtual void setScissorRect(const math::p2d &center, const math::p2d &lt, const math::p2d &rb, bool resolutionDepended = false) = 0;
-            virtual void setMaterialParams(const math::p3d &metalness, float glossiness, const platform::TextureCubeInterface *irradiance, const platform::TextureCubeInterface *const *env, unsigned envCount) = 0;
+            virtual void setMaterialParams(const math::p3d &metalness, float glossiness, const platform::TextureCubeInterface *irr, const platform::TextureCubeInterface *env) = 0;
             
             virtual void drawQuad2D(const math::m3x3 &trfm, const resources::ClipData *clip, unsigned frame, const fg::color &c, bool resolutionDepended = false) = 0;
             virtual void drawText2D(const std::string &utf8text, const math::m3x3 &trfm, const resources::FontResourceInterface *font, const object2d::FontForm &form = object2d::FontForm(), object2d::TextAlign align = object2d::TextAlign::LEFT, bool resolutionDepended = false) = 0;

@@ -38,13 +38,15 @@ namespace fg {
         D3D11_CULL_MODE             __nativeCullMode[] = {D3D11_CULL_NONE, D3D11_CULL_BACK, D3D11_CULL_FRONT};
         D3D11_COMPARISON_FUNC       __nativeCmpFunc[] = {D3D11_COMPARISON_NEVER, D3D11_COMPARISON_LESS, D3D11_COMPARISON_EQUAL, D3D11_COMPARISON_LESS_EQUAL, D3D11_COMPARISON_GREATER, D3D11_COMPARISON_NOT_EQUAL, D3D11_COMPARISON_GREATER_EQUAL, D3D11_COMPARISON_ALWAYS};
         D3D11_FILTER                __nativeFilter[] = {D3D11_FILTER_MIN_MAG_MIP_POINT, D3D11_FILTER_MIN_MAG_MIP_LINEAR, D3D11_FILTER_ANISOTROPIC, D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT};
-        DXGI_FORMAT                 __nativeTextureFormat[] = {DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8_UNORM, DXGI_FORMAT_BC1_UNORM, DXGI_FORMAT_BC2_UNORM, DXGI_FORMAT_BC3_UNORM};
+        DXGI_FORMAT                 __nativeTextureFormat[] = {DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_R8_UNORM, DXGI_FORMAT_BC1_UNORM, DXGI_FORMAT_BC2_UNORM, DXGI_FORMAT_BC3_UNORM};
         D3D_PRIMITIVE_TOPOLOGY      __nativeTopology[] = {D3D_PRIMITIVE_TOPOLOGY_LINELIST, D3D_PRIMITIVE_TOPOLOGY_LINESTRIP, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP};
 
         unsigned __getTexture2DPitch(fg::platform::TextureFormat fmt, unsigned width) {
             switch (fmt) {
             case fg::platform::TextureFormat::RGBA8:
-                return width * 4;
+                return (width * 32 + 7) / 8;
+            case fg::platform::TextureFormat::BGRA8:
+                return (width * 32 + 7) / 8;
             case fg::platform::TextureFormat::RED8:
                 return width;
             case fg::platform::TextureFormat::DXT1:
@@ -456,7 +458,7 @@ namespace fg {
 
         //--- 
         
-        DesktopSampler::DesktopSampler(DesktopPlatform *owner, platform::TextureFilter filter, platform::TextureAddressMode addrMode) : PlatformObject(owner) {
+        DesktopSampler::DesktopSampler(DesktopPlatform *owner, platform::TextureFilter filter, platform::TextureAddressMode addrMode, float minLod, float bias) : PlatformObject(owner) {
             _self = nullptr;
 
             D3D11_SAMPLER_DESC sdesc;
@@ -464,17 +466,17 @@ namespace fg {
             sdesc.AddressU = __nativeAddrMode[(unsigned int)addrMode];
             sdesc.AddressV = __nativeAddrMode[(unsigned int)addrMode];
             sdesc.AddressW = __nativeAddrMode[(unsigned int)addrMode];
-            sdesc.MipLODBias = -0.2f;
+            sdesc.MipLODBias = bias;
             sdesc.MaxAnisotropy = 1;
             sdesc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;
             sdesc.BorderColor[0] = 1.0f;
             sdesc.BorderColor[1] = 1.0f;
             sdesc.BorderColor[2] = 1.0f;
             sdesc.BorderColor[3] = 1.0f;
-            sdesc.MinLOD = -FLT_MAX;
+            sdesc.MinLOD = minLod; 
             sdesc.MaxLOD = FLT_MAX;
 
-            if(filter == platform::TextureFilter::SHADOW) {
+            if(filter == platform::TextureFilter::SHADOW) { // !!! remove
                 sdesc.MipLODBias = 0.0f;
                 sdesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
                 sdesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
@@ -801,7 +803,9 @@ namespace fg {
             for (unsigned c = 0; c < 6; c++) {
                 for (unsigned i = 0; i < mipCount; i++) {
                     subResData[c * mipCount + i].pSysMem = imgMipsBinaryData[faceMapping[c]][i]; 
-                    subResData[c * mipCount + i].SysMemPitch = __getTexture2DPitch(format, originSize >> i);
+
+                    unsigned sz = originSize >> i;
+                    subResData[c * mipCount + i].SysMemPitch = __getTexture2DPitch(format, sz);
                     subResData[c * mipCount + i].SysMemSlicePitch = 0;
                 }
             }            
@@ -1134,7 +1138,7 @@ namespace fg {
             _device->CreateShaderResourceView(tmptex, &texViewDesc, &_defRenderTarget._depthTexture._view);
             tmptex->Release();
 
-            _defSampler = new DesktopSampler (this, platform::TextureFilter::LINEAR, platform::TextureAddressMode::CLAMP);
+            _defSampler = new DesktopSampler (this, platform::TextureFilter::LINEAR, platform::TextureAddressMode::CLAMP, 0, 0);
             _defRenderTarget._depthTexture._width = unsigned(_nativeWidth);
             _defRenderTarget._depthTexture._height = unsigned(_nativeHeight);
             _defRenderTarget._depthTexture._mipCount = 1;
@@ -1417,8 +1421,8 @@ namespace fg {
             }
         }
 
-        platform::SamplerInterface *DesktopPlatform::rdCreateSampler(platform::TextureFilter filter, platform::TextureAddressMode addrMode) {
-            DesktopSampler *r = new DesktopSampler (this, filter, addrMode);
+        platform::SamplerInterface *DesktopPlatform::rdCreateSampler(platform::TextureFilter filter, platform::TextureAddressMode addrMode, float minLod, float bias) {
+            DesktopSampler *r = new DesktopSampler (this, filter, addrMode, minLod, bias);
 
             if(r->valid()) {
                 return r;

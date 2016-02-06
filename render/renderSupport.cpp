@@ -47,11 +47,14 @@ namespace fg {
             _platform->rdSetDepthParams(_defDepthParams);
             _platform->rdSetRasterizerParams(_defRasterizerParams);
 
+            _frameConstants->data.lightsCount = 0;
+            _frameConstants->data.environmentIntensity = 0.5f;
+            _frameConstants->data.mipCount = float(FG_DEFAULT_ENV_MIPS);
             _frameConstants->data.camPosition = _camera->getPosition();
             _frameConstants->data.camViewProj = _camera->getVPMatrix();
-            _frameConstants->data.globalSunDirection = math::p3d(0.0f, 0.1f, 1.0f).normalize();
-            _frameConstants->data.scrWidth = _platform->getScreenWidth();
-            _frameConstants->data.scrHeight = _platform->getScreenHeight();
+            _frameConstants->data.screenWidth = _platform->getScreenWidth();
+            _frameConstants->data.screenHeight = _platform->getScreenHeight();
+            _frameConstants->data.pointOfInterest = _camera->getInterestPoint();
             _frameConstants->updateAndApply();
             
             if (_simpleShader) {
@@ -203,9 +206,9 @@ namespace fg {
             }
         }
 
-        void RenderSupport::setMaterialParams(const math::p3d &metalness, float glossiness, const platform::TextureCubeInterface *irradiance, const platform::TextureCubeInterface *const *env, unsigned envCount) {
-            _platform->rdSetTextureCube(fg::platform::TextureSlot::TEXTURE6, irradiance);
-            _platform->rdSetTextureCube(fg::platform::TextureSlot::TEXTURE7, env[int(std::max(std::min(glossiness, 0.99f), 0.0f) * float(envCount))]);
+        void RenderSupport::setMaterialParams(const math::p3d &metalness, float glossiness, const platform::TextureCubeInterface *irr, const platform::TextureCubeInterface *env) {
+            _platform->rdSetTextureCube(fg::platform::TextureSlot::TEXTURE6, irr);
+            _platform->rdSetTextureCube(fg::platform::TextureSlot::TEXTURE7, env);
             _materialConstants->data.metalness = metalness;
             _materialConstants->data.glossiness = glossiness;
             _materialConstants->updateAndApply();

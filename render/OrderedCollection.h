@@ -28,6 +28,10 @@ namespace fg {
                 return _cur;
             }
 
+            unsigned count() const {
+                return _elements.size();
+            }
+
         private:
             OrderedCollection(platform::PlatformInterface &platform, resources::ResourceManagerInterface &resMan) : _platform(platform), _resMan(resMan) {
                 _elements.reserve(64);

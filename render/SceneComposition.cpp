@@ -49,7 +49,7 @@ namespace fg {
 
     namespace object2d {
         inline bool DisplayObjectCmp(const object2d::DisplayObjectInterface *left, const object2d::DisplayObjectInterface *right) {
-            return left->getZ() < right->getZ() + FLT_MIN;
+            return right->getZ() < left->getZ();
         }
     }
 
@@ -147,7 +147,7 @@ namespace fg {
                             }
                         }
                         else if (cur->getType() == object3d::RenderObjectType::LIGHT) {
-                            _pointLights.add(static_cast<object3d::PointLightInterface *>(cur), object3d::RenderObjectCmp(_camera->getPosition()));
+                            _pointLights.add(static_cast<object3d::PointLightInterface *>(cur), object3d::RenderObjectCmp(_camera->getInterestPoint()));
                         }
                     }
                 }
@@ -190,7 +190,7 @@ namespace fg {
             _regularMeshes.sort(object3d::RenderObjectComponentCmp<less>(_camera));
             _transparentMeshes.sort(object3d::RenderObjectComponentCmp<greater>(_camera));
             _particleEmitters.sort(object3d::RenderObjectComponentCmp<greater>(_camera));
-            _pointLights.sort(object3d::RenderObjectCmp(_camera->getPosition()));
+            _pointLights.sort(object3d::RenderObjectCmp(_camera->getInterestPoint()));
         }
 
 
@@ -214,7 +214,7 @@ namespace fg {
                 }
             }
             else if (ptr->getType() == object3d::RenderObjectType::LIGHT) {
-                _pointLights.remove(static_cast<object3d::PointLightInterface *>(ptr), object3d::RenderObjectCmp(_camera->getPosition()));
+                _pointLights.remove(static_cast<object3d::PointLightInterface *>(ptr), object3d::RenderObjectCmp(_camera->getInterestPoint()));
             }
         }
 

@@ -10,13 +10,13 @@ namespace fg {
         }
 
         void DefaultRender::init(RenderAPI &api) {
-            _envCubes[0] = ((resources::TextureCubeResourceInterface *)api.resources.getResource("defaultCube0.cubemap"))->getPlatformObject();
-            _envCubes[1] = ((resources::TextureCubeResourceInterface *)api.resources.getResource("defaultCube1.cubemap"))->getPlatformObject();
-            _envCubes[2] = ((resources::TextureCubeResourceInterface *)api.resources.getResource("defaultCube2.cubemap"))->getPlatformObject();
-            _envCubes[3] = ((resources::TextureCubeResourceInterface *)api.resources.getResource("defaultCube3.cubemap"))->getPlatformObject();
-            _envCubes[4] = ((resources::TextureCubeResourceInterface *)api.resources.getResource("defaultCube4.cubemap"))->getPlatformObject();
-            _envCubes[5] = ((resources::TextureCubeResourceInterface *)api.resources.getResource("defaultCube5.cubemap"))->getPlatformObject();
             _irradiance = ((resources::TextureCubeResourceInterface *)api.resources.getResource("defaultIrradiance.cubemap"))->getPlatformObject();
+            _environments[0] = ((resources::TextureCubeResourceInterface *)api.resources.getResource("defaultEnvironment0.cubemap"))->getPlatformObject();
+            _environments[1] = ((resources::TextureCubeResourceInterface *)api.resources.getResource("defaultEnvironment1.cubemap"))->getPlatformObject();
+            _environments[2] = ((resources::TextureCubeResourceInterface *)api.resources.getResource("defaultEnvironment2.cubemap"))->getPlatformObject();
+            _environments[3] = ((resources::TextureCubeResourceInterface *)api.resources.getResource("defaultEnvironment3.cubemap"))->getPlatformObject();
+            _environments[4] = ((resources::TextureCubeResourceInterface *)api.resources.getResource("defaultEnvironment4.cubemap"))->getPlatformObject();
+            _environments[5] = ((resources::TextureCubeResourceInterface *)api.resources.getResource("defaultEnvironment5.cubemap"))->getPlatformObject();
         }
 
         void DefaultRender::destroy() {
@@ -37,9 +37,26 @@ namespace fg {
         void DefaultRender::draw3D(SceneCompositionInterface &sceneComposition, RenderAPI &api) {
             api.platform.rdSetRenderTarget(api.platform.rdGetDefaultRenderTarget());
             api.platform.rdClearCurrentDepthBuffer();
-            api.platform.rdClearCurrentColorBuffer(fg::color(0.9f, 0.9f, 0.9f, 1.0f));
+            api.platform.rdClearCurrentColorBuffer(fg::color(0.2f, 0.2f, 0.2f, 1.0f));
             api.rendering.debugDrawAxis();
-            
+
+            //--- LIGHTS ---
+
+            auto &pointLights = sceneComposition.getPointLightEnumerator();
+            api.rendering.defFrameConst().lightsCount = std::min(FG_DEFAULT_LIGHTS_MAX, pointLights.count());
+
+            for (unsigned i = 0; i < api.rendering.defFrameConst().lightsCount && pointLights.next(); i++) {
+                math::p3d pos  = pointLights.get()->getPosition();
+                float distance = pointLights.get()->getDistance();
+                
+                api.rendering.defFrameConst().lightPosAndDistances[i] = math::p4d(pos.x, pos.y, pos.z, distance);
+                api.rendering.defFrameConst().lightColors[i] = pointLights.get()->getColor();
+            }
+
+            api.rendering.defFrameConstApplyChanges();
+
+            //--- REGULAR MESHES ---
+
             auto &regularMeshes = sceneComposition.getRegularMeshEnumerator();
 
             while (regularMeshes.next()) {
@@ -56,7 +73,8 @@ namespace fg {
                         api.platform.rdSetShaderConstBuffer(skinTable);
                     }
 
-                    api.rendering.setMaterialParams(component->getMaterialMetalness(), component->getMaterialGlossiness(), _irradiance, _envCubes, 6);
+                    unsigned envIndex = std::min(unsigned(component->getMaterialGlossiness() * float(FG_DEFAULT_ENV_MIPS)), FG_DEFAULT_ENV_MIPS - 1);
+                    api.rendering.setMaterialParams(component->getMaterialMetalness(), component->getMaterialGlossiness(), _irradiance, _environments[envIndex]);
                     api.rendering.defInstanceData().rgba = fg::color();
                     api.rendering.defInstanceData().modelTransform = component->getFullTransform();
                     api.rendering.defInstanceDataApplyChanges();
@@ -66,19 +84,6 @@ namespace fg {
 
             }
 
-            //while(iterator.next()) {
-            //    else if (iterator.type() == object3d::RenderObjectType::PARTICLES) {
-            //        const fg::object3d::Particles3DInterface *ptc = iterator.object();
-            //        const fg::object3d::Particles3DInterface::EmitterComponentInterface *component = iterator.component();
-
-            //        for (unsigned i = 0; i < component->getTextureBindCount(); i++) {
-            //            api.rendering.setTexture(fg::platform::TextureSlot(i), component->getTextureBind(i));
-            //        }
-
-            //        api.rendering.setShader(component->getShader());
-            //        _transparentDrawer.drawParticles(api, component);
-            //    }
-            //}
         }
 
         void DefaultRender::draw2D(SceneCompositionInterface &sceneComposition, RenderAPI &api) {
@@ -94,13 +99,6 @@ namespace fg {
                 api.rendering.setScissorRect(center, sprite->getScissorRectLT(), sprite->getScissorRectRB(), sprite->isResolutionDepended());
                 api.rendering.drawQuad2D(sprite->getFullTransform(), sprite->getClipData(), sprite->getCurrentFrame(), rgba, sprite->isResolutionDepended());
             }
-
-            //while(iterator.next()) {
-            //    else if (iterator.type() == object2d::DisplayObjectType::TEXTFIELD) {
-            //        const fg::object2d::TextFieldInterface *obj = iterator.object();
-            //        api.rendering.drawText2D(obj->getText(), obj->getFullTransform(), obj->getFont(), obj->getForm(), obj->getAlign(), obj->isResolutionDepended());
-            //    }
-            //}
             
             char buffer[64];
             sprintf(buffer, "FPS = %2.0f", _fps); //

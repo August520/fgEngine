@@ -58,10 +58,9 @@ namespace fg {
                     for (unsigned i = 0; i < _mipsCount; i++) {
                         _imgData[i] = (unsigned char *)(data.getCurrentPtr() + mipOffset);
 
+                        mipOffset += tools::getDDSImageSize(_format, tw, th);
                         tw >>= 1;
                         th >>= 1;
-
-                        mipOffset += tools::getDDSImageSize(_format, tw, th);
                     }
                 }
                 else {

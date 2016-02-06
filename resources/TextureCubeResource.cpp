@@ -30,8 +30,8 @@ namespace fg {
                         for (unsigned i = 0, tsz = _sz; i < _mipsCount; i++) {
                             _imgData[c][i] = (unsigned char *)(data.getCurrentPtr() + offset);
 
-                            tsz >>= 1;
                             offset += tools::getDDSImageSize(_format, tsz, tsz);
+                            tsz >>= 1;
                         }
                     }                    
                 }

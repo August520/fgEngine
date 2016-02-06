@@ -73,7 +73,7 @@ namespace fg {
                         curParams->metalness = math::p3d(metalness, metalness, metalness);
                     }
 
-                    curParams->glossiness = params.get("glossiness");
+                    curParams->glossiness = std::max(std::min(float(params.get("glossiness")), 1.0f), 0.0f);
                     curParams->isTransparent = params.get("isTransparent");
 
                     target.add(meshName, curParams);

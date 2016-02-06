@@ -82,26 +82,28 @@
 #include "GameAPI.cpp"
 
 const char *_binaryResources = "\
+$/displayObject.shader\n\
 $/simpleModel.shader\n\
 $/simpleSkin.shader\n\
-$/displayObject.shader\n\
 $/texturedModel.shader\n\
+$/texturedSkin.shader\n\
 $/lightedModel.shader\n\
-$/lightedNormalModel.shader\n\
 $/lightedSkin.shader\n\
+$/lightedNormalModel.shader\n\
 $/lightedNormalSkin.shader\n\
 $/lightedTexturedModel.shader\n\
+$/lightedTexturedSkin.shader\n\
 $/lightedTexturedNormalModel.shader\n\
 $/lightedTexturedNormalSkin.shader\n\
 $/texturedScreenQuad.shader\n\
 $/texturedScreenQuadFilter.shader\n\
-$/defaultCube0.cubemap\n\
-$/defaultCube1.cubemap\n\
-$/defaultCube2.cubemap\n\
-$/defaultCube3.cubemap\n\
-$/defaultCube4.cubemap\n\
-$/defaultCube5.cubemap\n\
 $/defaultIrradiance.cubemap\n\
+$/defaultEnvironment0.cubemap\n\
+$/defaultEnvironment1.cubemap\n\
+$/defaultEnvironment2.cubemap\n\
+$/defaultEnvironment3.cubemap\n\
+$/defaultEnvironment4.cubemap\n\
+$/defaultEnvironment5.cubemap\n\
 $/arial.ttf\n\
 "; //
 
