@@ -1,6 +1,4 @@
 
-#include <type_traits>
-
 namespace fg {
     namespace render {
         template <typename COMPONENT_TYPE> class OrderedCollection final {

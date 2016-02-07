@@ -97,7 +97,7 @@ namespace fg {
 
                 api.rendering.setTexture(platform::TextureSlot::TEXTURE0, sprite->getTexture());
                 api.rendering.setScissorRect(center, sprite->getScissorRectLT(), sprite->getScissorRectRB(), sprite->isResolutionDepended());
-                api.rendering.drawQuad2D(sprite->getFullTransform(), sprite->getClipData(), sprite->getCurrentFrame(), rgba, sprite->isResolutionDepended());
+                api.rendering.drawQuad2D(sprite->getFullTransform(), sprite->getClipData(), sprite->getCurrentFrame(), rgba, sprite->getZ(), sprite->isResolutionDepended());
             }
             
             char buffer[64];

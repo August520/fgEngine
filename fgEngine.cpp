@@ -1,5 +1,7 @@
 
 #include "pch.h"
+
+#include <unordered_set>
 #include <regex>
 
 #include "LuaScript.cpp"

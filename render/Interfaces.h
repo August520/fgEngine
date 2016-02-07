@@ -113,7 +113,7 @@ namespace fg {
             virtual void setScissorRect(const math::p2d &center, const math::p2d &lt, const math::p2d &rb, bool resolutionDepended = false) = 0;
             virtual void setMaterialParams(const math::p3d &metalness, float glossiness, const platform::TextureCubeInterface *irr, const platform::TextureCubeInterface *env) = 0;
             
-            virtual void drawQuad2D(const math::m3x3 &trfm, const resources::ClipData *clip, unsigned frame, const fg::color &c, bool resolutionDepended = false) = 0;
+            virtual void drawQuad2D(const math::m3x3 &trfm, const resources::ClipData *clip, unsigned frame, const fg::color &c, float z, bool resolutionDepended = false) = 0;
             virtual void drawText2D(const std::string &utf8text, const math::m3x3 &trfm, const resources::FontResourceInterface *font, const object2d::FontForm &form = object2d::FontForm(), object2d::TextAlign align = object2d::TextAlign::LEFT, bool resolutionDepended = false) = 0;
             virtual void drawScreenQuad(float x, float y, float width, float height) = 0;
             virtual void drawMesh(const resources::MeshInterface *mesh, const platform::InstanceDataInterface *instanceData = nullptr) = 0; //TODO: instances

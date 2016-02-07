@@ -1,6 +1,4 @@
 
-#include <string>
-
 namespace fg {
     namespace platform {
         const unsigned TEXTURE_UNITS_MAX = 8;

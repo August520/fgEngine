@@ -129,6 +129,8 @@ namespace fg {
             virtual const math::p3d  *getMeshBBoxMinPoint(const fg::string &meshName) const = 0;
             virtual const math::p3d  *getMeshBBoxMaxPoint(const fg::string &meshName) const = 0;
 
+            virtual void  getHelpers(std::vector <std::string> &helpers) const = 0;
+
             virtual bool  isMeshVisible(const fg::string &meshName) = 0;
             virtual const fg::color &getColor() const = 0;
 

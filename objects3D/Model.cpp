@@ -380,6 +380,16 @@ namespace fg {
             return nullptr;
 		}
 
+        void Model3D::getHelpers(std::vector <std::string> &helpers) const {
+            helpers.clear();
+
+            for (unsigned i = 0; i < _meshCount; i++) {
+                if (_meshes[i]->getMesh()->isHelper()) {
+                    helpers.push_back(_meshes[i]->getMesh()->getName().data());
+                }
+            }
+        }
+
         const fg::color &Model3D::getColor() const {
             return _rgba;
         }
@@ -480,7 +490,7 @@ namespace fg {
 
             struct fn { 
                 static void createMeshesRecursive(Model3D &mdl, MeshData *current, const resources::MeshInterface *mesh, const resources::MaterialResourceInterface *material, const resources::MaterialMeshParams *rootMaterial = nullptr) {
-                    if(mesh->getGeometryVertexCount()) {
+                    if(mesh->getGeometryVertexCount() || mesh->isHelper()) {
                         mdl._meshes[mdl._meshCount++] = current;
                     }
                     

@@ -1,6 +1,5 @@
 
 #include <vector>
-#include <type_traits>
 #pragma warning (disable : 4250) // for virtual inheritance in MSVS
 
 namespace fg {

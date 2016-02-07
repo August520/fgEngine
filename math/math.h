@@ -1,16 +1,4 @@
 
-#include <math.h>
-
-#ifndef NOMINMAX
-#ifndef max
-#define max(a,b)            (((a) > (b)) ? (a) : (b))
-#endif
-
-#ifndef min
-#define min(a,b)            (((a) < (b)) ? (a) : (b))
-#endif
-#endif
-
 namespace fg {
     namespace math {
         #include "p2d.h"

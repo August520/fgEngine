@@ -1,4 +1,7 @@
 
+#include <thread>
+#include <memory>
+
 namespace fg {
     namespace resources {   
         ResourceManager::ResourceManager(const diag::LogInterface &log, platform::EnginePlatformInterface &platform) : _log(log), _platform(platform) {

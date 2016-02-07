@@ -214,7 +214,7 @@ namespace fg {
             _materialConstants->updateAndApply();
         }
         
-        void RenderSupport::drawQuad2D(const math::m3x3 &trfm, const resources::ClipData *clip, unsigned frame, const fg::color &c, bool resolutionDepended) {
+        void RenderSupport::drawQuad2D(const math::m3x3 &trfm, const resources::ClipData *clip, unsigned frame, const fg::color &c, float z, bool resolutionDepended) {
             float dpiKoeffX = 1.0f;
             float dpiKoeffY = 1.0f;
             float scaleX = _screenPixelsPerCoordSystemPixelsX;
@@ -245,7 +245,6 @@ namespace fg {
             rt.y = (1.0f - 2.0f * dpiKoeffY * rt.y / _platform->getScreenHeight() * fabs(scaleY)) * math::fsign(scaleY);
             rb.y = (1.0f - 2.0f * dpiKoeffY * rb.y / _platform->getScreenHeight() * fabs(scaleY)) * math::fsign(scaleY);
 
-            float sz = 0.0f;
             float tx = clip->frames[frame].tu;
             float ty = clip->frames[frame].tv;
 
@@ -256,6 +255,8 @@ namespace fg {
 
             VertexTextured *tmem = (VertexTextured *)_oddVertexBufferTextured->lockVertices();
             unsigned short *tind = (unsigned short *)_oddVertexBufferTextured->lockIndices();
+
+            float sz = 1.0f - z;
 
             tmem[0].position.x = lb.x;
             tmem[0].position.y = lb.y;

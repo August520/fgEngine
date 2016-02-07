@@ -18,16 +18,6 @@ namespace fg {
                 return static_cast <const DOWNTYPE *> (_obj);
             }
         };
-
-        //class DisplayObjectIteratorInterface {
-        //public:
-        //    virtual ~DisplayObjectIteratorInterface() {}
-
-        //    virtual DisplayObjectType      type() const = 0;
-        //    virtual DisplayObjectConstPtr  object() const = 0;
-
-        //    virtual bool next() = 0;
-        //};
     }
 
     namespace object3d {
@@ -57,17 +47,6 @@ namespace fg {
                 return static_cast <const DOWNTYPE *> (_component);
             }
         };
-
-        //class RenderObjectIteratorInterface {
-        //public:
-        //    virtual ~RenderObjectIteratorInterface() {}
-
-        //    virtual RenderObjectType          type() const = 0;
-        //    virtual RenderObjectConstPtr      object() const = 0;
-        //    virtual RenderObjectComponentPtr  component() const = 0;
-
-        //    virtual bool next() = 0;
-        //};
     }
 
 }

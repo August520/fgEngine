@@ -125,6 +125,8 @@ namespace fg {
             const math::p3d  *getMeshBBoxMinPoint(const fg::string &meshName) const override;
             const math::p3d  *getMeshBBoxMaxPoint(const fg::string &meshName) const override;
 
+            void  getHelpers(std::vector <std::string> &helpers) const override;
+
             const fg::color &getColor() const override;
             bool  isMeshVisible(const fg::string &meshName) override;
 
