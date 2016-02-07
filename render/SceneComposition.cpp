@@ -49,7 +49,7 @@ namespace fg {
 
     namespace object2d {
         inline bool DisplayObjectCmp(const object2d::DisplayObjectInterface *left, const object2d::DisplayObjectInterface *right) {
-            return left->getZ() >= right->getZ();
+            return left->getZ() < right->getZ() + FLT_MIN;
         }
     }
 
