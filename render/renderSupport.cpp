@@ -1,6 +1,4 @@
 
-// TODO: draw* over instances
-
 #include <float.h>
 
 namespace fg {
@@ -37,6 +35,7 @@ namespace fg {
 
             _camera = new Camera (iplatform);
             _frameConstants = new ShaderConstantBufferStruct <DefaultFrameConstants> (iplatform, platform::ShaderConstBufferUsing::FRAME_DATA);
+            _materialConstants = new ShaderConstantBufferStruct <DefaultMaterialConstants>(iplatform, platform::ShaderConstBufferUsing::MATERIAL_DATA);
             
             _simpleShader = iresMan.getResource(FG_SIMPLE_SHADER);
             _ifaceShader = iresMan.getResource(FG_IFACE_SHADER);
@@ -48,11 +47,14 @@ namespace fg {
             _platform->rdSetDepthParams(_defDepthParams);
             _platform->rdSetRasterizerParams(_defRasterizerParams);
 
+            _frameConstants->data.lightsCount = 0;
+            _frameConstants->data.environmentIntensity = 0.5f;
+            _frameConstants->data.mipCount = float(FG_DEFAULT_ENV_MIPS);
             _frameConstants->data.camPosition = _camera->getPosition();
             _frameConstants->data.camViewProj = _camera->getVPMatrix();
-            _frameConstants->data.globalSunDirection = math::p3d(1.5f, 2.0f, 1.0f).normalize();
-            _frameConstants->data.scrWidth = _platform->getScreenWidth();
-            _frameConstants->data.scrHeight = _platform->getScreenHeight();
+            _frameConstants->data.screenWidth = _platform->getScreenWidth();
+            _frameConstants->data.screenHeight = _platform->getScreenHeight();
+            _frameConstants->data.pointOfInterest = _camera->getInterestPoint();
             _frameConstants->updateAndApply();
             
             if (_simpleShader) {
@@ -79,9 +81,11 @@ namespace fg {
         void RenderSupport::destroy() {
             delete _camera;
             delete _frameConstants;
+            delete _materialConstants;
             
             _camera = nullptr;
             _frameConstants = nullptr;
+            _materialConstants = nullptr;
             _platform = nullptr;
             _simpleShader = nullptr;
             _ifaceShader = nullptr;
@@ -146,6 +150,10 @@ namespace fg {
         DefaultFrameConstants &RenderSupport::defFrameConst() {
             return _frameConstants->data;
         }
+
+        DefaultMaterialConstants &RenderSupport::defMaterialConst() {
+            return _materialConstants->data;
+        }
         
         InstanceDataDefault &RenderSupport::defInstanceData() {
             return _defInstanceStruct;
@@ -153,6 +161,10 @@ namespace fg {
 
         void RenderSupport::defFrameConstApplyChanges() {
             _frameConstants->updateAndApply();
+        }
+
+        void RenderSupport::defMaterialConstApplyChanges() {
+            _materialConstants->updateAndApply();
         }
 
         void RenderSupport::defInstanceDataApplyChanges() {
@@ -193,8 +205,16 @@ namespace fg {
                 _platform->rdSetScissorRect(math::p2d(0, 0), math::p2d(_platform->getScreenWidth(), _platform->getScreenHeight()));
             }
         }
+
+        void RenderSupport::setMaterialParams(const math::p3d &metalness, float glossiness, const platform::TextureCubeInterface *irr, const platform::TextureCubeInterface *env) {
+            _platform->rdSetTextureCube(fg::platform::TextureSlot::TEXTURE6, irr);
+            _platform->rdSetTextureCube(fg::platform::TextureSlot::TEXTURE7, env);
+            _materialConstants->data.metalness = metalness;
+            _materialConstants->data.glossiness = glossiness;
+            _materialConstants->updateAndApply();
+        }
         
-        void RenderSupport::drawQuad2D(const math::m3x3 &trfm, const resources::ClipData *clip, unsigned frame, const fg::color &c, bool resolutionDepended) {
+        void RenderSupport::drawQuad2D(const math::m3x3 &trfm, const resources::ClipData *clip, unsigned frame, const fg::color &c, float z, bool resolutionDepended) {
             float dpiKoeffX = 1.0f;
             float dpiKoeffY = 1.0f;
             float scaleX = _screenPixelsPerCoordSystemPixelsX;
@@ -225,7 +245,6 @@ namespace fg {
             rt.y = (1.0f - 2.0f * dpiKoeffY * rt.y / _platform->getScreenHeight() * fabs(scaleY)) * math::fsign(scaleY);
             rb.y = (1.0f - 2.0f * dpiKoeffY * rb.y / _platform->getScreenHeight() * fabs(scaleY)) * math::fsign(scaleY);
 
-            float sz = 0.0f;
             float tx = clip->frames[frame].tu;
             float ty = clip->frames[frame].tv;
 
@@ -236,6 +255,8 @@ namespace fg {
 
             VertexTextured *tmem = (VertexTextured *)_oddVertexBufferTextured->lockVertices();
             unsigned short *tind = (unsigned short *)_oddVertexBufferTextured->lockIndices();
+
+            float sz = 1.0f - z;
 
             tmem[0].position.x = lb.x;
             tmem[0].position.y = lb.y;

@@ -201,6 +201,14 @@ namespace fg {
         const math::m4x4 *Model3D::MeshData::getSkinMatrixArray() const {
             return _skinMatrixes;
 		}
+
+        const math::p3d &Model3D::MeshData::getMaterialMetalness() const {
+            return _materialParams->metalness;
+        }
+
+        float Model3D::MeshData::getMaterialGlossiness() const {
+            return _materialParams->glossiness;
+        }
         
         unsigned Model3D::MeshData::getSkinMatrixCount() const {
             return _skinMatrixCount;
@@ -222,6 +230,10 @@ namespace fg {
             return _mesh;
         }
         
+        bool Model3D::MeshData::isTransparent() const {
+            return _materialParams ? _materialParams->isTransparent : false;
+        }
+
         bool Model3D::MeshData::isSkinned() const {
             return _skinned;
 		}
@@ -272,6 +284,14 @@ namespace fg {
             delete [] _meshes;
             delete _root;
 		}
+
+        void Model3D::setColor(float r, float g, float b, float a) {
+            _rgba = fg::color(r, g, b, a);
+        }
+
+        void Model3D::setColor(const fg::color &rgba) {
+            _rgba = rgba;
+        }
         
         void Model3D::setModelAndMaterial(const fg::string &mdlResourcePath, const fg::string &materialResourcePath) {
             _modelResourcePath = mdlResourcePath;
@@ -359,6 +379,20 @@ namespace fg {
             }
             return nullptr;
 		}
+
+        void Model3D::getHelpers(std::vector <std::string> &helpers) const {
+            helpers.clear();
+
+            for (unsigned i = 0; i < _meshCount; i++) {
+                if (_meshes[i]->getMesh()->isHelper()) {
+                    helpers.push_back(_meshes[i]->getMesh()->getName().data());
+                }
+            }
+        }
+
+        const fg::color &Model3D::getColor() const {
+            return _rgba;
+        }
         
         bool Model3D::isMeshVisible(const fg::string &meshName) {
             MeshData *mesh = _getOrCreateMeshByName(meshName);
@@ -456,7 +490,7 @@ namespace fg {
 
             struct fn { 
                 static void createMeshesRecursive(Model3D &mdl, MeshData *current, const resources::MeshInterface *mesh, const resources::MaterialResourceInterface *material, const resources::MaterialMeshParams *rootMaterial = nullptr) {
-                    if(mesh->getGeometryVertexCount()) {
+                    if(mesh->getGeometryVertexCount() || mesh->isHelper()) {
                         mdl._meshes[mdl._meshCount++] = current;
                     }
                     
@@ -568,7 +602,7 @@ namespace fg {
             return _meshCount;
 		}
 
-        RenderObjectInterface::ComponentInterface *Model3D::getComponentInterface(unsigned index) {
+        RenderObjectComponentInterface *Model3D::getComponentInterface(unsigned index) {
             return _meshes[index];
 		}
 

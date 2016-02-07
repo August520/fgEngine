@@ -4,22 +4,18 @@ namespace fg {
         class DisplayObject : public DisplayObjectInterface {
         public:
             DisplayObject();
+            DisplayObject(render::EngineSceneCompositionInterface *sceneComposition);
             ~DisplayObject() override;
 
             DisplayObjectInterface *addChild(DisplayObjectInterface *obj) override;
             DisplayObjectType getType() const override;
 
             unsigned removeChild(DisplayObjectInterface *obj) override;
-            unsigned removeChild(unsigned index) override;
             void     removeAllChilds() override;
             unsigned getChildCount() const override;
 
-            DisplayObjectInterface *getChildAt(unsigned index) const override;
-            DisplayObjectInterface *getChildBack() const override;
             DisplayObjectInterface *&getParent() override;
-            DisplayObjectInterface *&getNext() override;
-            DisplayObjectInterface *&getBack() override;
-
+            
             void  setAddHandler(const callback <void ()> &cb) override;
             void  setUpdateHandler(const callback <void (float)> &cb) override;
             void  setRemoveHandler(const callback <void ()> &cb) override;
@@ -64,26 +60,27 @@ namespace fg {
             bool  isResourcesReady(platform::PlatformInterface &platform, resources::ResourceManagerInterface &resMan) override;
             
         protected:
-            DisplayObjectType _type;
+            DisplayObjectType _type = DisplayObjectType::NONE;
+            DisplayObjectInterface *_parent = nullptr;
 
-            DisplayObjectInterface *_parent;
-            DisplayObjectInterface *_next;
-            DisplayObjectInterface *_back;
-
-            std::vector  <DisplayObjectInterface *> _childs;
+            render::EngineSceneCompositionInterface *_sceneComposition = nullptr;
+            std::unordered_set <DisplayObjectInterface *> _childs;
+            
             math::m3x3   _fullTransform;
             math::m3x3   _localTransform;
             math::p2d    _localScale;
-            float        _rotationInDegrees;
-            float        _zCoord;
-            float        _alpha;
-            bool         _visible;
-            bool         _resolutionDependent;
+            float        _rotationInDegrees = 0.0f;
+            float        _zCoord = 0.0f;
+            float        _alpha = 1.0f;
+            bool         _visible = true;
+            bool         _resolutionDependent = false;
 
             callback     <void ()> _addHandler;
             callback     <void (float)> _updateHandler;
             callback     <void ()> _removeHandler;
-                        
+
+            render::EngineSceneCompositionInterface *getSceneComposition() override;
+
         private:
             DisplayObject(const DisplayObject &);
             DisplayObject &operator =(const DisplayObject &);

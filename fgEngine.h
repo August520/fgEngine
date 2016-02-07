@@ -26,6 +26,8 @@ typedef long long int64;
 #include "input/Interfaces.h"
 #include "objects2D/Interfaces.h"
 #include "objects3D/Interfaces.h"
+
+#include "render/OrderedCollection.h"
 #include "render/Interfaces.h"
 
 #include "resources/ResourceFactory.h"
@@ -37,8 +39,7 @@ typedef long long int64;
 #include "render/DefaultRender.h"
 
 #include "input/InputManager.h"
-
-#include "Iterators.h"
+#include "pointers.h"
 
 #ifdef FG_RESOURCE_LONGNAME
 #define FG_SIMPLE_SHADER "bin/simpleModel.shader"
@@ -124,6 +125,7 @@ namespace fg {
         object2d::DisplayObjectInterface            *_root2D;
         object3d::RenderObjectInterface             *_root3D;
         render::CameraInterface                     *_gameCamera;
+        render::EngineSceneCompositionInterface     *_sceneComposition;
         
         callback  <void ()> _initHandler;
         callback  <void (float)> _updateHandler;

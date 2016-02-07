@@ -1,4 +1,6 @@
 
+#include <math.h>
+
 namespace fg {
     namespace math {
         #include "p2d.cpp"

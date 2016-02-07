@@ -38,9 +38,9 @@ namespace fg {
             void  setResource(const fg::string &particlesResourcePath) override;
             void  updateCoordinates(float frameTimeMs, resources::ResourceManagerInterface &resMan) override;
             bool  isResourcesReady(platform::PlatformInterface &platform, resources::ResourceManagerInterface &resMan) override;
-
+            
             unsigned  getComponentCount() const override;
-            ComponentInterface *getComponentInterface(unsigned index) override;
+            RenderObjectComponentInterface *getComponentInterface(unsigned index) override;
 
         protected:
             float        _frameTime;

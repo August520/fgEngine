@@ -1,6 +1,4 @@
 
-#include <string>
-
 namespace fg {
     namespace platform {
         const unsigned TEXTURE_UNITS_MAX = 8;
@@ -32,7 +30,11 @@ namespace fg {
 
         enum class TextureFormat {
             RGBA8   = 0,
-            RED8    = 1,
+            BGRA8   = 1,
+            RED8    = 2,
+            DXT1    = 3,
+            DXT3    = 4,
+            DXT5    = 5,
             UNKNOWN = -1,
         };
 
@@ -193,6 +195,12 @@ namespace fg {
             virtual void release() = 0;
         };
 
+        class TextureCubeInterface {
+        public:
+            virtual ~TextureCubeInterface() {}
+            virtual void release() = 0;
+        };
+
         class RenderTargetInterface {
         public:
             virtual ~RenderTargetInterface() {}
@@ -229,10 +237,11 @@ namespace fg {
             virtual RasterizerParamsInterface     *rdCreateRasterizerParams(CullMode cull) = 0;
             virtual BlenderParamsInterface        *rdCreateBlenderParams(const BlendMode blendMode) = 0;
             virtual DepthParamsInterface          *rdCreateDepthParams(bool depthEnabled, DepthFunc compareFunc, bool depthWriteEnabled) = 0;
-            virtual SamplerInterface              *rdCreateSampler(TextureFilter filter, TextureAddressMode addrMode) = 0;
+            virtual SamplerInterface              *rdCreateSampler(TextureFilter filter, TextureAddressMode addrMode, float minLod = 0.0f, float bias = 0.0f) = 0;
             virtual ShaderConstantBufferInterface *rdCreateShaderConstantBuffer(ShaderConstBufferUsing appoint, unsigned byteWidth) = 0;
-            virtual Texture2DInterface            *rdCreateTexture2D(unsigned char * const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount) = 0;
+            virtual Texture2DInterface            *rdCreateTexture2D(unsigned char *const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount, platform::TextureFormat fmt = platform::TextureFormat::RGBA8) = 0;
             virtual Texture2DInterface            *rdCreateTexture2D(TextureFormat format, unsigned originWidth, unsigned originHeight, unsigned mipCount) = 0;
+            virtual TextureCubeInterface          *rdCreateTextureCube(unsigned char **imgMipsBinaryData[6], unsigned originSize, unsigned mipCount, platform::TextureFormat fmt = platform::TextureFormat::RGBA8) = 0;
             virtual RenderTargetInterface         *rdCreateRenderTarget(unsigned colorTargetCount, unsigned originWidth, unsigned originHeight) = 0;
             virtual RenderTargetInterface         *rdGetDefaultRenderTarget() = 0;
 
@@ -247,6 +256,7 @@ namespace fg {
             virtual void  rdSetSampler(TextureSlot slot, const SamplerInterface *sampler) = 0;
             virtual void  rdSetShaderConstBuffer(const ShaderConstantBufferInterface *cbuffer) = 0;
             virtual void  rdSetTexture2D(TextureSlot slot, const Texture2DInterface *texture = nullptr) = 0;
+            virtual void  rdSetTextureCube(TextureSlot slot, const TextureCubeInterface *texture = nullptr) = 0;
             virtual void  rdSetScissorRect(const math::p2d &topLeft, const math::p2d &bottomRight) = 0;
 
             virtual void  rdDrawGeometry(const VertexBufferInterface *vbuffer, const InstanceDataInterface *instanceData, PrimitiveTopology topology, unsigned vertexCount, unsigned instanceCount = 1) = 0;

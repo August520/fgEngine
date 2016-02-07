@@ -5,10 +5,8 @@
 // resFont code safe
 
 #include <list>
-#include <atomic>
 #include <future>
-#include <thread>
-#include <memory>
+#include <atomic>
 
 //#define FG_RESOURCE_LONGNAME // def for complex projects
 //#define FG_RESOURCE_UNLOADABLE // def for complex projects 

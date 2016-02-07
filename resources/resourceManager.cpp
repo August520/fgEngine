@@ -1,4 +1,7 @@
 
+#include <thread>
+#include <memory>
+
 namespace fg {
     namespace resources {   
         ResourceManager::ResourceManager(const diag::LogInterface &log, platform::EnginePlatformInterface &platform) : _log(log), _platform(platform) {
@@ -110,8 +113,8 @@ namespace fg {
                                 
                                 if(platform.fsLoadFile(curResource->getFilePath().data(), &binaryData, &binarySize)){
                                     curResource->setBinary(binaryData, binarySize);
-                                    curResource->loaded(log);
                                     curResource->setLoadingState(ResourceLoadingState::LOADED);
+                                    curResource->loaded(log);
                                 }
                                 else{
                                     curResource->setLoadingState(ResourceLoadingState::INVALID);

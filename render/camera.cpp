@@ -2,10 +2,6 @@
 namespace fg {
     namespace render {
         Camera::Camera(const platform::EnginePlatformInterface &iplatform) : _platform(iplatform) {
-            _fov = 90.0f;
-            _zNear = 0.1f;
-            _zFar = 100.0f;
-
             setLookAtByRight(math::p3d(8, 8, 8), math::p3d(3, 3, 3), math::p3d(1, 0, -1));
         }
 
@@ -83,12 +79,21 @@ namespace fg {
             updateMatrix();
         }
 
+        void Camera::setInterestOffset(float offset) {
+            _interestOffset = offset;
+            _pointOfInterest = _position + _forwardVector * _interestOffset;
+        }
+
         const math::p3d &Camera::getPosition() const {
             return _position;
         }
 
         const math::p3d &Camera::getTarget() const {
             return _target;
+        }
+
+        const math::p3d &Camera::getInterestPoint() const {
+            return _pointOfInterest;
         }
         
         const math::p3d &Camera::getForwardDir() const {
@@ -151,6 +156,8 @@ namespace fg {
             _upVector = math::p3d(_viewMatrix._12, _viewMatrix._22, _viewMatrix._32);
             _rightVector = math::p3d(_viewMatrix._11, _viewMatrix._21, _viewMatrix._31);
             _forwardVector = math::p3d(_viewMatrix._13, _viewMatrix._23, _viewMatrix._33);
+            
+            _pointOfInterest = _position + _forwardVector * _interestOffset;
         }
     }
 }

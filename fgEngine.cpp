@@ -1,5 +1,7 @@
 
 #include "pch.h"
+
+#include <unordered_set>
 #include <regex>
 
 #include "LuaScript.cpp"
@@ -19,6 +21,7 @@
 #include "resources/ShaderResource.h"
 #include "resources/ModelResource.h"
 #include "resources/Texture2DResource.h"
+#include "resources/TextureCubeResource.h"
 #include "resources/FontResource.h"
 #include "resources/MaterialResource.h"
 #include "resources/ClipSetResource.h"
@@ -31,6 +34,7 @@
 #include "resources/ShaderResource.cpp"
 #include "resources/ModelResource.cpp"
 #include "resources/Texture2DResource.cpp"
+#include "resources/TextureCubeResource.cpp"
 #include "resources/FontResource.cpp"
 #include "resources/MaterialResource.cpp"
 #include "resources/ClipSetResource.cpp"
@@ -43,10 +47,6 @@
 
 #include "render/Camera.h"
 
-#include "render/DisplayObjectIterator.h"
-#include "render/DisplayObjectIterator.cpp"
-#include "render/RenderObjectIterator.h"
-#include "render/RenderObjectIterator.cpp"
 #include "render/RenderSupport.cpp"
 #include "render/Camera.cpp"
 #include "render/DefaultRender.cpp"
@@ -71,29 +71,41 @@
 #include "objects3D/RenderObject.h"
 #include "objects3D/Model.h"
 #include "objects3D/Particles.h"
-#include "objects3D/Billboard.h"
+#include "objects3D/PointLight.h"
 
 #include "objects3D/RenderObject.cpp"
 #include "objects3D/Model.cpp"
 #include "objects3D/Particles.cpp"
-#include "objects3D/Billboard.cpp"
+#include "objects3D/PointLight.cpp"
+
+#include "render/SceneComposition.h"
+#include "render/SceneComposition.cpp"
 
 #include "GameAPI.cpp"
 
 const char *_binaryResources = "\
+$/displayObject.shader\n\
 $/simpleModel.shader\n\
 $/simpleSkin.shader\n\
-$/displayObject.shader\n\
 $/texturedModel.shader\n\
+$/texturedSkin.shader\n\
 $/lightedModel.shader\n\
-$/lightedNormalModel.shader\n\
 $/lightedSkin.shader\n\
+$/lightedNormalModel.shader\n\
 $/lightedNormalSkin.shader\n\
 $/lightedTexturedModel.shader\n\
+$/lightedTexturedSkin.shader\n\
 $/lightedTexturedNormalModel.shader\n\
 $/lightedTexturedNormalSkin.shader\n\
 $/texturedScreenQuad.shader\n\
 $/texturedScreenQuadFilter.shader\n\
+$/defaultIrradiance.cubemap\n\
+$/defaultEnvironment0.cubemap\n\
+$/defaultEnvironment1.cubemap\n\
+$/defaultEnvironment2.cubemap\n\
+$/defaultEnvironment3.cubemap\n\
+$/defaultEnvironment4.cubemap\n\
+$/defaultEnvironment5.cubemap\n\
 $/arial.ttf\n\
 "; //
 
@@ -106,7 +118,9 @@ namespace fg {
         _renderSupport(irenderSupport),
         _input(iinput),
         _root3D(nullptr), 
-        _root2D(nullptr) 
+        _root2D(nullptr),
+        _gameCamera(nullptr),
+        _sceneComposition(nullptr)
     {
         _isBaseResourcesLoaded = false;
         _lastFrameTimeStamp = _platform.getTimeMs();
@@ -126,6 +140,7 @@ namespace fg {
         }
 
         _gameCamera = new render::Camera(_platform);
+        _sceneComposition = new render::SceneComposition(_platform, _resMan, _gameCamera);
         _coordSystem = coordSystem;
         _systemDpiPerCoordSystemDpi = initParams.dpi / coordSystem.dpi;
         _updateCoordSystem();
@@ -142,8 +157,8 @@ namespace fg {
         int64 curTime = _platform.getTimeMs();
         _lastFrameTimeStamp = curTime;
 
-        _root2D = new object2d::DisplayObject ();
-        _root3D = new object3d::RenderObject();
+        _root2D = new object2d::DisplayObject (_sceneComposition);
+        _root3D = new object3d::RenderObject (_sceneComposition);
         return true;
     }
 
@@ -162,10 +177,12 @@ namespace fg {
         delete _root2D;
         delete _root3D;
         delete _gameCamera;
+        delete _sceneComposition;
 
         _root2D = nullptr;
         _root3D = nullptr;
         _gameCamera = nullptr;
+        _sceneComposition = nullptr;
     }
 
     void Engine::updateAndDraw() {
@@ -187,18 +204,16 @@ namespace fg {
             }
 
             render::RenderAPI &&api = render::RenderAPI(_platform, _resMan, _renderSupport, *_gameCamera);
-            _render->update(frameTimeMs, api);
-            
+
+            _sceneComposition->update(frameTimeMs);
+            _render->update(frameTimeMs, api);            
             _renderSupport.getCamera().set(*_gameCamera);
-            _renderSupport.frameInit3D(frameTimeMs);            
-            
-            object3d::RenderObjectIterator &&iterator3D = object3d::RenderObjectIterator(_root3D, _platform, _resMan, frameTimeMs);
-            _render->draw3D(iterator3D, api);
-            
+
+            _renderSupport.frameInit3D(frameTimeMs);                        
+            _render->draw3D(*_sceneComposition, api);            
+
             _renderSupport.frameInit2D(frameTimeMs, _screenPixelsPerCoordSystemPixelsX, _screenPixelsPerCoordSystemPixelsY, _systemDpiPerCoordSystemDpi);
-            
-            object2d::DisplayObjectIterator &&iterator2D = object2d::DisplayObjectIterator(_root2D, _platform, _resMan, frameTimeMs);
-            _render->draw2D(iterator2D, api);
+            _render->draw2D(*_sceneComposition, api);
         }
 
         _platform.rdPresent();

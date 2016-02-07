@@ -5,7 +5,8 @@
 
 namespace fg {
     namespace tools {
-        #include "textureDecoders.h"
+        #include "png.h"
+        #include "dds.h"
         #include "ttf2Bitmap.h"
     }
 }

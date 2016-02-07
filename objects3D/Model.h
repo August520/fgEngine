@@ -66,17 +66,21 @@ namespace fg {
             public:
                 MeshData();
                 ~MeshData() override;
-
+                
                 const math::m4x4 &getFullTransform() const override;
                 const math::m4x4 *getSkinMatrixArray() const override;
 
                 unsigned getSkinMatrixCount() const override;
                 unsigned getTextureBindCount() const override;
 
+                const math::p3d &getMaterialMetalness() const override;
+                float getMaterialGlossiness() const override;
+
                 const resources::Texture2DResourceInterface *getTextureBind(unsigned bindIndex) const override;
                 const resources::ShaderResourceInterface *getShader() const override;
                 const resources::MeshInterface *getMesh() const override;
 
+                bool isTransparent() const override;
                 bool isSkinned() const override;
                 bool isVisible() const override;
 
@@ -90,7 +94,6 @@ namespace fg {
                 unsigned  _childCount = 0;
                 unsigned  _skinMatrixCount = 0;
 
-                math::m4x4  _fullTransform;
                 math::m4x4  _additionalTransform;                
                 math::m4x4  *_skinMatrixes = nullptr;
 
@@ -106,6 +109,9 @@ namespace fg {
             Model3D();
             ~Model3D() override;
 
+            void  setColor(float r, float g, float b, float a) override;
+            void  setColor(const fg::color &rgba) override;
+
             void  setModelAndMaterial(const fg::string &mdlResourcePath, const fg::string &materialResourcePath) override;
             void  setMaterial(const fg::string &materialResourcePath) override;
             void  setMeshVisible(const fg::string &meshName, bool visible) override;
@@ -119,6 +125,9 @@ namespace fg {
             const math::p3d  *getMeshBBoxMinPoint(const fg::string &meshName) const override;
             const math::p3d  *getMeshBBoxMaxPoint(const fg::string &meshName) const override;
 
+            void  getHelpers(std::vector <std::string> &helpers) const override;
+
+            const fg::color &getColor() const override;
             bool  isMeshVisible(const fg::string &meshName) override;
 
             void  playAnim(const fg::string &animResourcePath, float animLenMs, float animOffsetMs, float smoothTimeMs, bool cycled, AnimationLayer layer = AnimationLayer::LAYER0) override;
@@ -129,9 +138,9 @@ namespace fg {
 
             void  updateCoordinates(float frameTimeMs, resources::ResourceManagerInterface &resMan) override;
             bool  isResourcesReady(platform::PlatformInterface &platform, resources::ResourceManagerInterface &resMan) override;
-
+            
             unsigned  getComponentCount() const override;
-            RenderObjectInterface::ComponentInterface *getComponentInterface(unsigned index) override;
+            RenderObjectComponentInterface *getComponentInterface(unsigned index) override;
 
         protected:
             Animator _animator;
@@ -140,11 +149,12 @@ namespace fg {
             const resources::MaterialResourceInterface  *_material;
 
             fg::string  _modelResourcePath;
-            fg::string  _materialResourcePath;      
+            fg::string  _materialResourcePath;
             unsigned    _meshCount;
             MeshData    *_root;
             MeshData    **_meshes;
             bool        _modelReady;
+            fg::color   _rgba;
 
             mutable StaticHash  <resources::FG_MESH_MAX, MeshData *> _meshesByName;
             std::vector         <callback <void()>> _resourceReadyApplies;

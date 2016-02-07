@@ -1,6 +1,4 @@
 
-#include <string>
-
 namespace fg {
     struct color {
         float r, g, b, a;

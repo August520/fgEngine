@@ -4,22 +4,18 @@ namespace fg {
         class RenderObject : public RenderObjectInterface {
         public:
             RenderObject();
+            RenderObject(render::EngineSceneCompositionInterface *sceneComposition);
             ~RenderObject() override;
 
             RenderObjectInterface *addChild(RenderObjectInterface *obj) override;
             RenderObjectType getType() const override;
 
             unsigned removeChild(RenderObjectInterface *obj) override;
-            unsigned removeChild(unsigned index) override;
             void     removeAllChilds() override;
             unsigned getChildCount() const override;
 
-            RenderObjectInterface *getChildAt(unsigned index) const override;
-            RenderObjectInterface *getChildBack() const override;
             RenderObjectInterface *&getParent() override;
-            RenderObjectInterface *&getNext() override;
-            RenderObjectInterface *&getBack() override;
-
+            
             void setAddHandler(const callback <void ()> &cb) override;
             void setUpdateHandler(const callback <void (float)> &cb) override;
             void setRemoveHandler(const callback <void ()> &cb) override;
@@ -37,8 +33,6 @@ namespace fg {
             void setTransform(const math::m4x4 &transform) override;
 
             void setVisible(bool visible) override;
-            void setColor(float r, float g, float b, float a) override;
-            void setColor(const fg::color &rgba) override;
 
             void appendPosition(float xInc, float yInc, float zInc) override;
             void appendPosition(const math::p3d &posInc) override;
@@ -50,34 +44,33 @@ namespace fg {
             const math::m4x4  &getTransform() const override;
             const math::m4x4  &getFullTransform() const override;
 
-            const fg::color &getColor() const override;
             bool  isVisible() const override;
 
             void  updateCoordinates(float frameTimeMs, resources::ResourceManagerInterface &resMan) override;
             bool  isResourcesReady(platform::PlatformInterface &platform, resources::ResourceManagerInterface &resMan) override;
-
+            
             unsigned  getComponentCount() const override;
-            ComponentInterface *getComponentInterface(unsigned index) override;
+            RenderObjectComponentInterface *getComponentInterface(unsigned index) override;
 
         protected:
-            RenderObjectType       _type;
-            RenderObjectInterface  *_parent;
-            RenderObjectInterface  *_next;
-            RenderObjectInterface  *_back;
+            RenderObjectType       _type = RenderObjectType::NONE;
+            RenderObjectInterface  *_parent = nullptr;
             
-            std::vector  <RenderObjectInterface *> _childs;
+            render::EngineSceneCompositionInterface *_sceneComposition = nullptr;
+            std::unordered_set <RenderObjectInterface *> _childs;
                         
-            bool         _visible;
+            bool         _visible = true;
             math::m4x4   _fullTransform;
             math::m4x4   _localTransform;
             math::p3d    _localPosition;
             math::p3d    _localScale;
             math::quat   _localRotation;
-            fg::color    _rgba;
 
             callback     <void ()> _addHandler;
             callback     <void (float)> _updateHandler;
             callback     <void ()> _removeHandler;
+
+            render::EngineSceneCompositionInterface *getSceneComposition() override;
 
         private:
             RenderObject(const RenderObject &);

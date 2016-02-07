@@ -1,6 +1,5 @@
 
 #include <vector>
-#include <type_traits>
 #pragma warning (disable : 4250) // for virtual inheritance in MSVS
 
 namespace fg {
@@ -154,6 +153,13 @@ namespace fg {
 
         //---
 
+        class TextureCubeResourceInterface : virtual public ResourceInterface {
+        public:
+            virtual const platform::TextureCubeInterface *getPlatformObject() const = 0;
+        };
+
+        //---
+
         struct FontCharInfo {
             platform::Texture2DInterface *texture;
 
@@ -187,6 +193,9 @@ namespace fg {
             fg::string      shaderPath;
             fg::string      textureBinds[FG_MATERIAL_TEXTURE_MAX];
             unsigned        textureBindCount;
+            math::p3d       metalness;
+            float           glossiness;
+            bool            isTransparent;
         };
 
         class MaterialResourceInterface : virtual public ResourceInterface {

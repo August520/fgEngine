@@ -1,4 +1,6 @@
 
+#include <ctime>
+
 namespace fg {
     namespace diag {
         DefaultLogger::DefaultLogger(bool fileOutput, bool consoleOutput) {

@@ -12,9 +12,11 @@ namespace fg {
             void  setOrientation(const math::quat &q) override;
             void  setTransform(const math::m4x4 &transform) override;
             void  setPerspectiveProj(float fov, float zNear, float zFar) override;
+            void  setInterestOffset(float offset) override;
 
             const math::p3d &getPosition() const override;
             const math::p3d &getTarget() const override;
+            const math::p3d &getInterestPoint() const override;
             
             const math::p3d &getForwardDir() const override;
             const math::p3d &getRightDir() const override;
@@ -32,16 +34,16 @@ namespace fg {
         protected:
             const platform::EnginePlatformInterface  &_platform;
 
-            math::p3d   _position;
             math::p3d   _target;
-
+            math::p3d   _pointOfInterest;
             math::p3d   _upVector;
             math::p3d   _rightVector;
             math::p3d   _forwardVector;
             
-            float       _fov;
-            float       _zNear;
-            float       _zFar;
+            float       _fov = 90.0f;
+            float       _zNear = 0.1f;
+            float       _zFar = 100.0f;
+            float       _interestOffset = 0.0f;
             math::m4x4  _viewMatrix;
             math::m4x4  _projMatrix;
                         
