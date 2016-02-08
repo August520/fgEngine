@@ -200,7 +200,7 @@ namespace fg {
 
         class UniversalSampler : public PlatformObject, public platform::SamplerInterface {
         public:
-            UniversalSampler(UniversalPlatform *owner, platform::TextureFilter filter, platform::TextureAddressMode addrMode);
+            UniversalSampler(UniversalPlatform *owner, platform::TextureFilter filter, platform::TextureAddressMode addrMode, float minLod, float bias);
             ~UniversalSampler() override;
 
             void release() override;
@@ -255,7 +255,7 @@ namespace fg {
 
         public:
             UniversalTexture2D();
-            UniversalTexture2D(UniversalPlatform *owner, unsigned char * const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount);
+            UniversalTexture2D(UniversalPlatform *owner, unsigned char * const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount, platform::TextureFormat format);
             UniversalTexture2D(UniversalPlatform *owner, platform::TextureFormat fmt, unsigned originWidth, unsigned originHeight, unsigned mipCount);
             ~UniversalTexture2D() override;
 
@@ -273,8 +273,28 @@ namespace fg {
             unsigned  _width;
             unsigned  _height;
             unsigned  _mipCount;
-            unsigned  _pixelsz;
-            
+
+            platform::TextureFormat   _format;
+            ID3D11Texture2D           *_self;
+            ID3D11ShaderResourceView  *_view;
+        };
+
+        //---
+
+        class UniversalTextureCube : public PlatformObject, public platform::TextureCubeInterface {
+            friend class UniversalRenderTarget;
+            friend class UniversalPlatform;
+
+        public:
+            UniversalTextureCube(UniversalPlatform *owner, unsigned char **imgMipsBinaryData[6], unsigned originSize, unsigned mipCount, platform::TextureFormat format);
+            ~UniversalTextureCube() override;
+
+            void  release() override;
+            bool  valid() const override;
+            void  set(platform::TextureSlot slot);
+
+        protected:
+            platform::TextureFormat   _format;
             ID3D11Texture2D           *_self;
             ID3D11ShaderResourceView  *_view;
         };
@@ -358,10 +378,11 @@ namespace fg {
             platform::RasterizerParamsInterface      *rdCreateRasterizerParams(platform::CullMode cull) override;
             platform::BlenderParamsInterface         *rdCreateBlenderParams(const platform::BlendMode blendMode) override; 
             platform::DepthParamsInterface           *rdCreateDepthParams(bool depthEnabled, platform::DepthFunc compareFunc, bool depthWriteEnabled) override; 
-            platform::SamplerInterface               *rdCreateSampler(platform::TextureFilter filter, platform::TextureAddressMode addrMode) override; //!
+            platform::SamplerInterface               *rdCreateSampler(platform::TextureFilter filter, platform::TextureAddressMode addrMode, float minLod, float bias) override; 
             platform::ShaderConstantBufferInterface  *rdCreateShaderConstantBuffer(platform::ShaderConstBufferUsing appoint, unsigned byteWidth) override;
-            platform::Texture2DInterface             *rdCreateTexture2D(unsigned char * const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount) override;
+            platform::Texture2DInterface             *rdCreateTexture2D(unsigned char * const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount, platform::TextureFormat fmt) override;
             platform::Texture2DInterface             *rdCreateTexture2D(platform::TextureFormat format, unsigned originWidth, unsigned originHeight, unsigned mipCount) override;
+            platform::TextureCubeInterface           *rdCreateTextureCube(unsigned char **imgMipsBinaryData[6], unsigned originSize, unsigned mipCount, platform::TextureFormat fmt) override;
             platform::RenderTargetInterface          *rdCreateRenderTarget(unsigned colorTargetCount, unsigned originWidth, unsigned originHeight) override;
             platform::RenderTargetInterface          *rdGetDefaultRenderTarget() override;
 
@@ -376,6 +397,7 @@ namespace fg {
             void  rdSetSampler(platform::TextureSlot slot, const platform::SamplerInterface *sampler) override;
             void  rdSetShaderConstBuffer(const platform::ShaderConstantBufferInterface *cbuffer) override;
             void  rdSetTexture2D(platform::TextureSlot slot, const platform::Texture2DInterface *texture) override;
+            void  rdSetTextureCube(platform::TextureSlot slot, const platform::TextureCubeInterface *texture) override;
             void  rdSetScissorRect(const math::p2d &topLeft, const math::p2d &bottomRight) override;
             
             void  rdDrawGeometry(const platform::VertexBufferInterface *vbuffer, const platform::InstanceDataInterface *instanceData, platform::PrimitiveTopology topology, unsigned vertexCount, unsigned instanceCount) override;
