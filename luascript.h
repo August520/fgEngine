@@ -24,7 +24,6 @@ enum LUATYPE {
 #define LUAOBJ_STRMAX 32
 #define LUAOBJ_EPSILON 0.000001
 
-struct byteform;
 struct luaScript;
 
 struct luaObj;

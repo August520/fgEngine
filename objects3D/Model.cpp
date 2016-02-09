@@ -541,7 +541,7 @@ namespace fg {
             if(_model->valid() && _material->valid()) {
                 if(_root == nullptr) {
                     _root = _getOrCreateMeshByName(_model->getRoot()->getName());
-                    _meshes = new MeshData * [_model->getTotalMeshCount()];
+                    _meshes = new MeshData * [_model->getTotalMeshCount() + _model->getHelpersCount()];
                     
                     fn::createMeshesRecursive(*this, _root, _model->getRoot(), _material);
 

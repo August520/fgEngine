@@ -139,7 +139,7 @@ namespace fg {
 
         class ES3DesktopWin32Sampler : public PlatformObject, public platform::SamplerInterface {
         public:
-            ES3DesktopWin32Sampler(platform::TextureFilter filter, platform::TextureAddressMode addrMode);
+            ES3DesktopWin32Sampler(platform::TextureFilter filter, platform::TextureAddressMode addrMode, float minLod, float bias);
             ~ES3DesktopWin32Sampler() override;
 
             void release() override;
@@ -153,7 +153,7 @@ namespace fg {
 
         class ES3DesktopWin32Shader : public PlatformObject, public platform::ShaderInterface {
         public:
-            ES3DesktopWin32Shader(const byteform &binary, const diag::LogInterface &log);
+            ES3DesktopWin32Shader(const byteinput &binary, const diag::LogInterface &log);
             ~ES3DesktopWin32Shader() override;
 
             void set();
@@ -192,7 +192,7 @@ namespace fg {
         public:
             ES3DesktopWin32Texture2D();
             ES3DesktopWin32Texture2D(platform::TextureFormat fmt, unsigned originWidth, unsigned originHeight, unsigned mipCount);
-            ES3DesktopWin32Texture2D(unsigned char *const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount);
+            ES3DesktopWin32Texture2D(unsigned char *const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount, platform::TextureFormat fmt);
             ~ES3DesktopWin32Texture2D() override;
 
             unsigned getWidth() const override;
@@ -214,6 +214,24 @@ namespace fg {
 
         //---
 
+        class ES3DesktopWin32TextureCube : public PlatformObject, public platform::TextureCubeInterface {
+            friend class DesktopRenderTarget;
+            friend class ES3DesktopWin32Platform;
+
+        public:
+            ES3DesktopWin32TextureCube(ES3DesktopWin32Platform *owner, unsigned char **imgMipsBinaryData[6], unsigned originSize, unsigned mipCount, platform::TextureFormat format);
+            ~ES3DesktopWin32TextureCube() override;
+
+            void  release() override;
+            void  set(platform::TextureSlot slot);
+
+        protected:
+            platform::TextureFormat   _format;
+            GLuint    _texture;
+        };
+
+        //---
+
         class ES3DesktopWin32RenderTarget : public PlatformObject, public platform::RenderTargetInterface {
             friend class ES3DesktopWin32Platform;
 
@@ -224,6 +242,7 @@ namespace fg {
 
             platform::Texture2DInterface *getDepthBuffer() override;
             platform::Texture2DInterface *getRenderBuffer(unsigned index) override;
+            unsigned getRenderBufferCount() const override;
 
             void  release() override;
             void  set();
@@ -277,14 +296,15 @@ namespace fg {
             platform::VertexBufferInterface          *rdCreateVertexBuffer(platform::VertexType vtype, unsigned vcount, bool isDynamic, const void *data) override;
             platform::IndexedVertexBufferInterface   *rdCreateIndexedVertexBuffer(platform::VertexType vtype, unsigned vcount, unsigned ushortIndexCount, bool isDynamic, const void *vdata, const void *idata) override;
             platform::InstanceDataInterface          *rdCreateInstanceData(platform::InstanceDataType type, unsigned instanceCount) override;
-            platform::ShaderInterface                *rdCreateShader(const byteform &binary) override;
+            platform::ShaderInterface                *rdCreateShader(const byteinput &binary) override;
             platform::RasterizerParamsInterface      *rdCreateRasterizerParams(platform::CullMode cull) override;
             platform::BlenderParamsInterface         *rdCreateBlenderParams(const platform::BlendMode blendMode) override;
             platform::DepthParamsInterface           *rdCreateDepthParams(bool depthEnabled, platform::DepthFunc compareFunc, bool depthWriteEnabled) override; 
-            platform::SamplerInterface               *rdCreateSampler(platform::TextureFilter filter, platform::TextureAddressMode addrMode) override; 
+            platform::SamplerInterface               *rdCreateSampler(platform::TextureFilter filter, platform::TextureAddressMode addrMode, float minLod, float bias) override;
             platform::ShaderConstantBufferInterface  *rdCreateShaderConstantBuffer(platform::ShaderConstBufferUsing appoint, unsigned byteWidth) override;
-            platform::Texture2DInterface             *rdCreateTexture2D(unsigned char *const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount) override;
+            platform::Texture2DInterface             *rdCreateTexture2D(unsigned char *const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount, platform::TextureFormat fmt) override;
             platform::Texture2DInterface             *rdCreateTexture2D(platform::TextureFormat format, unsigned originWidth, unsigned originHeight, unsigned mipCount) override;
+            platform::TextureCubeInterface           *rdCreateTextureCube(unsigned char **imgMipsBinaryData[6], unsigned originSize, unsigned mipCount, platform::TextureFormat fmt) override;
             platform::RenderTargetInterface          *rdCreateRenderTarget(unsigned colorTargetCount, unsigned originWidth, unsigned originHeight) override;
             platform::RenderTargetInterface          *rdGetDefaultRenderTarget() override;
 
@@ -299,7 +319,8 @@ namespace fg {
             void  rdSetSampler(platform::TextureSlot slot, const platform::SamplerInterface *sampler) override;
             void  rdSetShaderConstBuffer(const platform::ShaderConstantBufferInterface *cbuffer) override;
             void  rdSetTexture2D(platform::TextureSlot, const platform::Texture2DInterface *texture) override;
-            void  rdSetScissorRect(math::p2d &topLeft, math::p2d &bottomRight) override;
+            void  rdSetTextureCube(platform::TextureSlot slot, const platform::TextureCubeInterface *texture) override;
+            void  rdSetScissorRect(const math::p2d &topLeft, const math::p2d &bottomRight) override;
 
             void  rdDrawGeometry(const platform::VertexBufferInterface *vbuffer, const platform::InstanceDataInterface *instanceData, platform::PrimitiveTopology topology, unsigned vertexCount, unsigned instanceCount) override;
             void  rdDrawIndexedGeometry(const platform::IndexedVertexBufferInterface *ivbuffer, const platform::InstanceDataInterface *instanceData, platform::PrimitiveTopology topology, unsigned indexCount, unsigned instanceCount) override;

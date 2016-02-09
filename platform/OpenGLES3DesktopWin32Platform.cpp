@@ -71,8 +71,8 @@ namespace fg {
         };
 
         char   __buffer[__BUFFER_MAX];
-        GLenum __nativeTextureFormat[] = {GL_RGBA, GL_RED};
-        GLenum __nativeTextureInternalFormat[] = {GL_RGBA8, GL_R8};
+        GLenum __nativeTextureFormat[] = {GL_RGBA, GL_RGBA, GL_RED, GL_NONE, GL_NONE, GL_NONE};
+        GLenum __nativeTextureInternalFormat[] = {GL_RGBA8, GL_RGBA8, GL_R8, GL_NONE, GL_NONE, GL_NONE};
         GLenum __nativeTopology[] = {GL_LINES, GL_LINE_STRIP, GL_TRIANGLES, GL_TRIANGLE_STRIP};
         GLenum __nativeCmpFunc[] = {GL_NEVER, GL_LESS, GL_EQUAL, GL_LEQUAL, GL_GREATER, GL_NOTEQUAL, GL_GEQUAL, GL_ALWAYS};
 
@@ -347,10 +347,11 @@ namespace fg {
 
         //---
 
-        ES3DesktopWin32Sampler::ES3DesktopWin32Sampler(platform::TextureFilter filter, platform::TextureAddressMode addrMode) {
+        ES3DesktopWin32Sampler::ES3DesktopWin32Sampler(platform::TextureFilter filter, platform::TextureAddressMode addrMode, float minLod, float bias) {
             _self = 0;
             glGenSamplers(1, &_self);
 
+            glSamplerParameteri(_self, GL_TEXTURE_MIN_LOD, (GLint)(minLod));
             glSamplerParameteri(_self, GL_TEXTURE_MIN_FILTER, filter == platform::TextureFilter::POINT ? GL_NEAREST : GL_LINEAR_MIPMAP_LINEAR);
             glSamplerParameteri(_self, GL_TEXTURE_MAG_FILTER, filter == platform::TextureFilter::POINT ? GL_NEAREST : GL_LINEAR);
             glSamplerParameteri(_self, GL_TEXTURE_WRAP_S, addrMode == platform::TextureAddressMode::CLAMP ? GL_CLAMP_TO_EDGE : GL_REPEAT);
@@ -372,7 +373,7 @@ namespace fg {
 
         //---
 
-        ES3DesktopWin32Shader::ES3DesktopWin32Shader(const byteform &binary, const diag::LogInterface &log) {
+        ES3DesktopWin32Shader::ES3DesktopWin32Shader(const byteinput &binary, const diag::LogInterface &log) {
             _program = 0;
             _vShader = 0;
             _fShader = 0;
@@ -523,8 +524,8 @@ namespace fg {
             glBindTexture(GL_TEXTURE_2D, 0);
         }
         
-        ES3DesktopWin32Texture2D::ES3DesktopWin32Texture2D(unsigned char *const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount) {
-            _format = fg::platform::TextureFormat::RGBA8;
+        ES3DesktopWin32Texture2D::ES3DesktopWin32Texture2D(unsigned char *const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount, platform::TextureFormat fmt) {
+            _format = fmt;
             _width = originWidth;
             _height = originHeight;
             _mipCount = mipCount;
@@ -634,6 +635,10 @@ namespace fg {
 
         platform::Texture2DInterface *ES3DesktopWin32RenderTarget::getRenderBuffer(unsigned index) {
             return &_renderTexture[index];
+        }
+        
+        unsigned ES3DesktopWin32RenderTarget::getRenderBufferCount() const {
+            return _colorTargetCount;
         }
         
         void ES3DesktopWin32RenderTarget::release() {
@@ -931,7 +936,7 @@ namespace fg {
             return new ES3DesktopWin32InstanceData (type, instanceCount);
         }
 
-        platform::ShaderInterface *ES3DesktopWin32Platform::rdCreateShader(const byteform &binary) {
+        platform::ShaderInterface *ES3DesktopWin32Platform::rdCreateShader(const byteinput &binary) {
             return new ES3DesktopWin32Shader (binary, _log);
         }
 
@@ -947,20 +952,24 @@ namespace fg {
             return new ES3DesktopWin32DepthParams (depthEnabled, compareFunc, depthWriteEnabled);
         }
 
-        platform::SamplerInterface *ES3DesktopWin32Platform::rdCreateSampler(platform::TextureFilter filter, platform::TextureAddressMode addrMode) {
-            return new ES3DesktopWin32Sampler (filter, addrMode);
+        platform::SamplerInterface *ES3DesktopWin32Platform::rdCreateSampler(platform::TextureFilter filter, platform::TextureAddressMode addrMode, float minLod, float bias) {
+            return new ES3DesktopWin32Sampler (filter, addrMode, minLod, bias);
         }
 
         platform::ShaderConstantBufferInterface *ES3DesktopWin32Platform::rdCreateShaderConstantBuffer(platform::ShaderConstBufferUsing appoint, unsigned byteWidth) {
             return new ES3DesktopWin32ShaderConstantBuffer (unsigned(appoint), byteWidth);
         }
 
-        platform::Texture2DInterface *ES3DesktopWin32Platform::rdCreateTexture2D(unsigned char *const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount) {
-            return new ES3DesktopWin32Texture2D (imgMipsBinaryData, originWidth, originHeight, mipCount);
+        platform::Texture2DInterface *ES3DesktopWin32Platform::rdCreateTexture2D(unsigned char *const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount, platform::TextureFormat fmt) {
+            return new ES3DesktopWin32Texture2D (imgMipsBinaryData, originWidth, originHeight, mipCount, fmt);
         }
 
         platform::Texture2DInterface *ES3DesktopWin32Platform::rdCreateTexture2D(platform::TextureFormat format, unsigned originWidth, unsigned originHeight, unsigned mipCount) {
             return new ES3DesktopWin32Texture2D (format, originWidth, originHeight, mipCount);
+        }
+
+        platform::TextureCubeInterface *ES3DesktopWin32Platform::rdCreateTextureCube(unsigned char **imgMipsBinaryData[6], unsigned originSize, unsigned mipCount, platform::TextureFormat fmt) {
+            return nullptr;
         }
 
         platform::RenderTargetInterface *ES3DesktopWin32Platform::rdCreateRenderTarget(unsigned colorTargetCount, unsigned originWidth, unsigned originHeight) {
@@ -1019,13 +1028,20 @@ namespace fg {
 
         void ES3DesktopWin32Platform::rdSetTexture2D(platform::TextureSlot slot, const platform::Texture2DInterface *texture) {
             ES3DesktopWin32Texture2D *platfromObject = (ES3DesktopWin32Texture2D *)texture;
-            platfromObject->set(slot);
+            
+            if (platfromObject) {
+                platfromObject->set(slot);
 
-            _lastTextureWidth[unsigned(slot)] = float(platfromObject->getWidth());
-            _lastTextureHeight[unsigned(slot)] = float(platfromObject->getHeight());
+                _lastTextureWidth[unsigned(slot)] = float(platfromObject->getWidth());
+                _lastTextureHeight[unsigned(slot)] = float(platfromObject->getHeight());
+            }
+        }
+
+        void ES3DesktopWin32Platform::rdSetTextureCube(platform::TextureSlot slot, const platform::TextureCubeInterface *texture) {
+
         }
         
-        void ES3DesktopWin32Platform::rdSetScissorRect(math::p2d &topLeft, math::p2d &bottomRight) {
+        void ES3DesktopWin32Platform::rdSetScissorRect(const math::p2d &topLeft, const math::p2d &bottomRight) {
             glScissor(int(topLeft.x), int(topLeft.y), int(bottomRight.x - topLeft.x), int(bottomRight.y - topLeft.y));
         }
         
