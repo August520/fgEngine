@@ -219,7 +219,7 @@ namespace fg {
             friend class ES3DesktopWin32Platform;
 
         public:
-            ES3DesktopWin32TextureCube(ES3DesktopWin32Platform *owner, unsigned char **imgMipsBinaryData[6], unsigned originSize, unsigned mipCount, platform::TextureFormat format);
+            ES3DesktopWin32TextureCube(unsigned char **imgMipsBinaryData[6], unsigned originSize, unsigned mipCount, platform::TextureFormat format);
             ~ES3DesktopWin32TextureCube() override;
 
             void  release() override;

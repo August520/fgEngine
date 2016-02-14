@@ -584,6 +584,57 @@ namespace fg {
 
         //---
 
+        ES3DesktopWin32TextureCube::ES3DesktopWin32TextureCube(unsigned char **imgMipsBinaryData[6], unsigned originSize, unsigned mipCount, platform::TextureFormat format) {
+            _format = format;
+            
+            glGenTextures(1, &_texture);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, _texture);
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+            unsigned faces[] = {
+                GL_TEXTURE_CUBE_MAP_POSITIVE_X, GL_TEXTURE_CUBE_MAP_NEGATIVE_X,
+                GL_TEXTURE_CUBE_MAP_POSITIVE_Y, GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,
+                GL_TEXTURE_CUBE_MAP_POSITIVE_Z, GL_TEXTURE_CUBE_MAP_NEGATIVE_Z,
+            };
+
+            glTexStorage2D(GL_TEXTURE_CUBE_MAP, mipCount, __nativeTextureInternalFormat[unsigned(_format)], originSize, originSize);
+
+            for (unsigned i = 0; i < 6; i++) {
+
+            //    //glTexImage2D()
+
+            //    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            //    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+                //glTexImage2D(faces[i], 0, GL_RGB, originSize, originSize, 0, GL_RGB, GL_UNSIGNED_BYTE, imgMipsBinaryData[i][0]);
+
+                for (unsigned c = 0; c < mipCount; c++) {
+                    unsigned curSize = originSize >> c;
+
+
+                    glTexSubImage2D(faces[i], c, 0, 0, curSize, curSize, __nativeTextureFormat[unsigned(_format)], GL_UNSIGNED_BYTE, imgMipsBinaryData[i][c]);
+                }
+            }
+
+            glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+        }
+
+        ES3DesktopWin32TextureCube::~ES3DesktopWin32TextureCube() {
+
+        }
+
+        void ES3DesktopWin32TextureCube::release() {
+            glDeleteTextures(1, &_texture);
+            delete this;
+        }
+
+        void ES3DesktopWin32TextureCube::set(platform::TextureSlot slot) {
+            glActiveTexture(GL_TEXTURE0 + unsigned(slot)); //
+            glBindTexture(GL_TEXTURE_CUBE_MAP, _texture);
+        }
+
+        //---
+
         ES3DesktopWin32RenderTarget::ES3DesktopWin32RenderTarget() {
             _fbo = 0;
             _colorTargetCount = 0;
@@ -969,7 +1020,7 @@ namespace fg {
         }
 
         platform::TextureCubeInterface *ES3DesktopWin32Platform::rdCreateTextureCube(unsigned char **imgMipsBinaryData[6], unsigned originSize, unsigned mipCount, platform::TextureFormat fmt) {
-            return nullptr;
+            return new ES3DesktopWin32TextureCube(imgMipsBinaryData, originSize, mipCount, fmt);
         }
 
         platform::RenderTargetInterface *ES3DesktopWin32Platform::rdCreateRenderTarget(unsigned colorTargetCount, unsigned originWidth, unsigned originHeight) {
@@ -991,54 +1042,79 @@ namespace fg {
         }
 
         void ES3DesktopWin32Platform::rdSetRenderTarget(const platform::RenderTargetInterface *rt) {
-            ES3DesktopWin32RenderTarget *platfromObject = (ES3DesktopWin32RenderTarget *)rt;
-            _curRenderTarget = platfromObject;
-            platfromObject->set();
+            ES3DesktopWin32RenderTarget *platformObject = (ES3DesktopWin32RenderTarget *)rt;
+            _curRenderTarget = platformObject;
+            
+            if (platformObject) {
+                platformObject->set();
+            }
         }
 
         void ES3DesktopWin32Platform::rdSetShader(const platform::ShaderInterface *vshader) {
-            ES3DesktopWin32Shader *platfromObject = (ES3DesktopWin32Shader *)vshader;
-            platfromObject->set();
+            ES3DesktopWin32Shader *platformObject = (ES3DesktopWin32Shader *)vshader;
+            
+            if (platformObject) {
+                platformObject->set();
+            }
         }
 
         void ES3DesktopWin32Platform::rdSetRasterizerParams(const platform::RasterizerParamsInterface *params) {
-            ES3DesktopWin32RasterizerParams *platfromObject = (ES3DesktopWin32RasterizerParams *)params;
-            platfromObject->set();
+            ES3DesktopWin32RasterizerParams *platformObject = (ES3DesktopWin32RasterizerParams *)params;
+            
+            if (platformObject) {
+                platformObject->set();
+            }
         }
 
         void ES3DesktopWin32Platform::rdSetBlenderParams(const platform::BlenderParamsInterface *params) {
             ES3DesktopWin32BlenderParams *platformObject = (ES3DesktopWin32BlenderParams *)params;
-            platformObject->set();
+            
+            if (platformObject) {
+                platformObject->set();
+            }
         }
 
         void ES3DesktopWin32Platform::rdSetDepthParams(const platform::DepthParamsInterface *params) {
-            ES3DesktopWin32DepthParams *platfromObject = (ES3DesktopWin32DepthParams *)params;
-            platfromObject->set();
+            ES3DesktopWin32DepthParams *platformObject = (ES3DesktopWin32DepthParams *)params;
+            
+            if (platformObject) {
+                platformObject->set();
+            }
         }
 
         void ES3DesktopWin32Platform::rdSetSampler(platform::TextureSlot slot, const platform::SamplerInterface *sampler) {
-            ES3DesktopWin32Sampler *platfromObject = (ES3DesktopWin32Sampler *)sampler;
-            platfromObject->set(slot);
+            ES3DesktopWin32Sampler *platformObject = (ES3DesktopWin32Sampler *)sampler;
+            
+            if (platformObject) {
+                platformObject->set(slot);
+            }
         }
 
         void ES3DesktopWin32Platform::rdSetShaderConstBuffer(const platform::ShaderConstantBufferInterface *cbuffer) {
-            ES3DesktopWin32ShaderConstantBuffer *platfromObject = (ES3DesktopWin32ShaderConstantBuffer *)cbuffer;
-            platfromObject->set();
+            ES3DesktopWin32ShaderConstantBuffer *platformObject = (ES3DesktopWin32ShaderConstantBuffer *)cbuffer;
+            
+            if (platformObject) {
+                platformObject->set();
+            }
         }
 
         void ES3DesktopWin32Platform::rdSetTexture2D(platform::TextureSlot slot, const platform::Texture2DInterface *texture) {
-            ES3DesktopWin32Texture2D *platfromObject = (ES3DesktopWin32Texture2D *)texture;
+            ES3DesktopWin32Texture2D *platformObject = (ES3DesktopWin32Texture2D *)texture;
             
-            if (platfromObject) {
-                platfromObject->set(slot);
+            if (platformObject) {
+                platformObject->set(slot);
 
-                _lastTextureWidth[unsigned(slot)] = float(platfromObject->getWidth());
-                _lastTextureHeight[unsigned(slot)] = float(platfromObject->getHeight());
+                _lastTextureWidth[unsigned(slot)] = float(platformObject->getWidth());
+                _lastTextureHeight[unsigned(slot)] = float(platformObject->getHeight());
             }
         }
 
         void ES3DesktopWin32Platform::rdSetTextureCube(platform::TextureSlot slot, const platform::TextureCubeInterface *texture) {
+            ES3DesktopWin32TextureCube *platformObject = (ES3DesktopWin32TextureCube *)texture;
 
+            if (platformObject) {
+                platformObject->set(slot);
+            }
         }
         
         void ES3DesktopWin32Platform::rdSetScissorRect(const math::p2d &topLeft, const math::p2d &bottomRight) {
@@ -1046,11 +1122,11 @@ namespace fg {
         }
         
         void ES3DesktopWin32Platform::rdDrawGeometry(const platform::VertexBufferInterface *vbuffer, const platform::InstanceDataInterface *instanceData, platform::PrimitiveTopology topology, unsigned vertexCount, unsigned instanceCount) {
-            ES3DesktopWin32VertexBuffer *platfromObject = (ES3DesktopWin32VertexBuffer *)vbuffer;
+            ES3DesktopWin32VertexBuffer *platformObject = (ES3DesktopWin32VertexBuffer *)vbuffer;
             ES3DesktopWin32InstanceData *platformInstanceData = (ES3DesktopWin32InstanceData *)instanceData;
             InstanceParams &curParams = __instanceParams[unsigned(platformInstanceData->getType())];
 
-            glBindVertexArray(platfromObject->getVAO());
+            glBindVertexArray(platformObject->getVAO());
             glBindBuffer(GL_ARRAY_BUFFER, platformInstanceData->getVBO());
 
             unsigned offset = 0;
@@ -1069,11 +1145,11 @@ namespace fg {
         }
 
         void ES3DesktopWin32Platform::rdDrawIndexedGeometry(const platform::IndexedVertexBufferInterface *ivbuffer, const platform::InstanceDataInterface *instanceData, platform::PrimitiveTopology topology, unsigned indexCount, unsigned instanceCount) {
-            ES3DesktopWin32IndexedVertexBuffer *platfromObject = (ES3DesktopWin32IndexedVertexBuffer *)ivbuffer;
+            ES3DesktopWin32IndexedVertexBuffer *platformObject = (ES3DesktopWin32IndexedVertexBuffer *)ivbuffer;
             ES3DesktopWin32InstanceData *platformInstanceData = (ES3DesktopWin32InstanceData *)instanceData;
             InstanceParams &curParams = __instanceParams[unsigned(platformInstanceData->getType())];
             
-            glBindVertexArray(platfromObject->getVAO());
+            glBindVertexArray(platformObject->getVAO());
             glBindBuffer(GL_ARRAY_BUFFER, platformInstanceData->getVBO());
 
             unsigned offset = 0;
