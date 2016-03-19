@@ -35,7 +35,8 @@ struct m4x4{
     void toQuaternion(quat &out) const;
     void rotationAxis(float angleRad, const p3d &axis);
     void lookAt(const p3d &eye, const p3d &at, const p3d &up);
-    void perspectiveFov(float fovY, float aspect, float zNear, float zFar);
+    void perspectiveFovRH(float fovY, float aspect, float zNear, float zFar);
+    void perspectiveFovLH(float fovY, float aspect, float zNear, float zFar);
     m4x4 operator *(const m4x4 &m) const;
 };
 

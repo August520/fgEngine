@@ -21,7 +21,7 @@ namespace fg {
 
         void RenderSupport::init(platform::EnginePlatformInterface &iplatform, resources::ResourceManagerInterface &iresMan) {
             _platform = &iplatform;            
-            _defRasterizerParams = iplatform.rdCreateRasterizerParams(platform::CullMode::NONE);
+            _defRasterizerParams = iplatform.rdCreateRasterizerParams(platform::CullMode::BACK);
             _defLerpBlenderParams = iplatform.rdCreateBlenderParams(platform::BlendMode::ALPHA_LERP);
             _defAddBlenderParams = iplatform.rdCreateBlenderParams(platform::BlendMode::ALPHA_ADD);
             _defDepthParams = iplatform.rdCreateDepthParams(true, platform::DepthFunc::LESS_EQUAL, true);
@@ -35,8 +35,10 @@ namespace fg {
 
             _camera = new Camera (iplatform);
             _frameConstants = new ShaderConstantBufferStruct <DefaultFrameConstants> (iplatform, platform::ShaderConstBufferUsing::FRAME_DATA);
-            _materialConstants = new ShaderConstantBufferStruct <DefaultMaterialConstants>(iplatform, platform::ShaderConstBufferUsing::MATERIAL_DATA);
-            
+            _cameraConstants = new ShaderConstantBufferStruct <DefaultCameraConstants> (iplatform, platform::ShaderConstBufferUsing::CAMERA_DATA);
+            _materialConstants = new ShaderConstantBufferStruct <DefaultMaterialConstants> (iplatform, platform::ShaderConstBufferUsing::MATERIAL_DATA);
+            _lightingConstants = new ShaderConstantBufferStruct <DefaultLightingConstants> (iplatform, platform::ShaderConstBufferUsing::LIGHTING_DATA);
+
             _simpleShader = iresMan.getResource(FG_SIMPLE_SHADER);
             _ifaceShader = iresMan.getResource(FG_IFACE_SHADER);
         }
@@ -47,15 +49,18 @@ namespace fg {
             _platform->rdSetDepthParams(_defDepthParams);
             _platform->rdSetRasterizerParams(_defRasterizerParams);
 
-            _frameConstants->data.lightsCount = 0;
+            _lightingConstants->data.lightCount = 0;
             _frameConstants->data.environmentIntensity = 0.5f;
-            _frameConstants->data.mipCount = float(FG_DEFAULT_ENV_MIPS);
-            _frameConstants->data.camPosition = _camera->getPosition();
-            _frameConstants->data.camViewProj = _camera->getVPMatrix();
+            _frameConstants->data.environmentMipCount = float(FG_DEFAULT_ENV_MIPS);
             _frameConstants->data.screenWidth = _platform->getScreenWidth();
             _frameConstants->data.screenHeight = _platform->getScreenHeight();
-            _frameConstants->data.pointOfInterest = _camera->getInterestPoint();
+            _cameraConstants->data.camPosition = _camera->getPosition();
+            _cameraConstants->data.camViewProj = _camera->getVPMatrix();
+            _cameraConstants->data.pointOfInterest = _camera->getInterestPoint();
+            
+            _lightingConstants->updateAndApply();
             _frameConstants->updateAndApply();
+            _cameraConstants->updateAndApply();
             
             if (_simpleShader) {
                 _platform->rdSetShader(_simpleShader->getPlatformObject());
@@ -67,8 +72,8 @@ namespace fg {
             _screenPixelsPerCoordSystemPixelsY = scaleY;
             _systemDpiPerCoordSystemDpi = dpiFactor;
 
-            _frameConstants->data.camViewProj.identity();
-            _frameConstants->updateAndApply();
+            _cameraConstants->data.camViewProj.identity();
+            _cameraConstants->updateAndApply();
             
             _platform->rdSetBlenderParams(_defLerpBlenderParams);
             _platform->rdSetSampler(platform::TextureSlot::TEXTURE0, _defLinearSampler);
@@ -82,9 +87,14 @@ namespace fg {
             delete _camera;
             delete _frameConstants;
             delete _materialConstants;
-            
+            delete _lightingConstants;
+            delete _cameraConstants;
+
             _camera = nullptr;
             _frameConstants = nullptr;
+            _lightingConstants = nullptr;
+            _cameraConstants = nullptr;
+
             _materialConstants = nullptr;
             _platform = nullptr;
             _simpleShader = nullptr;
@@ -151,8 +161,16 @@ namespace fg {
             return _frameConstants->data;
         }
 
+        DefaultCameraConstants &RenderSupport::defCameraConst() {
+            return _cameraConstants->data;
+        }
+
         DefaultMaterialConstants &RenderSupport::defMaterialConst() {
             return _materialConstants->data;
+        }
+
+        DefaultLightingConstants &RenderSupport::defLightingConst() {
+            return _lightingConstants->data;
         }
         
         InstanceDataDefault &RenderSupport::defInstanceData() {
@@ -163,8 +181,16 @@ namespace fg {
             _frameConstants->updateAndApply();
         }
 
+        void RenderSupport::defCameraConstApplyChanges() {
+            _cameraConstants->updateAndApply();
+        }
+
         void RenderSupport::defMaterialConstApplyChanges() {
             _materialConstants->updateAndApply();
+        }
+
+        void RenderSupport::defLightingConstApplyChanges() {
+            _lightingConstants->updateAndApply();
         }
 
         void RenderSupport::defInstanceDataApplyChanges() {
@@ -207,8 +233,8 @@ namespace fg {
         }
 
         void RenderSupport::setMaterialParams(const math::p3d &metalness, float glossiness, const platform::TextureCubeInterface *irr, const platform::TextureCubeInterface *env) {
-            _platform->rdSetTextureCube(fg::platform::TextureSlot::TEXTURE6, irr);
-            _platform->rdSetTextureCube(fg::platform::TextureSlot::TEXTURE7, env);
+            _platform->rdSetTextureCube(fg::platform::TextureSlot(FG_ENV_TEXTURES_BASE + 0), irr);
+            _platform->rdSetTextureCube(fg::platform::TextureSlot(FG_ENV_TEXTURES_BASE + 1), env);
             _materialConstants->data.metalness = metalness;
             _materialConstants->data.glossiness = glossiness;
             _materialConstants->updateAndApply();

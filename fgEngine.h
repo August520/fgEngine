@@ -9,6 +9,8 @@
 
 typedef long long int64;
 
+#include "engineDefines.h"
+
 #include "utility.h"
 #include "LuaScript.h"
 #include "string.h"
@@ -40,14 +42,6 @@ typedef long long int64;
 
 #include "input/InputManager.h"
 #include "pointers.h"
-
-#ifdef FG_RESOURCE_LONGNAME
-#define FG_SIMPLE_SHADER "bin/simpleModel.shader"
-#define FG_IFACE_SHADER = "bin/displayObject.shader"
-#else
-#define FG_SIMPLE_SHADER "simpleModel.shader"
-#define FG_IFACE_SHADER "displayObject.shader"
-#endif
 
 namespace fg {
     enum class HorizontalAnchor {

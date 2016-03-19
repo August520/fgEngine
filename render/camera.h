@@ -11,7 +11,7 @@ namespace fg {
             void  setLookAtByRight(const math::p3d &pos, const math::p3d &target, const math::p3d &rightVector) override;
             void  setOrientation(const math::quat &q) override;
             void  setTransform(const math::m4x4 &transform) override;
-            void  setPerspectiveProj(float fov, float zNear, float zFar) override;
+            void  setPerspectiveProj(float fovY, float zNear, float zFar) override;
             void  setInterestOffset(float offset) override;
 
             const math::p3d &getPosition() const override;
@@ -40,7 +40,7 @@ namespace fg {
             math::p3d   _rightVector;
             math::p3d   _forwardVector;
             
-            float       _fov = 90.0f;
+            float       _fov = 50.0f;
             float       _zNear = 0.1f;
             float       _zFar = 100.0f;
             float       _interestOffset = 0.0f;

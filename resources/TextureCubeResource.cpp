@@ -50,6 +50,10 @@ namespace fg {
             if (_loadingState != ResourceLoadingState::INVALID) {
                 _self = api.rdCreateTextureCube(_imgData, _sz, _mipsCount, _format);
             }
+
+            for (unsigned c = 0; c < 6; c++) {
+                delete _imgData[c];                
+            }
             
             return false;
         }

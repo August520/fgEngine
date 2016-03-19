@@ -11,7 +11,6 @@ namespace fg {
             void update();
             void apply();
             void updateAndApply();
-            void release();
 
         protected:
             platform::PlatformInterface &_platform;
@@ -44,11 +43,6 @@ namespace fg {
         template <typename BASE> void ShaderConstantBufferStruct <BASE>::updateAndApply() {
             _self->update(&data);
             _platform.rdSetShaderConstBuffer(_self);
-        }
-
-        template <typename BASE> void ShaderConstantBufferStruct <BASE>::release() {
-            _self->release();
-            _self = nullptr;
         }
     }
 }

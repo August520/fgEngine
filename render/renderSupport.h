@@ -22,11 +22,15 @@ namespace fg {
             platform::SamplerInterface           *getDefaultLinearSampler() override;
 
             DefaultFrameConstants     &defFrameConst() override;
+            DefaultCameraConstants    &defCameraConst() override;
             DefaultMaterialConstants  &defMaterialConst() override;
+            DefaultLightingConstants  &defLightingConst() override;
             InstanceDataDefault       &defInstanceData() override;
             
             void defFrameConstApplyChanges() override;
+            void defCameraConstApplyChanges() override;
             void defMaterialConstApplyChanges() override;
+            void defLightingConstApplyChanges() override;
             void defInstanceDataApplyChanges() override;
 
             void setShader(const resources::ShaderResourceInterface *shader) override;
@@ -67,7 +71,9 @@ namespace fg {
             platform::InstanceDataInterface      *_defDisplayObjectInstanceData = nullptr;
 
             ShaderConstantBufferStruct           <DefaultFrameConstants> *_frameConstants = nullptr;
+            ShaderConstantBufferStruct           <DefaultCameraConstants>  *_cameraConstants = nullptr;
             ShaderConstantBufferStruct           <DefaultMaterialConstants>  *_materialConstants = nullptr;
+            ShaderConstantBufferStruct           <DefaultLightingConstants>  *_lightingConstants = nullptr;
             
             const resources::ShaderResourceInterface *_simpleShader = nullptr;
             const resources::ShaderResourceInterface *_ifaceShader = nullptr;

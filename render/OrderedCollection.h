@@ -26,6 +26,10 @@ namespace fg {
                 return _cur;
             }
 
+            const COMPONENT_TYPE *get(unsigned index) const {
+                return _elements[index];
+            }
+
             unsigned count() const {
                 return _elements.size();
             }

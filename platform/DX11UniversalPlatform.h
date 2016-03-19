@@ -24,24 +24,28 @@ namespace fg {
     namespace dx11 {
         class UniversalPlatform;
         class PlatformObject {
+            friend class UniversalPlatform;
+
         public:
-            PlatformObject(UniversalPlatform *owner) : _owner(owner) {}
             virtual ~PlatformObject() {}
             virtual bool valid() const = 0;
 
         protected:
+            PlatformObject(UniversalPlatform *owner) : _owner(owner) {}
+            
             UniversalPlatform *_owner;
 
         private:
-            PlatformObject(const PlatformObject &);
-            PlatformObject &operator =(const PlatformObject &);
+            PlatformObject(const PlatformObject &) {}
+            PlatformObject &operator =(const PlatformObject &) {}
         };
 
         //---
 
         class UniversalSoundEmitter : public PlatformObject, public platform::SoundEmitterInterface {
+            friend class UniversalPlatform;
+
         public:
-            UniversalSoundEmitter(UniversalPlatform *owner, unsigned sampleRate, unsigned channels);
             ~UniversalSoundEmitter() override;
 
             void pushBuffer(const char *data, unsigned samples) override;
@@ -55,6 +59,8 @@ namespace fg {
             bool valid() const override;
 
         protected:
+            UniversalSoundEmitter(UniversalPlatform *owner, unsigned sampleRate, unsigned channels);
+            
             struct SoundCallback : public IXAudio2VoiceCallback {
                 UniversalSoundEmitter *emitter;
                 SoundCallback(UniversalSoundEmitter *iemitter) : emitter(iemitter) {}
@@ -68,10 +74,10 @@ namespace fg {
                 void __stdcall OnVoiceError(void *pBufferContext, HRESULT Error) {}
             };
 
-            void (*_userCallback)(void *);
-            void *_userPointer;
+            void (*_userCallback)(void *) = nullptr;
+            void *_userPointer = nullptr;
 
-            IXAudio2SourceVoice  *_nativeVoice;
+            IXAudio2SourceVoice  *_nativeVoice = nullptr;
             SoundCallback        _sndCallback;
             unsigned             _channels;
         };
@@ -79,8 +85,9 @@ namespace fg {
         //---
 
         class UniversalVertexBuffer : public PlatformObject, public platform::VertexBufferInterface {
+            friend class UniversalPlatform;
+
         public:
-            UniversalVertexBuffer(UniversalPlatform *owner, platform::VertexType type, unsigned vcount, bool isDynamic, const void *data);
             ~UniversalVertexBuffer() override;
 
             void *lock() override;
@@ -94,7 +101,9 @@ namespace fg {
             bool valid() const override;
             
         protected:
-            ID3D11Buffer   *_self;
+            UniversalVertexBuffer(UniversalPlatform *owner, platform::VertexType type, unsigned vcount, bool isDynamic, const void *data);
+            
+            ID3D11Buffer   *_self = nullptr;
             unsigned       _vcount;
             unsigned       _vsize;
         };
@@ -102,8 +111,9 @@ namespace fg {
         //--- 
 
         class UniversalIndexedVertexBuffer : public PlatformObject, public platform::IndexedVertexBufferInterface {
+            friend class UniversalPlatform;
+
         public:
-            UniversalIndexedVertexBuffer(UniversalPlatform *owner, platform::VertexType type, unsigned vcount, unsigned icount, bool isDynamic, const void *vdata, const void *idata);
             ~UniversalIndexedVertexBuffer() override;
 
             void *lockVertices() override;
@@ -121,8 +131,10 @@ namespace fg {
             unsigned       getVertexSize() const;
 
         protected:
-            ID3D11Buffer   *_vbuffer;
-            ID3D11Buffer   *_ibuffer;
+            UniversalIndexedVertexBuffer(UniversalPlatform *owner, platform::VertexType type, unsigned vcount, unsigned icount, bool isDynamic, const void *vdata, const void *idata);
+
+            ID3D11Buffer   *_vbuffer = nullptr;
+            ID3D11Buffer   *_ibuffer = nullptr;
             unsigned       _vcount;
             unsigned       _vsize;
             unsigned       _icount;
@@ -131,8 +143,9 @@ namespace fg {
         //---
 
         class UniversalInstanceData : public PlatformObject, public platform::InstanceDataInterface {
+            friend class UniversalPlatform;
+
         public:
-            UniversalInstanceData(UniversalPlatform *owner, platform::InstanceDataType type, unsigned instanceCount);
             ~UniversalInstanceData() override;
 
             void *lock() override;
@@ -146,7 +159,9 @@ namespace fg {
             unsigned       getInstanceDataSize() const;
 
         protected:
-            ID3D11Buffer   *_instanceBuffer;
+            UniversalInstanceData(UniversalPlatform *owner, platform::InstanceDataType type, unsigned instanceCount);
+
+            ID3D11Buffer   *_instanceBuffer = nullptr;
             unsigned       _instanceCount;
             unsigned       _instanceDataSize;
         };
@@ -154,95 +169,112 @@ namespace fg {
         //--- 
 
         class UniversalRasterizerParams : public PlatformObject, public platform::RasterizerParamsInterface {
+            friend class UniversalPlatform;
+
         public:
-            UniversalRasterizerParams(UniversalPlatform *owner, platform::CullMode cull);
             ~UniversalRasterizerParams() override;
 
             void release() override;
-            void set();
+            void set() const;
             bool valid() const override;
 
         protected:
-            ID3D11RasterizerState *_self;
+            UniversalRasterizerParams(UniversalPlatform *owner, platform::CullMode cull);
+
+            ID3D11RasterizerState *_self = nullptr;
         };
 
         //--- 
 
         class UniversalBlenderParams : public PlatformObject, public platform::BlenderParamsInterface {
+            friend class UniversalPlatform;
+
         public:
-            UniversalBlenderParams(UniversalPlatform *owner, const platform::BlendMode blendMode);
             ~UniversalBlenderParams() override;
 
             void release() override;
-            void set();
+            void set() const;
             bool valid() const override;
 
         protected:
-            ID3D11BlendState *_self;
+            UniversalBlenderParams(UniversalPlatform *owner, const platform::BlendMode blendMode);
+
+            ID3D11BlendState *_self = nullptr;
         };
 
         //--- 
 
         class UniversalDepthParams : public PlatformObject, public platform::DepthParamsInterface {
+            friend class UniversalPlatform;
+
         public:
-            UniversalDepthParams(UniversalPlatform *owner, bool depthEnabled, platform::DepthFunc compareFunc, bool depthWriteEnabled);
             ~UniversalDepthParams() override;
 
             void release() override;
-            void set();
+            void set() const;
             bool valid() const override;
 
         protected:
-            ID3D11DepthStencilState *_self;
+            UniversalDepthParams(UniversalPlatform *owner, bool depthEnabled, platform::DepthFunc compareFunc, bool depthWriteEnabled);
+
+            ID3D11DepthStencilState *_self = nullptr;
         };
 
         //--- 
 
         class UniversalSampler : public PlatformObject, public platform::SamplerInterface {
+            friend class UniversalPlatform;
+
         public:
-            UniversalSampler(UniversalPlatform *owner, platform::TextureFilter filter, platform::TextureAddressMode addrMode, float minLod, float bias);
             ~UniversalSampler() override;
 
             void release() override;
-            void set(platform::TextureSlot slot);
+            void set(platform::TextureSlot slot) const;
             bool valid() const override;
 
         protected:
-            ID3D11SamplerState *_self;
+            UniversalSampler(UniversalPlatform *owner, platform::TextureFilter filter, platform::TextureAddressMode addrMode, float minLod, float bias);
+
+            ID3D11SamplerState *_self = nullptr;
         };
 
         //--- 
 
         class UniversalShader : public PlatformObject, public platform::ShaderInterface {
+            friend class UniversalPlatform;
+
         public:
-            UniversalShader(UniversalPlatform *owner, const byteinput &binary);
             ~UniversalShader() override;
 
             void release() override;
-            void set();
+            void set() const;
             bool valid() const override;
 
         protected:
-            ID3D11VertexShader  *_vsh;
-            ID3D11PixelShader   *_psh;
-            ID3D11InputLayout   *_layout;
+            UniversalShader(UniversalPlatform *owner, const byteinput &binary);
+
+            ID3D11VertexShader  *_vsh = nullptr;
+            ID3D11PixelShader   *_psh = nullptr;
+            ID3D11InputLayout   *_layout = nullptr;
         };
         
         //---
 
         class UniversalShaderConstantBuffer : public PlatformObject, public platform::ShaderConstantBufferInterface {
+            friend class UniversalPlatform;
+
         public:
-            UniversalShaderConstantBuffer(UniversalPlatform *owner, platform::ShaderConstBufferUsing appoint, unsigned byteWidth);
             ~UniversalShaderConstantBuffer() override;
 
             void update(const void *data, unsigned byteWidth) override;
-
             void release() override;
-            void set();
+            void set() const;
             bool valid() const override;
 
         protected:
-            ID3D11Buffer   *_self;
+            UniversalShaderConstantBuffer(UniversalPlatform *owner, platform::ShaderConstBufferUsing appoint, unsigned byteWidth);
+
+            ID3D11Buffer   *_self = nullptr;
             unsigned       _inputIndex;
             unsigned       _bytewidth;
         };
@@ -251,12 +283,10 @@ namespace fg {
 
         class UniversalTexture2D : public PlatformObject, public platform::Texture2DInterface {
             friend class UniversalRenderTarget;
+            friend class UniversalCubeRenderTarget;
             friend class UniversalPlatform;
 
         public:
-            UniversalTexture2D();
-            UniversalTexture2D(UniversalPlatform *owner, unsigned char * const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount, platform::TextureFormat format);
-            UniversalTexture2D(UniversalPlatform *owner, platform::TextureFormat fmt, unsigned originWidth, unsigned originHeight, unsigned mipCount);
             ~UniversalTexture2D() override;
 
             unsigned getWidth() const override;
@@ -264,39 +294,44 @@ namespace fg {
             unsigned getMipCount() const override;
 
             void  update(unsigned mip, unsigned x, unsigned y, unsigned w, unsigned h, void *src) override;
-            
             void  release() override;
             bool  valid() const override;
-            void  set(platform::TextureSlot slot);
+            void  set(platform::TextureSlot slot) const;
 
         protected:
-            unsigned  _width;
-            unsigned  _height;
-            unsigned  _mipCount;
+            UniversalTexture2D();
+            UniversalTexture2D(UniversalPlatform *owner, unsigned char * const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount, platform::TextureFormat format);
+            UniversalTexture2D(UniversalPlatform *owner, platform::TextureFormat fmt, unsigned originWidth, unsigned originHeight, unsigned mipCount);
 
-            platform::TextureFormat   _format;
-            ID3D11Texture2D           *_self;
-            ID3D11ShaderResourceView  *_view;
+            unsigned  _width = 0;
+            unsigned  _height = 0;
+            unsigned  _mipCount = 0;
+
+            platform::TextureFormat   _format = platform::TextureFormat::UNKNOWN;
+            ID3D11Texture2D           *_self = nullptr;
+            ID3D11ShaderResourceView  *_view = nullptr;
         };
 
         //---
 
         class UniversalTextureCube : public PlatformObject, public platform::TextureCubeInterface {
-            friend class UniversalRenderTarget;
+            friend class UniversalCubeRenderTarget;
             friend class UniversalPlatform;
 
         public:
-            UniversalTextureCube(UniversalPlatform *owner, unsigned char **imgMipsBinaryData[6], unsigned originSize, unsigned mipCount, platform::TextureFormat format);
             ~UniversalTextureCube() override;
 
             void  release() override;
             bool  valid() const override;
-            void  set(platform::TextureSlot slot);
+            void  set(platform::TextureSlot slot) const;
 
         protected:
-            platform::TextureFormat   _format;
-            ID3D11Texture2D           *_self;
-            ID3D11ShaderResourceView  *_view;
+            UniversalTextureCube();
+            UniversalTextureCube(UniversalPlatform *owner, unsigned char **imgMipsBinaryData[6], unsigned originSize, unsigned mipCount, platform::TextureFormat format);
+
+            platform::TextureFormat   _format = platform::TextureFormat::UNKNOWN;
+            ID3D11Texture2D           *_self = nullptr;
+            ID3D11ShaderResourceView  *_view = nullptr;
         };
 
         //---
@@ -305,26 +340,60 @@ namespace fg {
             friend class UniversalPlatform;
 
         public:
-            UniversalRenderTarget(UniversalPlatform *owner);
-            UniversalRenderTarget(UniversalPlatform *owner, unsigned colorTargetCount, unsigned originWidth, unsigned originHeight);
             ~UniversalRenderTarget() override;
 
-            platform::Texture2DInterface *getDepthBuffer() override;
-            platform::Texture2DInterface *getRenderBuffer(unsigned index) override;
+            const platform::Texture2DInterface *getDepthBuffer() const override;
+            const platform::Texture2DInterface *getRenderBuffer(unsigned index) const override;
+            
             unsigned getRenderBufferCount() const override;
+            unsigned getWidth() const override;
+            unsigned getHeight() const override;
 
             void  release() override;
             bool  valid() const override;
-            void  set();
 
         protected:
-            unsigned _colorTargetCount;
+            UniversalRenderTarget(UniversalPlatform *owner);
+            UniversalRenderTarget(UniversalPlatform *owner, unsigned colorTargetCount, unsigned originWidth, unsigned originHeight, platform::RenderTargetType type);
 
-            UniversalTexture2D  _renderTexture[platform::RENDERTARGETS_MAX];
+            platform::RenderTargetType _type = platform::RenderTargetType::Normal;
+            unsigned _colorTargetCount = 0;
+            unsigned _width  = 0;
+            unsigned _height = 0;
+
+            UniversalTexture2D  _renderTextures[platform::RENDERTARGETS_MAX];
             UniversalTexture2D  _depthTexture;
 
-            ID3D11RenderTargetView  *_rtView[platform::RENDERTARGETS_MAX];
-            ID3D11DepthStencilView  *_depthView;
+            ID3D11RenderTargetView  *_rtViews[platform::RENDERTARGETS_MAX];
+            ID3D11DepthStencilView  *_depthView = nullptr;
+        };
+
+        //---
+
+        class UniversalCubeRenderTarget : public PlatformObject, public platform::CubeRenderTargetInterface {
+            friend class UniversalPlatform;
+
+        public:
+            ~UniversalCubeRenderTarget() override;
+
+            const platform::Texture2DInterface   *getDepthBuffer() const override;
+            const platform::TextureCubeInterface *getRenderBuffer() const override;
+            unsigned getSize() const override;
+            
+            void  release() override;
+            bool  valid() const override;
+
+        protected:
+            UniversalCubeRenderTarget(UniversalPlatform *owner, unsigned originSize, platform::RenderTargetType type);
+
+            platform::RenderTargetType _type = platform::RenderTargetType::Normal;
+            unsigned _size = 0;
+
+            UniversalTextureCube  _renderCube;
+            UniversalTexture2D    _depthTexture;
+
+            ID3D11RenderTargetView  *_rtViews[6];
+            ID3D11DepthStencilView  *_depthView = nullptr;
         };
 
         //---
@@ -337,10 +406,10 @@ namespace fg {
 
         class UniversalPlatform : public platform::EnginePlatformInterface {
         public:
-            ID3D11Device1         *_device = nullptr;
-            ID3D11DeviceContext1  *_context = nullptr;
-            IDXGISwapChain1       *_swapChain = nullptr;
-            IXAudio2              *_audio = nullptr;
+            ID3D11Device1         *device = nullptr;
+            ID3D11DeviceContext1  *context = nullptr;
+            IDXGISwapChain1       *swapChain = nullptr;
+            IXAudio2              *audio = nullptr;
 
             UniversalPlatform(const diag::LogInterface &log);
 
@@ -383,13 +452,15 @@ namespace fg {
             platform::Texture2DInterface             *rdCreateTexture2D(unsigned char * const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount, platform::TextureFormat fmt) override;
             platform::Texture2DInterface             *rdCreateTexture2D(platform::TextureFormat format, unsigned originWidth, unsigned originHeight, unsigned mipCount) override;
             platform::TextureCubeInterface           *rdCreateTextureCube(unsigned char **imgMipsBinaryData[6], unsigned originSize, unsigned mipCount, platform::TextureFormat fmt) override;
-            platform::RenderTargetInterface          *rdCreateRenderTarget(unsigned colorTargetCount, unsigned originWidth, unsigned originHeight) override;
+            platform::RenderTargetInterface          *rdCreateRenderTarget(unsigned colorTargetCount, unsigned originWidth, unsigned originHeight, platform::RenderTargetType type) override;
+            platform::CubeRenderTargetInterface      *rdCreateCubeRenderTarget(unsigned originSize, platform::RenderTargetType type) override;
             platform::RenderTargetInterface          *rdGetDefaultRenderTarget() override;
 
             void  rdClearCurrentDepthBuffer(float depth = 1.0f) override;
             void  rdClearCurrentColorBuffer(const fg::color &c = fg::color(0.0f, 0.0f, 0.0f, 0.0f)) override;
 
             void  rdSetRenderTarget(const platform::RenderTargetInterface *rt) override;
+            void  rdSetCubeRenderTarget(const platform::CubeRenderTargetInterface *rt, unsigned faceIndex) override;
             void  rdSetShader(const platform::ShaderInterface *shader) override;
             void  rdSetRasterizerParams(const platform::RasterizerParamsInterface *params) override;
             void  rdSetBlenderParams(const platform::BlenderParamsInterface *params) override;
@@ -407,22 +478,26 @@ namespace fg {
             bool  isInited() const override;
 
         protected:
-            const diag::LogInterface &_log;
+            const diag::LogInterface   &_log;
+            IXAudio2MasteringVoice     *_mastering = nullptr;
+            UniversalSampler           *_defSampler = nullptr;
+            UniversalRenderTarget      _defRenderTarget = nullptr;
+            Agile                      <CoreWindow ^> _window = nullptr;
+            Agile                      <SwapChainPanel ^> _swapChainPanel = nullptr;
+            platform::Orientation      _orientation = platform::Orientation::ALBUM;
+            math::m3x3                 _inputTransform;
 
-            IXAudio2MasteringVoice   *_mastering = nullptr;
-            UniversalRenderTarget    *_curRenderTarget = nullptr;
-            UniversalSampler         *_defSampler = nullptr;
-            UniversalRenderTarget    _defRenderTarget = nullptr;
-            Agile                    <CoreWindow ^> _window;
-            Agile                    <SwapChainPanel ^> _swapChainPanel;
-            platform::Orientation    _orientation = platform::Orientation::ALBUM;
-            math::m3x3               _inputTransform;
-            
-            float      _nativeWidth;
-            float      _nativeHeight;
+            unsigned int _curRTWidth = 1;
+            unsigned int _curRTHeight = 1;
+            unsigned int _curRTColorTargetCount = 1;
+            ID3D11RenderTargetView *_curRTColorViews[platform::RENDERTARGETS_MAX];
+            ID3D11DepthStencilView *_curRTDepthView;
+
+            float      _nativeWidth = 1.0f;
+            float      _nativeHeight = 1.0f;
             float      _lastTextureWidth[platform::TEXTURE_UNITS_MAX];
             float      _lastTextureHeight[platform::TEXTURE_UNITS_MAX];
-            unsigned   _syncInterval;
+            unsigned   _syncInterval = 0;
 
             void _initDevice();
             void _initDefaultRenderTarget();

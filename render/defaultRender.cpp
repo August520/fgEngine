@@ -17,10 +17,36 @@ namespace fg {
             _environments[3] = ((resources::TextureCubeResourceInterface *)api.resources.getResource("defaultEnvironment3.cubemap"))->getPlatformObject();
             _environments[4] = ((resources::TextureCubeResourceInterface *)api.resources.getResource("defaultEnvironment4.cubemap"))->getPlatformObject();
             _environments[5] = ((resources::TextureCubeResourceInterface *)api.resources.getResource("defaultEnvironment5.cubemap"))->getPlatformObject();
+
+            _shadowRasterizer = api.platform.rdCreateRasterizerParams(platform::CullMode::BACK);
+            _shadowBlend = api.platform.rdCreateBlenderParams(platform::BlendMode::MIN_VALUE);
+            _additionalConstants = new ShaderConstantBufferStruct <AdditionalData> (api.platform, platform::ShaderConstBufferUsing::ADDITIONAL_DATA);
+
+            for (unsigned i = 0; i < FG_DEFAULT_LIGHTS_MAX; i++) {
+                _shadowCubeRT[i] = api.platform.rdCreateCubeRenderTarget(256, platform::RenderTargetType::OnlyColorNullDepth);
+            }
         }
 
         void DefaultRender::destroy() {
-
+            if (_shadowBlend) {
+                _shadowBlend->release();
+                _shadowBlend = nullptr;
+            }
+            if (_shadowRasterizer) {
+                _shadowRasterizer->release();
+                _shadowRasterizer = nullptr;
+            }
+            if (_additionalConstants) {
+                delete _additionalConstants;
+                _additionalConstants = nullptr;
+            }
+        
+            for (unsigned i = 0; i < FG_DEFAULT_LIGHTS_MAX; i++) {
+                if (_shadowCubeRT[i]) {
+                    _shadowCubeRT[i]->release();
+                    _shadowCubeRT[i] = nullptr;
+                }
+            }
         }
 
         void DefaultRender::update(float frameTimeMs, RenderAPI &api) {
@@ -35,30 +61,89 @@ namespace fg {
         }
 
         void DefaultRender::draw3D(SceneCompositionInterface &sceneComposition, RenderAPI &api) {
-            api.platform.rdSetRenderTarget(api.platform.rdGetDefaultRenderTarget());
-            api.platform.rdClearCurrentDepthBuffer();
-            api.platform.rdClearCurrentColorBuffer(fg::color(0.2f, 0.2f, 0.2f, 1.0f));
-            api.rendering.debugDrawAxis();
-
-            //--- LIGHTS ---
-
-            auto &pointLights = sceneComposition.getPointLightEnumerator();
-            api.rendering.defFrameConst().lightsCount = std::min(FG_DEFAULT_LIGHTS_MAX, pointLights.count());
-
-            for (unsigned i = 0; i < api.rendering.defFrameConst().lightsCount && pointLights.next(); i++) {
-                math::p3d pos  = pointLights.get()->getPosition();
-                float distance = pointLights.get()->getDistance();
-                
-                api.rendering.defFrameConst().lightPosAndDistances[i] = math::p4d(pos.x, pos.y, pos.z, distance);
-                api.rendering.defFrameConst().lightColors[i] = pointLights.get()->getColor();
-            }
-
-            api.rendering.defFrameConstApplyChanges();
-
-            //--- REGULAR MESHES ---
-
             auto &regularMeshes = sceneComposition.getRegularMeshEnumerator();
 
+            //--- LIGHTS & SHADOWS ---
+
+            auto &pointLights = sceneComposition.getPointLightEnumerator();
+            api.rendering.defLightingConst().lightCount = std::min(FG_DEFAULT_LIGHTS_MAX, pointLights.count());
+            api.rendering.defLightingConst().shadowSpreadFactor = 0.8f;
+
+            api.platform.rdSetSampler(platform::TextureSlot::TEXTURE0, api.rendering.getDefaultPointSampler());
+            api.platform.rdSetRasterizerParams(_shadowRasterizer);
+            api.platform.rdSetBlenderParams(_shadowBlend);
+            api.rendering.setShader(api.resources.getResource("depthR32FModel.shader"));
+
+            static const math::p3d cubeFdDirs[] = {
+                math::p3d(-1, 0, 0), math::p3d(1, 0, 0),
+                math::p3d(0, -1, 0), math::p3d(0, 1, 0),
+                math::p3d(0, 0, -1), math::p3d(0, 0, 1),
+            };
+            static const math::p3d cubeUpDirs[] = {
+                math::p3d(0, 1, 0), math::p3d(0, 1, 0),
+                math::p3d(0, 0, -1), math::p3d(0, 0, 1),
+                math::p3d(0, 1, 0), math::p3d(0, 1, 0)};
+
+            for (unsigned i = 0; i < api.rendering.defLightingConst().lightCount && pointLights.next(); i++) { //
+                math::p3d pos = pointLights.get(i)->getPosition();
+                float distance = pointLights.get(i)->getDistance();
+
+                api.rendering.defLightingConst().lightPosAndDistances[i] = math::p4d(pos.x, pos.y, pos.z, distance);
+                api.rendering.defLightingConst().lightColors[i] = pointLights.get(i)->getColor();
+
+                _additionalConstants->data.lightPositionAndDistance = math::p4d(pos.x, pos.y, pos.z, distance);
+                _additionalConstants->updateAndApply();
+
+                for (unsigned c = 0; c < 6; c++) {
+                    regularMeshes.resetIteration();
+
+                    api.platform.rdSetCubeRenderTarget(_shadowCubeRT[i], c);
+                    api.platform.rdClearCurrentColorBuffer(color(1.0f, 1.0f, 1.0f, 1.0f));
+                    
+                    math::m4x4 cubeSideProj, cubeSideView;
+                    cubeSideProj.perspectiveFovLH(0.5f * M_PI, 1.0f, 0.1f, 20.0f);
+                    cubeSideView.lookAt(pos, pos + cubeFdDirs[c], cubeUpDirs[c]);
+
+                    api.rendering.defCameraConst().camViewProj = cubeSideView * cubeSideProj;
+                    api.rendering.defCameraConstApplyChanges();
+
+                    while (regularMeshes.next()) {
+                        const object3d::Model3DInterface::MeshComponentInterface *component = regularMeshes.get();
+
+                        if (component->isVisible()) {
+                            api.rendering.defInstanceData().rgba = color();
+                            api.rendering.defInstanceData().modelTransform = component->getFullTransform();
+                            api.rendering.defInstanceDataApplyChanges();
+                            api.rendering.drawMesh(component->getMesh());
+                        }
+                    }
+                }
+            }
+            
+            api.rendering.defLightingConstApplyChanges();
+            api.platform.rdSetRenderTarget(api.platform.rdGetDefaultRenderTarget());
+            
+            //--- REGULAR MESHES ---
+
+            api.platform.rdClearCurrentDepthBuffer();
+            api.platform.rdClearCurrentColorBuffer();
+
+            for (unsigned i = 0; i < api.rendering.defLightingConst().lightCount; i++) {
+                api.platform.rdSetTextureCube(platform::TextureSlot(FG_SHADOW_TEXTURES_BASE + i), _shadowCubeRT[i]->getRenderBuffer());
+            }
+
+            api.platform.rdSetBlenderParams(api.rendering.getDefaultLerpBlenderParams());
+            api.platform.rdSetRasterizerParams(api.rendering.getDefaultRasterizerParams());
+            api.platform.rdSetSampler(platform::TextureSlot::TEXTURE0, api.rendering.getDefaultLinearSampler());
+            
+            api.rendering.getCamera().set(api.gameCamera);
+            api.rendering.defCameraConst().camViewProj = api.rendering.getCamera().getVPMatrix();
+            api.rendering.defCameraConstApplyChanges();
+                      
+            //api.rendering.debugDrawAxis();
+
+            regularMeshes.resetIteration();
+            
             while (regularMeshes.next()) {
                 const object3d::Model3DInterface::MeshComponentInterface *component = regularMeshes.get();
 
@@ -75,13 +160,12 @@ namespace fg {
 
                     unsigned envIndex = std::min(unsigned(component->getMaterialGlossiness() * float(FG_DEFAULT_ENV_MIPS)), FG_DEFAULT_ENV_MIPS - 1);
                     api.rendering.setMaterialParams(component->getMaterialMetalness(), component->getMaterialGlossiness(), _irradiance, _environments[envIndex]);
-                    api.rendering.defInstanceData().rgba = fg::color();
+                    api.rendering.defInstanceData().rgba = color();
                     api.rendering.defInstanceData().modelTransform = component->getFullTransform();
                     api.rendering.defInstanceDataApplyChanges();
                     api.rendering.setShader(component->getShader());
                     api.rendering.drawMesh(component->getMesh());
                 }
-
             }
 
         }

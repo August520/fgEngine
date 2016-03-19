@@ -1,28 +1,33 @@
 
 namespace fg {    
     namespace render {
-        const unsigned FG_SKIN_MATRIX_MAX = 32;
-        const unsigned FG_DEFAULT_LIGHTS_MAX = 3;
-
         struct DefaultFrameConstants {
-            math::m4x4  camViewProj;
-            math::p3d   camPosition;
-            unsigned    lightsCount;
-            math::p4d   lightPosAndDistances[FG_DEFAULT_LIGHTS_MAX];
-            fg::color   lightColors[FG_DEFAULT_LIGHTS_MAX];
-            math::p3d   pointOfInterest;
             float       screenWidth;
             float       screenHeight;
             float       environmentIntensity;
-            float       mipCount;
-            float       received;
+            float       environmentMipCount;
+        };
+
+        struct DefaultCameraConstants {
+            math::m4x4  camViewProj;
+            math::p4d   camPosition;
+            math::p4d   pointOfInterest;
         };
 
         struct DefaultMaterialConstants {
             math::p3d   metalness;
             float       glossiness;
         };
-        
+
+        struct DefaultLightingConstants {
+            math::p4d   lightPosAndDistances[FG_DEFAULT_LIGHTS_MAX];
+            fg::color   lightColors[FG_DEFAULT_LIGHTS_MAX];
+            unsigned    lightCount;
+            float       shadowSpreadFactor;
+            float       received0;
+            float       received1;
+        };
+
         //---
 
         class CameraInterface {
@@ -34,7 +39,7 @@ namespace fg {
             virtual void  setLookAtByRight(const math::p3d &pos, const math::p3d &target, const math::p3d &rightVector) = 0;
             virtual void  setOrientation(const math::quat &q) = 0;
             virtual void  setTransform(const math::m4x4 &transform) = 0;
-            virtual void  setPerspectiveProj(float fov, float zNear, float zFar) = 0;
+            virtual void  setPerspectiveProj(float fovY, float zNear, float zFar) = 0;
             virtual void  setInterestOffset(float offset) = 0;
 
             virtual const math::p3d &getPosition() const = 0;
@@ -101,11 +106,15 @@ namespace fg {
             virtual platform::SamplerInterface           *getDefaultLinearSampler() = 0;
             
             virtual DefaultFrameConstants     &defFrameConst() = 0;
+            virtual DefaultCameraConstants    &defCameraConst() = 0;
             virtual DefaultMaterialConstants  &defMaterialConst() = 0;
+            virtual DefaultLightingConstants  &defLightingConst() = 0;
             virtual InstanceDataDefault       &defInstanceData() = 0;
             
             virtual void defFrameConstApplyChanges() = 0;
+            virtual void defCameraConstApplyChanges() = 0;
             virtual void defMaterialConstApplyChanges() = 0;
+            virtual void defLightingConstApplyChanges() = 0;
             virtual void defInstanceDataApplyChanges() = 0;
 
             virtual void setShader(const resources::ShaderResourceInterface *shader) = 0;

@@ -172,14 +172,24 @@ void m4x4::lookAt(const p3d &eye, const p3d &at, const p3d &up){
     _41 = -tmpx.dot(eye), _42 = -tmpy.dot(eye), _43 = -tmpz.dot(eye), _44 = 1.0f;
 }
 
-void m4x4::perspectiveFov(float fovY, float aspect, float zNear, float zFar){
-    float yS = 1.0f / tanf(fovY * 0.5f);
+void m4x4::perspectiveFovRH(float fovY, float aspect, float zNear, float zFar){
+    float yS = 1.0f / tanf(fovY * 0.5f); 
     float xS = yS / aspect;
 
     _11 = xS; _12 = _13 = _14 = 0.0f;
     _22 = yS; _21 = _23 = _24 = 0.0f;
     _31 = _32 = 0.0f; _33 = zFar / (zNear - zFar); _34 = -1.0f;
     _41 = _42 = 0.0f; _43 = (zNear * zFar) / (zNear - zFar); _44 = 0.0f; 
+}
+
+void m4x4::perspectiveFovLH(float fovY, float aspect, float zNear, float zFar) {
+    float yS = 1.0f / tanf(fovY * 0.5f);
+    float xS = yS / aspect;
+
+    _11 = xS; _12 = _13 = _14 = 0.0f;
+    _22 = yS; _21 = _23 = _24 = 0.0f;
+    _31 = _32 = 0.0f; _33 = zFar / (zFar - zNear); _34 = 1.0f;
+    _41 = _42 = 0.0f; _43 = -(zNear * zFar) / (zFar - zNear); _44 = 0.0f;
 }
 
 m4x4 m4x4::operator *(const m4x4 &m) const{

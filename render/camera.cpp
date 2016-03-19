@@ -72,8 +72,8 @@ namespace fg {
             updateMatrix();
         }
         
-        void Camera::setPerspectiveProj(float fov, float zNear, float zFar) {
-            _fov = fov;
+        void Camera::setPerspectiveProj(float fovY, float zNear, float zFar) {
+            _fov = fovY;
             _zNear = zNear;
             _zFar = zFar;
             updateMatrix();
@@ -151,7 +151,7 @@ namespace fg {
         void Camera::updateMatrix() {
             float aspect = _platform.getCurrentRTWidth() / _platform.getCurrentRTHeight();
             _viewMatrix.lookAt(_position, _target, _upVector);
-            _projMatrix.perspectiveFov(_fov / 180.0f * float(M_PI) * 0.5f, aspect, _zNear, _zFar);
+            _projMatrix.perspectiveFovRH(_fov / 180.0f * float(M_PI), aspect, _zNear, _zFar);
 
             _upVector = math::p3d(_viewMatrix._12, _viewMatrix._22, _viewMatrix._32);
             _rightVector = math::p3d(_viewMatrix._11, _viewMatrix._21, _viewMatrix._31);

@@ -19,8 +19,6 @@ namespace fg {
             sizeof(InstanceDataDisplayObject),
         };
 
-        unsigned __texturePixelSizes[] = {4, 1};
-
         struct NativeLayoutComponent {
             DXGI_FORMAT  format;
             unsigned int size;
@@ -63,10 +61,6 @@ namespace fg {
         //---
 
         UniversalSoundEmitter::UniversalSoundEmitter(UniversalPlatform *owner, unsigned sampleRate, unsigned channels) : PlatformObject(owner), _sndCallback(this) {
-            _userCallback = nullptr;
-            _userPointer = nullptr;
-            _nativeVoice = nullptr;
-
             WAVEFORMATEX format = {0};
             
             format.wFormatTag = WAVE_FORMAT_PCM;
@@ -76,7 +70,8 @@ namespace fg {
             format.nBlockAlign = 2 * channels;
             format.wBitsPerSample = 16;
 
-            _owner->_audio->CreateSourceVoice(&_nativeVoice, &format, 0, XAUDIO2_DEFAULT_FREQ_RATIO, &_sndCallback);
+            _channels = channels;
+            _owner->audio->CreateSourceVoice(&_nativeVoice, &format, 0, XAUDIO2_DEFAULT_FREQ_RATIO, &_sndCallback);
         }
 
         void UniversalSoundEmitter::SoundCallback::OnBufferEnd(void *pBufferContext) {
@@ -149,9 +144,7 @@ namespace fg {
             dsc.MiscFlags = 0;
 
             resdata.pSysMem = data;
-
-            _self = nullptr;
-            _owner->_device->CreateBuffer(&dsc, isDynamic ? nullptr : &resdata, &_self);
+            _owner->device->CreateBuffer(&dsc, isDynamic ? nullptr : &resdata, &_self);
         }
 
         UniversalVertexBuffer::~UniversalVertexBuffer() {
@@ -160,12 +153,12 @@ namespace fg {
 
         void *UniversalVertexBuffer::lock() {
             D3D11_MAPPED_SUBRESOURCE mapres = {0};
-            _owner->_context->Map(_self, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapres);
+            _owner->context->Map(_self, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapres);
             return mapres.pData;
         }
 
         void UniversalVertexBuffer::unlock() {
-            _owner->_context->Unmap(_self, 0);
+            _owner->context->Unmap(_self, 0);
         }
 
         void UniversalVertexBuffer::release() {
@@ -200,9 +193,6 @@ namespace fg {
             _vcount = vcount;
             _icount = icount;
             _vsize = __vertexSizes[unsigned(type)];
-            
-            _vbuffer = nullptr;
-            _ibuffer = nullptr;
 
             dsc.Usage = isDynamic ? D3D11_USAGE_DYNAMIC : D3D11_USAGE_IMMUTABLE;
             dsc.CPUAccessFlags = isDynamic ? D3D11_CPU_ACCESS_WRITE : 0;
@@ -211,12 +201,12 @@ namespace fg {
             dsc.ByteWidth = _vcount * _vsize;
             dsc.BindFlags = D3D11_BIND_VERTEX_BUFFER;            
             resdata.pSysMem = vdata;
-            _owner->_device->CreateBuffer(&dsc, isDynamic ? nullptr : &resdata, &_vbuffer);
+            _owner->device->CreateBuffer(&dsc, isDynamic ? nullptr : &resdata, &_vbuffer);
 
             dsc.ByteWidth = _icount * sizeof(unsigned short);
             dsc.BindFlags = D3D11_BIND_INDEX_BUFFER;
             resdata.pSysMem = idata;
-            _owner->_device->CreateBuffer(&dsc, isDynamic ? nullptr : &resdata, &_ibuffer);
+            _owner->device->CreateBuffer(&dsc, isDynamic ? nullptr : &resdata, &_ibuffer);
         }
 
         UniversalIndexedVertexBuffer::~UniversalIndexedVertexBuffer() {
@@ -225,22 +215,22 @@ namespace fg {
 
         void *UniversalIndexedVertexBuffer::lockVertices() {
             D3D11_MAPPED_SUBRESOURCE mapres = {0};
-            _owner->_context->Map(_vbuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapres);
+            _owner->context->Map(_vbuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapres);
             return mapres.pData;
         }
 
         void *UniversalIndexedVertexBuffer::lockIndices() {
             D3D11_MAPPED_SUBRESOURCE mapres = {0};
-            _owner->_context->Map(_ibuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapres);
+            _owner->context->Map(_ibuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapres);
             return mapres.pData;
         }
 
         void UniversalIndexedVertexBuffer::unlockVertices() {
-            _owner->_context->Unmap(_vbuffer, 0);
+            _owner->context->Unmap(_vbuffer, 0);
         }
 
         void UniversalIndexedVertexBuffer::unlockIndices() {
-            _owner->_context->Unmap(_ibuffer, 0);
+            _owner->context->Unmap(_ibuffer, 0);
         }
 
         void UniversalIndexedVertexBuffer::release() {
@@ -280,7 +270,7 @@ namespace fg {
         //---
 
         UniversalInstanceData::UniversalInstanceData(UniversalPlatform *owner, platform::InstanceDataType type, unsigned instanceCount) : PlatformObject(owner) {
-            D3D11_BUFFER_DESC       dsc;
+            D3D11_BUFFER_DESC dsc;
 
             _instanceDataSize = sizeof(InstanceDataDefault);
             _instanceCount = instanceCount;
@@ -291,8 +281,7 @@ namespace fg {
             dsc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
             dsc.MiscFlags = 0;
 
-            _instanceBuffer = nullptr;
-            _owner->_device->CreateBuffer(&dsc, nullptr, &_instanceBuffer);
+            _owner->device->CreateBuffer(&dsc, nullptr, &_instanceBuffer);
         }
 
         UniversalInstanceData::~UniversalInstanceData() {
@@ -301,23 +290,23 @@ namespace fg {
 
         void *UniversalInstanceData::lock() {
             D3D11_MAPPED_SUBRESOURCE mapres = {0};
-            _owner->_context->Map(_instanceBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapres);
+            _owner->context->Map(_instanceBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapres);
             return mapres.pData;
         }
 
         void UniversalInstanceData::unlock() {
-            _owner->_context->Unmap(_instanceBuffer, 0);
+            _owner->context->Unmap(_instanceBuffer, 0);
         }
 
         void UniversalInstanceData::update(const void *data, unsigned instanceCount) {
             D3D11_MAPPED_SUBRESOURCE mapres = {0};
-            _owner->_context->Map(_instanceBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapres);
+            _owner->context->Map(_instanceBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapres);
 
             if(mapres.pData) {
                 memcpy(mapres.pData, data, instanceCount * _instanceDataSize);
             }
 
-            _owner->_context->Unmap(_instanceBuffer, 0);
+            _owner->context->Unmap(_instanceBuffer, 0);
         }
 
         void UniversalInstanceData::release() {
@@ -342,8 +331,6 @@ namespace fg {
         //---
 
         UniversalRasterizerParams::UniversalRasterizerParams(UniversalPlatform *owner, platform::CullMode cull) : PlatformObject(owner) {
-            _self = nullptr;
-
             D3D11_RASTERIZER_DESC rdesc;
             rdesc.FillMode = D3D11_FILL_SOLID;
             rdesc.CullMode = __nativeCullMode[(unsigned int)cull];
@@ -356,7 +343,7 @@ namespace fg {
             rdesc.MultisampleEnable = FALSE;
             rdesc.AntialiasedLineEnable = FALSE;
 
-            _owner->_device->CreateRasterizerState(&rdesc, &_self);
+            _owner->device->CreateRasterizerState(&rdesc, &_self);
         }
 
         UniversalRasterizerParams::~UniversalRasterizerParams() {
@@ -370,8 +357,8 @@ namespace fg {
             delete this;
         }
 
-        void UniversalRasterizerParams::set() {
-            _owner->_context->RSSetState(_self);
+        void UniversalRasterizerParams::set() const {
+            _owner->context->RSSetState(_self);
         }
 
         bool UniversalRasterizerParams::valid() const {
@@ -381,22 +368,41 @@ namespace fg {
         //--- 
 
         UniversalBlenderParams::UniversalBlenderParams(UniversalPlatform *owner, const platform::BlendMode blendMode) : PlatformObject(owner) {
-            _self = nullptr;
-
             D3D11_BLEND_DESC bdesc;
             bdesc.AlphaToCoverageEnable = FALSE;
             bdesc.IndependentBlendEnable = FALSE;
-
             bdesc.RenderTarget[0].BlendEnable = blendMode != platform::BlendMode::NOBLEND;
-            bdesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
-            bdesc.RenderTarget[0].DestBlend = blendMode == platform::BlendMode::ALPHA_ADD ? D3D11_BLEND_ONE : D3D11_BLEND_INV_SRC_ALPHA;
-            bdesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+            
+            if (blendMode == platform::BlendMode::ALPHA_ADD) {
+                bdesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+                bdesc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
+                bdesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+                bdesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+            }
+            else if (blendMode == platform::BlendMode::ALPHA_LERP) {
+                bdesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+                bdesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+                bdesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+                bdesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+            }
+            else if (blendMode == platform::BlendMode::MIN_VALUE) {
+                bdesc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
+                bdesc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
+                bdesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_MIN;
+                bdesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_MIN;
+            }
+            else if (blendMode == platform::BlendMode::MAX_VALUE) {
+                bdesc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
+                bdesc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
+                bdesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_MAX;
+                bdesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_MAX;
+            }
+            
             bdesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
             bdesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
-            bdesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
             bdesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
             
-            _owner->_device->CreateBlendState(&bdesc, &_self);
+            _owner->device->CreateBlendState(&bdesc, &_self);
         }
 
         UniversalBlenderParams::~UniversalBlenderParams() {
@@ -407,11 +413,12 @@ namespace fg {
             if(_self) {
                 _self->Release();
             }
+
             delete this;
         }
 
-        void UniversalBlenderParams::set() {
-            _owner->_context->OMSetBlendState(_self, nullptr, 0xffffffff);
+        void UniversalBlenderParams::set() const {
+            _owner->context->OMSetBlendState(_self, nullptr, 0xffffffff);
         }
 
         bool UniversalBlenderParams::valid() const {
@@ -421,8 +428,6 @@ namespace fg {
         //--- 
 
         UniversalDepthParams::UniversalDepthParams(UniversalPlatform *owner, bool depthEnabled, platform::DepthFunc compareFunc, bool depthWriteEnabled) : PlatformObject(owner) {
-            _self = nullptr;
-
             D3D11_DEPTH_STENCIL_DESC ddesc;
             ddesc.DepthEnable = depthEnabled ? TRUE : FALSE;
             ddesc.DepthWriteMask = depthWriteEnabled ? D3D11_DEPTH_WRITE_MASK_ALL : D3D11_DEPTH_WRITE_MASK_ZERO;
@@ -435,7 +440,7 @@ namespace fg {
             ddesc.BackFace.StencilPassOp = ddesc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
             ddesc.BackFace.StencilFailOp = ddesc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
 
-            _owner->_device->CreateDepthStencilState(&ddesc, &_self);
+            _owner->device->CreateDepthStencilState(&ddesc, &_self);
         }
 
         UniversalDepthParams::~UniversalDepthParams() {
@@ -449,8 +454,8 @@ namespace fg {
             delete this;
         }
 
-        void UniversalDepthParams::set() {
-            _owner->_context->OMSetDepthStencilState(_self, 1);
+        void UniversalDepthParams::set() const {
+            _owner->context->OMSetDepthStencilState(_self, 1);
         }
 
         bool UniversalDepthParams::valid() const {
@@ -460,8 +465,6 @@ namespace fg {
         //--- 
         
         UniversalSampler::UniversalSampler(UniversalPlatform *owner, platform::TextureFilter filter, platform::TextureAddressMode addrMode, float minLod, float bias) : PlatformObject(owner) {
-            _self = nullptr;
-
             D3D11_SAMPLER_DESC sdesc;
             sdesc.Filter = __nativeFilter[(unsigned)filter];
             sdesc.AddressU = __nativeAddrMode[(unsigned int)addrMode];
@@ -478,13 +481,14 @@ namespace fg {
             sdesc.MaxLOD = FLT_MAX;
 
             if(filter == platform::TextureFilter::SHADOW) {
+                sdesc.MaxAnisotropy = 0;
                 sdesc.MipLODBias = 0.0f;
                 sdesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
                 sdesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
                 sdesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
             }
 
-            _owner->_device->CreateSamplerState(&sdesc, &_self);
+            _owner->device->CreateSamplerState(&sdesc, &_self);
         }
 
         UniversalSampler::~UniversalSampler() {
@@ -498,8 +502,8 @@ namespace fg {
             delete this;
         }
 
-        void UniversalSampler::set(platform::TextureSlot slot) {
-            _owner->_context->PSSetSamplers(unsigned(slot), 1, &_self);
+        void UniversalSampler::set(platform::TextureSlot slot) const {
+            _owner->context->PSSetSamplers(unsigned(slot), 1, &_self);
         }
 
         bool UniversalSampler::valid() const {
@@ -509,10 +513,6 @@ namespace fg {
         //--- 
 
         UniversalShader::UniversalShader(UniversalPlatform *owner, const byteinput &binary) : PlatformObject(owner) {
-            _vsh = nullptr;
-            _psh = nullptr;
-            _layout = nullptr;
-
             binary.readDword(); // received flags
 
             unsigned  offsetPerVertexData = 0;
@@ -557,10 +557,10 @@ namespace fg {
                 }
             }
 
-            if(_owner->_device->CreateVertexShader(binary.getCurrentPtr(), vsLength, nullptr, &_vsh) == S_OK) {
-                if(_owner->_device->CreateInputLayout(inputDesc, inputCount, binary.getCurrentPtr(), vsLength, &_layout) == S_OK) {
+            if(_owner->device->CreateVertexShader(binary.getCurrentPtr(), vsLength, nullptr, &_vsh) == S_OK) {
+                if(_owner->device->CreateInputLayout(inputDesc, inputCount, binary.getCurrentPtr(), vsLength, &_layout) == S_OK) {
                     binary.startOff(binary.getOffset() + vsLength);
-                    _owner->_device->CreatePixelShader(binary.getCurrentPtr(), psLength, nullptr, &_psh);
+                    _owner->device->CreatePixelShader(binary.getCurrentPtr(), psLength, nullptr, &_psh);
                 }
             }
         }
@@ -582,10 +582,10 @@ namespace fg {
             delete this;
         }
 
-        void UniversalShader::set() {
-            _owner->_context->IASetInputLayout(_layout);
-            _owner->_context->VSSetShader(_vsh, nullptr, 0);
-            _owner->_context->PSSetShader(_psh, nullptr, 0);
+        void UniversalShader::set() const {
+            _owner->context->IASetInputLayout(_layout);
+            _owner->context->VSSetShader(_vsh, nullptr, 0);
+            _owner->context->PSSetShader(_psh, nullptr, 0);
         }
 
         bool UniversalShader::valid() const {
@@ -595,7 +595,6 @@ namespace fg {
         //--- 
 
         UniversalShaderConstantBuffer::UniversalShaderConstantBuffer(UniversalPlatform *owner, platform::ShaderConstBufferUsing appoint, unsigned byteWidth) : PlatformObject(owner) {
-            _self = nullptr;
             _inputIndex = unsigned(appoint);
             _bytewidth = byteWidth;
 
@@ -606,7 +605,7 @@ namespace fg {
             dsc.CPUAccessFlags = 0; //D3D11_CPU_ACCESS_WRITE
             dsc.MiscFlags = 0;
 
-            _owner->_device->CreateBuffer(&dsc, nullptr, &_self);
+            _owner->device->CreateBuffer(&dsc, nullptr, &_self);
         }
 
         UniversalShaderConstantBuffer::~UniversalShaderConstantBuffer() {
@@ -622,7 +621,7 @@ namespace fg {
             tbox.top = 0;
             tbox.bottom = 1;
 
-            _owner->_context->UpdateSubresource(_self, 0, byteWidth ? &tbox : nullptr, data, 0, 0);
+            _owner->context->UpdateSubresource(_self, 0, byteWidth ? &tbox : nullptr, data, 0, 0);
             
             //D3D11_MAPPED_SUBRESOURCE mapres = {0};
             //_owner->_context->Map(_self, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapres);
@@ -641,11 +640,11 @@ namespace fg {
             delete this;
         }
 
-        void UniversalShaderConstantBuffer::set() {
-            _owner->_context->VSSetConstantBuffers(_inputIndex, 1, &_self);
+        void UniversalShaderConstantBuffer::set() const {
+            _owner->context->VSSetConstantBuffers(_inputIndex, 1, &_self);
             
             if(_inputIndex != unsigned(platform::ShaderConstBufferUsing::SKIN_DATA)) {
-                _owner->_context->PSSetConstantBuffers(_inputIndex, 1, &_self);
+                _owner->context->PSSetConstantBuffers(_inputIndex, 1, &_self);
             }
         }
 
@@ -656,17 +655,10 @@ namespace fg {
         //---
 
         UniversalTexture2D::UniversalTexture2D() : PlatformObject(nullptr) {
-            _self = nullptr;
-            _view = nullptr;
-            _width = 0;
-            _height = 0;
-            _mipCount = 0;
-            _format = platform::TextureFormat::UNKNOWN;
+
         }
 
         UniversalTexture2D::UniversalTexture2D(UniversalPlatform *owner, unsigned char * const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount, platform::TextureFormat format) : PlatformObject(owner) {
-            _self = nullptr;
-            _view = nullptr;
             _width = originWidth;
             _height = originHeight;
             _mipCount = mipCount;
@@ -693,19 +685,17 @@ namespace fg {
                 subResData[i].SysMemSlicePitch = 0;
             }
 
-            if (_owner->_device->CreateTexture2D(&texDesc, subResData, &_self) == S_OK) {
+            if (_owner->device->CreateTexture2D(&texDesc, subResData, &_self) == S_OK) {
                 D3D11_SHADER_RESOURCE_VIEW_DESC texViewDesc = {texDesc.Format};
                 texViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
                 texViewDesc.Texture2D.MipLevels = texDesc.MipLevels;
                 texViewDesc.Texture2D.MostDetailedMip = 0;
 
-                _owner->_device->CreateShaderResourceView(_self, &texViewDesc, &_view);
+                _owner->device->CreateShaderResourceView(_self, &texViewDesc, &_view);
             }
         }
 
         UniversalTexture2D::UniversalTexture2D(UniversalPlatform *owner, platform::TextureFormat fmt, unsigned originWidth, unsigned originHeight, unsigned mipCount) : PlatformObject(owner) {
-            _self = nullptr;
-            _view = nullptr;
             _width = originWidth;
             _height = originHeight;
             _mipCount = mipCount;
@@ -724,13 +714,13 @@ namespace fg {
             texDesc.SampleDesc.Quality = 0;
             texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 
-            if(_owner->_device->CreateTexture2D(&texDesc, nullptr, &_self) == S_OK) {
+            if(_owner->device->CreateTexture2D(&texDesc, nullptr, &_self) == S_OK) {
                 D3D11_SHADER_RESOURCE_VIEW_DESC texViewDesc = {texDesc.Format};
                 texViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
                 texViewDesc.Texture2D.MipLevels = texDesc.MipLevels;
                 texViewDesc.Texture2D.MostDetailedMip = 0;
 
-                _owner->_device->CreateShaderResourceView(_self, &texViewDesc, &_view);
+                _owner->device->CreateShaderResourceView(_self, &texViewDesc, &_view);
             }
         }
 
@@ -751,14 +741,16 @@ namespace fg {
         }
 
         void UniversalTexture2D::update(unsigned mip, unsigned x, unsigned y, unsigned w, unsigned h, void *src) {
-            D3D11_BOX tbox;
-            tbox.back = 1;
-            tbox.front = 0;
-            tbox.left = x;
-            tbox.right = x + w;
-            tbox.top = y;
-            tbox.bottom = y + h;
-            _owner->_context->UpdateSubresource(_self, mip, &tbox, src, __getTexture2DPitch(_format, w), 0);
+            if (_owner) {
+                D3D11_BOX tbox;
+                tbox.back = 1;
+                tbox.front = 0;
+                tbox.left = x;
+                tbox.right = x + w;
+                tbox.top = y;
+                tbox.bottom = y + h;
+                _owner->context->UpdateSubresource(_self, mip, &tbox, src, __getTexture2DPitch(_format, w), 0);
+            }
         }
 
         void UniversalTexture2D::release() {
@@ -775,15 +767,19 @@ namespace fg {
             return _view != nullptr;
         }
 
-        void UniversalTexture2D::set(platform::TextureSlot slot) {
-            _owner->_context->PSSetShaderResources(unsigned(slot), 1, &_view);
+        void UniversalTexture2D::set(platform::TextureSlot slot) const {
+            if (_owner) {
+                _owner->context->PSSetShaderResources(unsigned(slot), 1, &_view);
+            }
         }
 
         //---
+        
+        UniversalTextureCube::UniversalTextureCube() : PlatformObject(nullptr) {
+
+        }
 
         UniversalTextureCube::UniversalTextureCube(UniversalPlatform *owner, unsigned char **imgMipsBinaryData[6], unsigned originSize, unsigned mipCount, platform::TextureFormat format) : PlatformObject(owner) {
-            _self = nullptr;
-            _view = nullptr;
             _format = format;
 
             D3D11_TEXTURE2D_DESC      texDesc = {0};
@@ -814,13 +810,13 @@ namespace fg {
                 }
             }
 
-            if (_owner->_device->CreateTexture2D(&texDesc, subResData, &_self) == S_OK) {
+            if (_owner->device->CreateTexture2D(&texDesc, subResData, &_self) == S_OK) {
                 D3D11_SHADER_RESOURCE_VIEW_DESC texViewDesc = {texDesc.Format};
                 texViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
                 texViewDesc.TextureCube.MipLevels = texDesc.MipLevels;
                 texViewDesc.TextureCube.MostDetailedMip = 0;
 
-                _owner->_device->CreateShaderResourceView(_self, &texViewDesc, &_view);
+                _owner->device->CreateShaderResourceView(_self, &texViewDesc, &_view);
             }
         }
 
@@ -842,107 +838,110 @@ namespace fg {
             return _view != nullptr;
         }
 
-        void UniversalTextureCube::set(platform::TextureSlot slot) {
-            _owner->_context->PSSetShaderResources(unsigned(slot), 1, &_view);
+        void UniversalTextureCube::set(platform::TextureSlot slot) const {
+            if (_owner) {
+                _owner->context->PSSetShaderResources(unsigned(slot), 1, &_view);
+            }
         }
 
         //---
 
         UniversalRenderTarget::UniversalRenderTarget(UniversalPlatform *owner) : PlatformObject(owner) {
-            _depthView = nullptr;
             _depthTexture._owner = owner;
             
             for(unsigned i = 0; i < platform::RENDERTARGETS_MAX; i++) {
-                _rtView[i] = nullptr;
-                _renderTexture[i]._owner = owner;
+                _rtViews[i] = nullptr;
+                _renderTextures[i]._owner = owner;
             }
-
-            _colorTargetCount = 0;
         }
 
-        UniversalRenderTarget::UniversalRenderTarget(UniversalPlatform *owner, unsigned colorTargetCount, unsigned originWidth, unsigned originHeight) : PlatformObject(owner) {
-            _depthView = nullptr;
-            _colorTargetCount = colorTargetCount;
+        UniversalRenderTarget::UniversalRenderTarget(UniversalPlatform *owner, unsigned colorTargetCount, unsigned originWidth, unsigned originHeight, platform::RenderTargetType type) : PlatformObject(owner) {
             _depthTexture._owner = owner;
+            _type = type;
+            _width = originWidth;
+            _height = originHeight;
             
             for(unsigned i = 0; i < platform::RENDERTARGETS_MAX; i++) {
-                _rtView[i] = nullptr;
-                _renderTexture[i]._owner = owner;
+                _rtViews[i] = nullptr;
+                _renderTextures[i]._owner = owner;
             }
 
             if(colorTargetCount > platform::RENDERTARGETS_MAX) {
                 return;
             }
             
-            DXGI_FORMAT  depthTexFormat = DXGI_FORMAT_R24G8_TYPELESS; //DXGI_FORMAT_R32_TYPELESS; dx10
-            DXGI_FORMAT  depthFormat = DXGI_FORMAT_D24_UNORM_S8_UINT; //DXGI_FORMAT_D32_FLOAT;
+            if (_type == platform::RenderTargetType::Normal || _type == platform::RenderTargetType::OnlyColorNullDepth || _type == platform::RenderTargetType::OnlyColorPrevDepth) {
+                _colorTargetCount = colorTargetCount;
 
-            D3D11_TEXTURE2D_DESC  texDesc = {0}; 
-            texDesc.Width = originWidth;
-            texDesc.Height = originHeight;
-            texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-            texDesc.Usage = D3D11_USAGE_DEFAULT;
-            texDesc.CPUAccessFlags = 0;
-            texDesc.MiscFlags = 0;
-            texDesc.MipLevels = 1;
-            texDesc.ArraySize = 1;
-            texDesc.SampleDesc.Count = 1;
-            texDesc.SampleDesc.Quality = 0;
-            texDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+                D3D11_TEXTURE2D_DESC  texDesc = {0};
+                texDesc.Width = originWidth;
+                texDesc.Height = originHeight;
+                texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+                texDesc.Usage = D3D11_USAGE_DEFAULT;
+                texDesc.CPUAccessFlags = 0;
+                texDesc.MiscFlags = 0;
+                texDesc.MipLevels = 1;
+                texDesc.ArraySize = 1;
+                texDesc.SampleDesc.Count = 1;
+                texDesc.SampleDesc.Quality = 0;
+                texDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
 
-            D3D11_SHADER_RESOURCE_VIEW_DESC texShaderViewDesc = {texDesc.Format};
-            texShaderViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-            texShaderViewDesc.Texture2D.MipLevels = 1;
-            texShaderViewDesc.Texture2D.MostDetailedMip = 0;
+                D3D11_SHADER_RESOURCE_VIEW_DESC texShaderViewDesc = {texDesc.Format};
+                texShaderViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+                texShaderViewDesc.Texture2D.MipLevels = 1;
+                texShaderViewDesc.Texture2D.MostDetailedMip = 0;
 
-            D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc = {texDesc.Format};
-            renderTargetViewDesc.Format = texDesc.Format;
-            renderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-            renderTargetViewDesc.Texture2D.MipSlice = 0;
+                D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc = {texDesc.Format};
+                renderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+                renderTargetViewDesc.Texture2D.MipSlice = 0;
 
-            _depthTexture._width = originWidth;
-            _depthTexture._height = originHeight;
-            _depthTexture._mipCount = 1;
-            _depthTexture._format = platform::TextureFormat::UNKNOWN;
+                for (unsigned i = 0; i < _colorTargetCount; i++) {
+                    _renderTextures[i]._width = originWidth;
+                    _renderTextures[i]._height = originHeight;
+                    _renderTextures[i]._mipCount = 1;
+                    _renderTextures[i]._format = platform::TextureFormat::RGBA8;
 
-            for(unsigned i = 0; i < _colorTargetCount; i++) {
-                _renderTexture[i]._width = originWidth;
-                _renderTexture[i]._height = originHeight;
-                _renderTexture[i]._mipCount = 1;
-                _renderTexture[i]._format = platform::TextureFormat::RGBA8;
-
-                if(_owner->_device->CreateTexture2D(&texDesc, nullptr, &_renderTexture[i]._self) == S_OK) {
-                    _owner->_device->CreateRenderTargetView(_renderTexture[i]._self, &renderTargetViewDesc, &_rtView[i]);                    
-                    _owner->_device->CreateShaderResourceView(_renderTexture[i]._self, &texShaderViewDesc, &_renderTexture[i]._view);
+                    if (_owner->device->CreateTexture2D(&texDesc, nullptr, &_renderTextures[i]._self) == S_OK) {
+                        _owner->device->CreateRenderTargetView(_renderTextures[i]._self, &renderTargetViewDesc, &_rtViews[i]);
+                        _owner->device->CreateShaderResourceView(_renderTextures[i]._self, &texShaderViewDesc, &_renderTextures[i]._view);
+                    }
                 }
             }
 
-            D3D11_TEXTURE2D_DESC depthTexDesc = {0};
-            depthTexDesc.Width = originWidth;
-            depthTexDesc.Height = originHeight;
-            depthTexDesc.MipLevels = 1;
-            depthTexDesc.ArraySize = 1;
-            depthTexDesc.Format = depthTexFormat;
-            depthTexDesc.SampleDesc.Count = 1;
-            depthTexDesc.SampleDesc.Quality = 0;
-            depthTexDesc.Usage = D3D11_USAGE_DEFAULT;
-            depthTexDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
-            depthTexDesc.CPUAccessFlags = 0;
-            depthTexDesc.MiscFlags = 0;
+            if (_type == platform::RenderTargetType::Normal || _type == platform::RenderTargetType::OnlyDepthNullColor || _type == platform::RenderTargetType::OnlyDepthPrevColor) {
+                _depthTexture._width = originWidth;
+                _depthTexture._height = originHeight;
+                _depthTexture._mipCount = 1;
+                
+                DXGI_FORMAT  depthTexFormat = DXGI_FORMAT_R24G8_TYPELESS; //DXGI_FORMAT_R32_TYPELESS; dx10
+                DXGI_FORMAT  depthFormat = DXGI_FORMAT_D24_UNORM_S8_UINT; //DXGI_FORMAT_D32_FLOAT;
 
-            if(_owner->_device->CreateTexture2D(&depthTexDesc, 0, &_depthTexture._self) == S_OK) {
-                D3D11_DEPTH_STENCIL_VIEW_DESC depthDesc = {depthFormat};
-                depthDesc.Format = depthFormat;
-                depthDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-                depthDesc.Texture2D.MipSlice = 0;
+                D3D11_TEXTURE2D_DESC depthTexDesc = {0};
+                depthTexDesc.Width = originWidth;
+                depthTexDesc.Height = originHeight;
+                depthTexDesc.MipLevels = 1;
+                depthTexDesc.ArraySize = 1;
+                depthTexDesc.Format = depthTexFormat;
+                depthTexDesc.SampleDesc.Count = 1;
+                depthTexDesc.SampleDesc.Quality = 0;
+                depthTexDesc.Usage = D3D11_USAGE_DEFAULT;
+                depthTexDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
+                depthTexDesc.CPUAccessFlags = 0;
+                depthTexDesc.MiscFlags = 0;
 
-                D3D11_SHADER_RESOURCE_VIEW_DESC depthShaderViewDesc = {DXGI_FORMAT_R24_UNORM_X8_TYPELESS};
-                depthShaderViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-                depthShaderViewDesc.Texture2D.MipLevels = 1; //!
-                depthShaderViewDesc.Texture2D.MostDetailedMip = 0;
+                if (_owner->device->CreateTexture2D(&depthTexDesc, 0, &_depthTexture._self) == S_OK) {
+                    D3D11_DEPTH_STENCIL_VIEW_DESC depthDesc = {depthFormat};
+                    depthDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+                    depthDesc.Texture2D.MipSlice = 0;
 
-                _owner->_device->CreateDepthStencilView(_depthTexture._self, &depthDesc, &_depthView);
-                _owner->_device->CreateShaderResourceView(_depthTexture._self, &depthShaderViewDesc, &_depthTexture._view);
+                    D3D11_SHADER_RESOURCE_VIEW_DESC depthShaderViewDesc = {DXGI_FORMAT_R24_UNORM_X8_TYPELESS};
+                    depthShaderViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+                    depthShaderViewDesc.Texture2D.MipLevels = 1; //!
+                    depthShaderViewDesc.Texture2D.MostDetailedMip = 0;
+
+                    _owner->device->CreateDepthStencilView(_depthTexture._self, &depthDesc, &_depthView);
+                    _owner->device->CreateShaderResourceView(_depthTexture._self, &depthShaderViewDesc, &_depthTexture._view);
+                }
             }
         }
 
@@ -950,16 +949,24 @@ namespace fg {
 
         }
 
-        platform::Texture2DInterface *UniversalRenderTarget::getDepthBuffer() {
+        const platform::Texture2DInterface *UniversalRenderTarget::getDepthBuffer() const {
             return &_depthTexture;
         }
 
-        platform::Texture2DInterface *UniversalRenderTarget::getRenderBuffer(unsigned index) {
-            return &_renderTexture[index]; 
+        const platform::Texture2DInterface *UniversalRenderTarget::getRenderBuffer(unsigned index) const {
+            return &_renderTextures[index];
         }
 
         unsigned UniversalRenderTarget::getRenderBufferCount() const {
             return _colorTargetCount;
+        }
+
+        unsigned UniversalRenderTarget::getWidth() const {
+            return _width;
+        }
+
+        unsigned UniversalRenderTarget::getHeight() const {
+            return _height;
         }
 
         void UniversalRenderTarget::release() {
@@ -970,47 +977,184 @@ namespace fg {
             }
 
             for(unsigned i = 0; i < platform::RENDERTARGETS_MAX; i++) {
-                if(_renderTexture[i]._self) {
-                    _renderTexture[i]._self->Release();
-                    _renderTexture[i]._view->Release();
+                if(_renderTextures[i]._self) {
+                    _renderTextures[i]._self->Release();
+                    _renderTextures[i]._view->Release();
                 }
 
-                if(_rtView[i]) {
-                    _rtView[i]->Release();
+                if(_rtViews[i]) {
+                    _rtViews[i]->Release();
                 }
             }
 
             delete this;
         }
 
-        void UniversalRenderTarget::set() {            
-            D3D11_VIEWPORT vp;
-            vp.TopLeftX = vp.TopLeftY = 0;
-            vp.Width = float(_renderTexture->_width);
-            vp.Height = float(_renderTexture->_height);
-            vp.MinDepth = 0.0f;
-            vp.MaxDepth = 1.0f;
+        //void UniversalRenderTarget::set() const {
+        //    D3D11_VIEWPORT vp;
+        //    vp.TopLeftX = vp.TopLeftY = 0;
+        //    vp.Width = float(_width);
+        //    vp.Height = float(_height);
+        //    vp.MinDepth = 0.0f;
+        //    vp.MaxDepth = 1.0f;
 
-            D3D11_RECT rect;
-            rect.top = 0;
-            rect.left = 0;
-            rect.right = int(_renderTexture->_width) - 1;
-            rect.bottom = int(_renderTexture->_height) - 1;
+        //    D3D11_RECT rect;
+        //    rect.top = 0;
+        //    rect.left = 0;
+        //    rect.right = int(_width) - 1;
+        //    rect.bottom = int(_height) - 1;
 
-            _owner->_context->RSSetScissorRects(1, &rect);
-            
-            _owner->_context->OMSetRenderTargets(_colorTargetCount, _rtView, _depthView);
-            _owner->_context->RSSetViewports(1, &vp);
-        }
+        //    _owner->context->RSSetScissorRects(1, &rect);            
+        //    _owner->context->OMSetRenderTargets(_colorTargetCount, _rtViews, _depthView);
+        //    _owner->context->RSSetViewports(1, &vp);
+        //}
         
         bool UniversalRenderTarget::valid() const {
-            if(_depthView == nullptr) {
-                return false;
+            if (_type == platform::RenderTargetType::Normal || _type == platform::RenderTargetType::OnlyDepthNullColor || _type == platform::RenderTargetType::OnlyDepthPrevColor) {
+                if (_depthView == nullptr) {
+                    return false;
+                }
             }
 
             for(unsigned i = 0; i < _colorTargetCount; i++) {
-                if(_rtView[i] == nullptr) {
+                if(_rtViews[i] == nullptr) {
                     return false;
+                }
+            }
+
+            return true;
+        }
+
+        //---
+
+        UniversalCubeRenderTarget::UniversalCubeRenderTarget(UniversalPlatform *owner, unsigned originSize, platform::RenderTargetType type) : PlatformObject(owner) {
+            _depthTexture._owner = owner;
+            _renderCube._owner = owner;
+            _type = type;
+            _size = originSize;
+            
+            for (unsigned i = 0; i < 6; i++) {
+                _rtViews[i] = nullptr;
+            }
+
+            if (_type == platform::RenderTargetType::Normal || _type == platform::RenderTargetType::OnlyColorNullDepth || _type == platform::RenderTargetType::OnlyColorPrevDepth) {
+                D3D11_TEXTURE2D_DESC  texDesc = {0};
+                texDesc.Width = originSize;
+                texDesc.Height = originSize;
+                texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+                texDesc.Usage = D3D11_USAGE_DEFAULT;
+                texDesc.CPUAccessFlags = 0;
+                texDesc.MiscFlags = D3D11_RESOURCE_MISC_TEXTURECUBE;
+                texDesc.MipLevels = 1;
+                texDesc.ArraySize = 6;
+                texDesc.SampleDesc.Count = 1;
+                texDesc.SampleDesc.Quality = 0;
+                texDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+
+                _renderCube._format = platform::TextureFormat::RGBA8;
+
+                if (_owner->device->CreateTexture2D(&texDesc, nullptr, &_renderCube._self) == S_OK) {
+                    D3D11_SHADER_RESOURCE_VIEW_DESC texViewDesc = {texDesc.Format};
+                    texViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
+                    texViewDesc.TextureCube.MipLevels = 1;
+
+                    _owner->device->CreateShaderResourceView(_renderCube._self, &texViewDesc, &_renderCube._view);
+                
+                    D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc = {texDesc.Format};
+                    renderTargetViewDesc.Texture2DArray.ArraySize = 1;
+                    renderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DARRAY;
+
+                    for (unsigned i = 0; i < 6; i++) {
+                        renderTargetViewDesc.Texture2DArray.FirstArraySlice = i;
+                        _owner->device->CreateRenderTargetView(_renderCube._self, &renderTargetViewDesc, &_rtViews[i]);
+                    }
+                }
+            }
+
+            if (_type == platform::RenderTargetType::Normal || _type == platform::RenderTargetType::OnlyDepthNullColor || _type == platform::RenderTargetType::OnlyDepthPrevColor) {
+                _depthTexture._width = originSize;
+                _depthTexture._height = originSize;
+                _depthTexture._mipCount = 1;
+
+                DXGI_FORMAT  depthTexFormat = DXGI_FORMAT_R24G8_TYPELESS; //DXGI_FORMAT_R32_TYPELESS; dx10
+                DXGI_FORMAT  depthFormat = DXGI_FORMAT_D24_UNORM_S8_UINT; //DXGI_FORMAT_D32_FLOAT;
+
+                D3D11_TEXTURE2D_DESC depthTexDesc = {0};
+                depthTexDesc.Width = originSize;
+                depthTexDesc.Height = originSize;
+                depthTexDesc.MipLevels = 1;
+                depthTexDesc.ArraySize = 1;
+                depthTexDesc.Format = depthTexFormat;
+                depthTexDesc.SampleDesc.Count = 1;
+                depthTexDesc.SampleDesc.Quality = 0;
+                depthTexDesc.Usage = D3D11_USAGE_DEFAULT;
+                depthTexDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
+                depthTexDesc.CPUAccessFlags = 0;
+                depthTexDesc.MiscFlags = 0;
+
+                if (_owner->device->CreateTexture2D(&depthTexDesc, 0, &_depthTexture._self) == S_OK) {
+                    D3D11_DEPTH_STENCIL_VIEW_DESC depthDesc = {depthFormat};
+                    depthDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+                    depthDesc.Texture2D.MipSlice = 0;
+
+                    D3D11_SHADER_RESOURCE_VIEW_DESC depthShaderViewDesc = {DXGI_FORMAT_R24_UNORM_X8_TYPELESS};
+                    depthShaderViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+                    depthShaderViewDesc.Texture2D.MipLevels = 1; //!
+                    depthShaderViewDesc.Texture2D.MostDetailedMip = 0;
+
+                    _owner->device->CreateDepthStencilView(_depthTexture._self, &depthDesc, &_depthView);
+                    _owner->device->CreateShaderResourceView(_depthTexture._self, &depthShaderViewDesc, &_depthTexture._view);
+                }
+            }
+        }
+
+        UniversalCubeRenderTarget::~UniversalCubeRenderTarget() {
+
+        }
+
+        const platform::Texture2DInterface *UniversalCubeRenderTarget::getDepthBuffer() const {
+            return &_depthTexture;
+        }
+
+        const platform::TextureCubeInterface *UniversalCubeRenderTarget::getRenderBuffer() const {
+            return &_renderCube;
+        }
+
+        unsigned UniversalCubeRenderTarget::getSize() const {
+            return _size;
+        }
+
+        void UniversalCubeRenderTarget::release() {
+            if (_depthView) {
+                _depthView->Release();
+                _depthTexture._self->Release();
+                _depthTexture._view->Release();
+            }
+
+            if (_renderCube._self) {
+                _renderCube._self->Release();
+                _renderCube._view->Release();
+
+                for (unsigned i = 0; i < 6; i++) {
+                    _rtViews[i]->Release();
+                }
+            }
+
+            delete this;
+        }
+
+        bool UniversalCubeRenderTarget::valid() const {
+            if (_type == platform::RenderTargetType::Normal || _type == platform::RenderTargetType::OnlyDepthNullColor || _type == platform::RenderTargetType::OnlyDepthPrevColor) {
+                if (_depthView == nullptr) {
+                    return false;
+                }
+            }
+
+            if (_type == platform::RenderTargetType::Normal || _type == platform::RenderTargetType::OnlyColorNullDepth || _type == platform::RenderTargetType::OnlyColorPrevDepth) {
+                for (unsigned i = 0; i < 6; i++) {
+                    if (_rtViews[i] == nullptr) {
+                        return false;
+                    }
                 }
             }
 
@@ -1020,22 +1164,15 @@ namespace fg {
         //---
         
         UniversalPlatform::UniversalPlatform(const diag::LogInterface &log) : _log(log), _defRenderTarget(this) {
-            _device = nullptr;
-            _context = nullptr;
-            _swapChain = nullptr;
-            _defSampler = nullptr;
-            _nativeWidth = 0.0f;
-            _nativeHeight = 0.0f;
-            _syncInterval = 0;
-            _curRenderTarget = nullptr;
+
         }
         
         bool UniversalPlatform::init(const platform::InitParams &initParams) {
             UniversalInitParams &params = (UniversalInitParams &)initParams;
             //-- sound
 
-            if(XAudio2Create(&_audio, 0, XAUDIO2_DEFAULT_PROCESSOR) == S_OK) {
-                if(_audio->CreateMasteringVoice(&_mastering) != S_OK) {
+            if(XAudio2Create(&audio, 0, XAUDIO2_DEFAULT_PROCESSOR) == S_OK) {
+                if(audio->CreateMasteringVoice(&_mastering) != S_OK) {
                     _log.msgError("can't create mastering voice");
                     return false;
                 }
@@ -1073,7 +1210,7 @@ namespace fg {
             IDXGIAdapter  *adapter;
             IDXGIDevice1  *dxgiDevice = 0;
             IDXGIFactory2 *dxgiFactory;
-            _device->QueryInterface(__uuidof(IDXGIDevice1), (void **)&dxgiDevice);
+            device->QueryInterface(__uuidof(IDXGIDevice1), (void **)&dxgiDevice);
 
             dxgiDevice->GetAdapter(&adapter);
             adapter->GetParent(__uuidof(IDXGIFactory2), (void **)&dxgiFactory);
@@ -1082,7 +1219,7 @@ namespace fg {
             DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {0};
             swapChainDesc.Width = int(_nativeWidth);
             swapChainDesc.Height = int(_nativeHeight);
-            swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+            swapChainDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
             swapChainDesc.Stereo = false;
             swapChainDesc.SampleDesc.Count = 1;
             swapChainDesc.SampleDesc.Quality = 0;
@@ -1093,13 +1230,13 @@ namespace fg {
             swapChainDesc.Flags = 0;
 
             if (_window.Get() != nullptr) {
-                if(dxgiFactory->CreateSwapChainForCoreWindow(_device, (IUnknown *)params.window.Get(), &swapChainDesc, nullptr, &_swapChain) != S_OK) {
+                if(dxgiFactory->CreateSwapChainForCoreWindow(device, (IUnknown *)params.window.Get(), &swapChainDesc, nullptr, &swapChain) != S_OK) {
                     _log.msgError("can't create hardware device");
                     return false;
                 }
             }
             else if(_swapChainPanel.Get() != nullptr) {
-                if (dxgiFactory->CreateSwapChainForComposition(_device, &swapChainDesc, nullptr, &_swapChain) != S_OK) {
+                if (dxgiFactory->CreateSwapChainForComposition(device, &swapChainDesc, nullptr, &swapChain) != S_OK) {
                     _log.msgError("can't create hardware device");
                     return false;
                 }
@@ -1109,10 +1246,10 @@ namespace fg {
                 IInspectable *panelInspectable = (IInspectable *) reinterpret_cast<IInspectable *>(_swapChainPanel.Get());
                 panelInspectable->QueryInterface(__uuidof(ISwapChainPanelNative), (void **)&swapChainPanelNative);
 
-                swapChainPanelNative->SetSwapChain(_swapChain);
+                swapChainPanelNative->SetSwapChain(swapChain);
                 swapChainPanelNative->Release();
 
-                _swapChain->QueryInterface(&swapChain2);
+                swapChain->QueryInterface(&swapChain2);
 
                 DXGI_MATRIX_3X2_F scale = {0};
                 scale._11 = 1.0f / _swapChainPanel->CompositionScaleX;
@@ -1146,31 +1283,35 @@ namespace fg {
 
         void UniversalPlatform::destroy() {  
             ID3D11RenderTargetView *tt[] = {nullptr};
-            _context->OMSetRenderTargets(1, tt, nullptr);
-            _context->Flush();
-            _context->ClearState();
+            context->OMSetRenderTargets(1, tt, nullptr);
+            context->Flush();
+            context->ClearState();
             
             _defSampler->release();
             _defRenderTarget._depthTexture._view->Release();
             _defRenderTarget._depthView->Release();
-            _defRenderTarget._rtView[0]->Release();
-            _swapChain->Release();
-            _context->Release();
-            _device->Release();
+            _defRenderTarget._rtViews[0]->Release();
+
+            swapChain->Release();
+            context->Release();
+            device->Release();
+
             _defSampler = nullptr;
             _defRenderTarget._depthTexture._view = nullptr;
             _defRenderTarget._depthView = nullptr;
-            _defRenderTarget._rtView[0] = nullptr;
-            _swapChain = nullptr;
-            _context = nullptr;
-            _device = nullptr;
+            _defRenderTarget._rtViews[0] = nullptr;
+
+            swapChain = nullptr;
+            context = nullptr;
+            device = nullptr;
 
             //pDevice->QueryInterface(IID_PPV_ARGS(&pDebug));
 
             _mastering->DestroyVoice();
             _mastering = nullptr;
-            _audio->Release();
-            _audio = nullptr;
+
+            audio->Release();
+            audio = nullptr;
         }
 
         void UniversalPlatform::resize(float width, float height) {
@@ -1192,55 +1333,61 @@ namespace fg {
                 }
             }
             
-            _defRenderTarget._rtView[0]->Release();
+            _defRenderTarget._rtViews[0]->Release();
             _defRenderTarget._depthTexture._view->Release();
             _defRenderTarget._depthView->Release();
-            _context->OMSetRenderTargets(0, 0, 0);
 
-            _swapChain->ResizeBuffers(2, unsigned(_nativeWidth), unsigned(_nativeHeight), DXGI_FORMAT_R8G8B8A8_UNORM, 0);
+            context->OMSetRenderTargets(0, 0, 0);
+            swapChain->ResizeBuffers(2, unsigned(_nativeWidth), unsigned(_nativeHeight), DXGI_FORMAT_B8G8R8A8_UNORM, 0);
+            
             _initDefaultRenderTarget();
         }
 
         void UniversalPlatform::_initDevice() {
-            if (_context) {
-                _context->Release();
+            if (context) {
+                context->Release();
             }
-            if (_device) {                
-                _device->Release();
+            if (device) {                
+                device->Release();
             }
 
             ID3D11DeviceContext  *tcontext;
             ID3D11Device         *tdevice;
             D3D_FEATURE_LEVEL    featureLevel;
 
-            unsigned flags = D3D11_CREATE_DEVICE_SINGLETHREADED;
-            //unsigned flags = D3D11_CREATE_DEVICE_DEBUG; //D3D11_CREATE_DEVICE_DEBUG; //| D3D11_CREATE_DEVICE_BGRA_SUPPORT
+            unsigned flags = D3D11_CREATE_DEVICE_SINGLETHREADED | D3D11_CREATE_DEVICE_BGRA_SUPPORT;
+            //unsigned flags = D3D11_CREATE_DEVICE_DEBUG | D3D11_CREATE_DEVICE_SINGLETHREADED | D3D11_CREATE_DEVICE_BGRA_SUPPORT; //D3D11_CREATE_DEVICE_DEBUG; //| D3D11_CREATE_DEVICE_BGRA_SUPPORT
 
             D3D_FEATURE_LEVEL features[] = {
                 D3D_FEATURE_LEVEL_9_3,
                 D3D_FEATURE_LEVEL_9_2,
-                D3D_FEATURE_LEVEL_9_1
+                D3D_FEATURE_LEVEL_9_1,
             };
 
             D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, flags, features, 3, D3D11_SDK_VERSION, &tdevice, &featureLevel, &tcontext);
 
-            tdevice->QueryInterface(__uuidof(ID3D11Device1), (void **)&_device);
-            tcontext->QueryInterface(__uuidof(ID3D11DeviceContext1), (void **)&_context);
+            tdevice->QueryInterface(__uuidof(ID3D11Device1), (void **)&device);
+            tcontext->QueryInterface(__uuidof(ID3D11DeviceContext1), (void **)&context);
             tdevice->Release();
             tcontext->Release();
         }
         
         void UniversalPlatform::_initDefaultRenderTarget() {
             ID3D11Texture2D *tmptex;
-            _swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void **)&tmptex);
+            swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void **)&tmptex);
 
-            if (_device->CreateRenderTargetView(tmptex, 0, &_defRenderTarget._rtView[0]) != S_OK) {
-                _swapChain->Release();
-                _context->Release();
-                _device->Release();
-                _swapChain = nullptr;
-                _context = nullptr;
-                _device = nullptr;
+            D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB};
+            renderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+            renderTargetViewDesc.Texture2D.MipSlice = 0;
+
+            if (device->CreateRenderTargetView(tmptex, &renderTargetViewDesc, &_defRenderTarget._rtViews[0]) != S_OK) {
+                swapChain->Release();
+                context->Release();
+                device->Release();
+                swapChain = nullptr;
+                context = nullptr;
+                device = nullptr;
+
                 _log.msgError("can't create default render target");
                 return;
             }
@@ -1269,37 +1416,44 @@ namespace fg {
             depthDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
             depthDesc.Texture2D.MipSlice = 0;
 
-            if (_device->CreateTexture2D(&depthTexDesc, 0, &tmptex) != S_OK) {
-                _defRenderTarget._rtView[0]->Release();
-                _defRenderTarget._rtView[0] = nullptr;
-                _swapChain->Release();
-                _context->Release();
-                _device->Release();
-                _swapChain = nullptr;
-                _context = nullptr;
-                _device = nullptr;
+            if (device->CreateTexture2D(&depthTexDesc, 0, &tmptex) != S_OK) {
+                _defRenderTarget._rtViews[0]->Release();
+                _defRenderTarget._rtViews[0] = nullptr;
+
+                swapChain->Release();
+                context->Release();
+                device->Release();
+                swapChain = nullptr;
+                context = nullptr;
+                device = nullptr;
+
                 _log.msgError("can't create zbuffer texture");
                 return;
             }
 
-            _device->CreateDepthStencilView(tmptex, &depthDesc, &_defRenderTarget._depthView);
+            device->CreateDepthStencilView(tmptex, &depthDesc, &_defRenderTarget._depthView);
 
             D3D11_SHADER_RESOURCE_VIEW_DESC texViewDesc = { DXGI_FORMAT_R24_UNORM_X8_TYPELESS };
             texViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
             texViewDesc.Texture2D.MipLevels = 1;
             texViewDesc.Texture2D.MostDetailedMip = 0;
 
-            _device->CreateShaderResourceView(tmptex, &texViewDesc, &_defRenderTarget._depthTexture._view);
+            device->CreateShaderResourceView(tmptex, &texViewDesc, &_defRenderTarget._depthTexture._view);
             tmptex->Release();
 
+            _defRenderTarget._width = _curRTWidth = unsigned(_nativeWidth);
+            _defRenderTarget._height = _curRTHeight = unsigned(_nativeHeight);
             _defRenderTarget._depthTexture._width = unsigned(_nativeWidth);
             _defRenderTarget._depthTexture._height = unsigned(_nativeHeight);
             _defRenderTarget._depthTexture._mipCount = 1;
-            _defRenderTarget._renderTexture[0]._width = unsigned(_nativeWidth);
-            _defRenderTarget._renderTexture[0]._height = unsigned(_nativeHeight);
-            _defRenderTarget._renderTexture[0]._mipCount = 1;
+            _defRenderTarget._renderTextures[0]._width = unsigned(_nativeWidth);
+            _defRenderTarget._renderTextures[0]._height = unsigned(_nativeHeight);
+            _defRenderTarget._renderTextures[0]._mipCount = 1;
             _defRenderTarget._colorTargetCount = 1;
-            _curRenderTarget = &_defRenderTarget;
+            
+            _curRTColorTargetCount = 1;
+            _curRTColorViews[0] = _defRenderTarget._rtViews[0];
+            _curRTDepthView = _defRenderTarget._depthView;
 
             D3D11_VIEWPORT vp;
             vp.TopLeftX = 0;
@@ -1308,14 +1462,14 @@ namespace fg {
             vp.Height = _nativeHeight;
             vp.MinDepth = 0.0f;
             vp.MaxDepth = 1.0f;
-            _context->RSSetViewports(1, &vp);
+            context->RSSetViewports(1, &vp);
 
             D3D11_RECT rect;
             rect.top = 0;
             rect.left = 0;
             rect.right = int(_nativeWidth) - 1;
             rect.bottom = int(_nativeHeight) - 1;
-            _context->RSSetScissorRects(1, &rect);
+            context->RSSetScissorRects(1, &rect);
         }
         
         float UniversalPlatform::getScreenWidth() const {
@@ -1327,11 +1481,11 @@ namespace fg {
         }
 
         float UniversalPlatform::getCurrentRTWidth() const {
-            return float(_curRenderTarget->getRenderBuffer(0)->getWidth());
+            return float(_curRTWidth);
         }
 
         float UniversalPlatform::getCurrentRTHeight() const {
-            return float(_curRenderTarget->getRenderBuffer(0)->getHeight());
+            return float(_curRTHeight);
         }
 
         float UniversalPlatform::getTextureWidth(platform::TextureSlot slot) const {
@@ -1364,7 +1518,7 @@ namespace fg {
             DXGI_MODE_ROTATION rotationMode;
             DisplayInformation ^curDisplayInfo = DisplayInformation::GetForCurrentView();
 
-            _swapChain->GetRotation(&rotationMode);
+            swapChain->GetRotation(&rotationMode);
 
             if(_orientation == platform::Orientation::ALBUM) {
                 if(curDisplayInfo->CurrentOrientation == DisplayOrientations::Portrait) {
@@ -1407,7 +1561,7 @@ namespace fg {
                 }
             }
 
-            _swapChain->SetRotation(rotationMode);
+            swapChain->SetRotation(rotationMode);
         }       
 
         void UniversalPlatform::fsFormFilesList(const char *path, std::string &out) {
@@ -1711,8 +1865,8 @@ namespace fg {
             }
         }
 
-        platform::RenderTargetInterface *UniversalPlatform::rdCreateRenderTarget(unsigned colorTargetCount, unsigned originWidth, unsigned originHeight) {
-            UniversalRenderTarget *r = new UniversalRenderTarget (this, colorTargetCount, originWidth, originHeight);
+        platform::RenderTargetInterface *UniversalPlatform::rdCreateRenderTarget(unsigned colorTargetCount, unsigned originWidth, unsigned originHeight, platform::RenderTargetType type) {
+            UniversalRenderTarget *r = new UniversalRenderTarget (this, colorTargetCount, originWidth, originHeight, type);
 
             if(r->valid()) {
                 return r;
@@ -1724,77 +1878,210 @@ namespace fg {
             }
         }
 
+        platform::CubeRenderTargetInterface *UniversalPlatform::rdCreateCubeRenderTarget(unsigned originSize, platform::RenderTargetType type) {
+            UniversalCubeRenderTarget *r = new UniversalCubeRenderTarget(this, originSize, type);
+
+            if (r->valid()) {
+                return r;
+            }
+            else {
+                _log.msgError("can't create cube render target");
+                delete r;
+                return nullptr;
+            }
+        }
+
         platform::RenderTargetInterface *UniversalPlatform::rdGetDefaultRenderTarget() {
             return &_defRenderTarget;
         }
 
         void UniversalPlatform::rdClearCurrentDepthBuffer(float depth) {
-            _context->ClearDepthStencilView(_curRenderTarget->_depthView, D3D11_CLEAR_DEPTH, depth, 0);
+            context->ClearDepthStencilView(_curRTDepthView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, depth, 0);
         }
 
         void UniversalPlatform::rdClearCurrentColorBuffer(const fg::color &c) {
-            for(unsigned i = 0; i < _curRenderTarget->_colorTargetCount; i++) {
-                _context->ClearRenderTargetView(_curRenderTarget->_rtView[i], (float *)&c);
+            for (unsigned i = 0; i < _curRTColorTargetCount; i++) {
+                context->ClearRenderTargetView(_curRTColorViews[i], (float *)&c);
             }
         }
 
         void UniversalPlatform::rdSetRenderTarget(const platform::RenderTargetInterface *rt) {
-            UniversalRenderTarget *dxObject = (UniversalRenderTarget *)rt;
-            _curRenderTarget = dxObject;
-            dxObject->set();            
+            const UniversalRenderTarget *dxObject = static_cast<const UniversalRenderTarget *>(rt);
+
+            D3D11_VIEWPORT vp;
+            vp.TopLeftX = vp.TopLeftY = 0;
+            vp.Width = float(dxObject->getWidth());
+            vp.Height = float(dxObject->getHeight());
+            vp.MinDepth = 0.0f;
+            vp.MaxDepth = 1.0f;
+
+            D3D11_RECT rect;
+            rect.top = 0;
+            rect.left = 0;
+            rect.right = int(dxObject->getWidth()) - 1;
+            rect.bottom = int(dxObject->getHeight()) - 1;
+
+            context->RSSetScissorRects(1, &rect);
+            context->RSSetViewports(1, &vp);
+
+            _curRTWidth = rt->getWidth();
+            _curRTHeight = rt->getHeight();
+
+            switch (dxObject->_type) {
+                case platform::RenderTargetType::Normal:
+                    context->OMSetRenderTargets(dxObject->_colorTargetCount, dxObject->_rtViews, dxObject->_depthView);
+                    
+                    _curRTDepthView = dxObject->_depthView;
+                    _curRTColorTargetCount = dxObject->_colorTargetCount;
+
+                    for (unsigned i = 0; i < dxObject->_colorTargetCount; i++) {
+                        _curRTColorViews[i] = dxObject->_rtViews[i];
+                    }
+
+                    break;
+                case platform::RenderTargetType::OnlyColorNullDepth:
+                    context->OMSetRenderTargets(dxObject->_colorTargetCount, dxObject->_rtViews, nullptr);
+
+                    _curRTDepthView = nullptr;
+                    _curRTColorTargetCount = dxObject->_colorTargetCount;
+
+                    for (unsigned i = 0; i < dxObject->_colorTargetCount; i++) {
+                        _curRTColorViews[i] = dxObject->_rtViews[i];
+                    }
+
+                    break;
+                case platform::RenderTargetType::OnlyColorPrevDepth:
+                    context->OMSetRenderTargets(dxObject->_colorTargetCount, dxObject->_rtViews, _curRTDepthView);
+
+                    _curRTColorTargetCount = dxObject->_colorTargetCount;
+
+                    for (unsigned i = 0; i < dxObject->_colorTargetCount; i++) {
+                        _curRTColorViews[i] = dxObject->_rtViews[i];
+                    }
+
+                    break;
+                case platform::RenderTargetType::OnlyDepthNullColor:
+                    context->OMSetRenderTargets(0, nullptr, dxObject->_depthView);
+
+                    _curRTDepthView = dxObject->_depthView;
+                    _curRTColorTargetCount = 0;
+                    break;
+                case platform::RenderTargetType::OnlyDepthPrevColor:
+                    context->OMSetRenderTargets(_curRTColorTargetCount, _curRTColorViews, dxObject->_depthView);
+
+                    _curRTDepthView = dxObject->_depthView;
+                    break;
+            }
+        }
+
+        void UniversalPlatform::rdSetCubeRenderTarget(const platform::CubeRenderTargetInterface *rt, unsigned faceIndex) {
+            const UniversalCubeRenderTarget *dxObject = static_cast<const UniversalCubeRenderTarget *>(rt);
+            
+            D3D11_VIEWPORT vp;
+            vp.TopLeftX = vp.TopLeftY = 0;
+            vp.Width = float(dxObject->getSize());
+            vp.Height = float(dxObject->getSize());
+            vp.MinDepth = 0.0f;
+            vp.MaxDepth = 1.0f;
+
+            D3D11_RECT rect;
+            rect.top = 0;
+            rect.left = 0;
+            rect.right = int(dxObject->getSize());
+            rect.bottom = int(dxObject->getSize());
+
+            context->RSSetScissorRects(1, &rect);
+            context->RSSetViewports(1, &vp);
+
+            _curRTWidth = rt->getSize();
+            _curRTHeight = rt->getSize();
+
+            switch (dxObject->_type) {
+                case platform::RenderTargetType::Normal:
+                    context->OMSetRenderTargets(1, &dxObject->_rtViews[faceIndex], dxObject->_depthView);
+
+                    _curRTDepthView = dxObject->_depthView;
+                    _curRTColorTargetCount = 1;
+                    _curRTColorViews[0] = dxObject->_rtViews[faceIndex];
+                    break;
+                case platform::RenderTargetType::OnlyColorNullDepth:
+                    context->OMSetRenderTargets(1, &dxObject->_rtViews[faceIndex], nullptr);
+
+                    _curRTDepthView = nullptr;
+                    _curRTColorTargetCount = 1;
+                    _curRTColorViews[0] = dxObject->_rtViews[faceIndex];
+                    break;
+                case platform::RenderTargetType::OnlyColorPrevDepth:
+                    context->OMSetRenderTargets(1, &dxObject->_rtViews[faceIndex], _curRTDepthView);
+
+                    _curRTColorTargetCount = 1;
+                    _curRTColorViews[0] = dxObject->_rtViews[faceIndex];
+                    break;
+                case platform::RenderTargetType::OnlyDepthNullColor:
+                    context->OMSetRenderTargets(0, nullptr, dxObject->_depthView);
+
+                    _curRTDepthView = dxObject->_depthView;
+                    _curRTColorTargetCount = 0;
+                    break;
+                case platform::RenderTargetType::OnlyDepthPrevColor:
+                    context->OMSetRenderTargets(_curRTColorTargetCount, _curRTColorViews, dxObject->_depthView);
+
+                    _curRTDepthView = dxObject->_depthView;
+                    break;
+            }
         }
 
         void UniversalPlatform::rdSetShader(const platform::ShaderInterface *shader) {
-            UniversalShader *dxObject = (UniversalShader *)shader;
+            const UniversalShader *dxObject = static_cast<const UniversalShader *>(shader);
             dxObject->set();
         }
 
         void UniversalPlatform::rdSetRasterizerParams(const platform::RasterizerParamsInterface *params) {
-            UniversalRasterizerParams *dxObj = (UniversalRasterizerParams *)params;
+            const UniversalRasterizerParams *dxObj = static_cast<const UniversalRasterizerParams *>(params);
             dxObj->set();
         }
 
         void UniversalPlatform::rdSetBlenderParams(const platform::BlenderParamsInterface *params) {
-            UniversalBlenderParams *dxObj = (UniversalBlenderParams *)params;
+            const UniversalBlenderParams *dxObj = static_cast<const UniversalBlenderParams *>(params);
             dxObj->set();
         }
 
         void UniversalPlatform::rdSetDepthParams(const platform::DepthParamsInterface *params) {
-            UniversalDepthParams *dxObj = (UniversalDepthParams *)params;
+            const UniversalDepthParams *dxObj = static_cast<const UniversalDepthParams *>(params);
             dxObj->set();
         }
 
         void UniversalPlatform::rdSetSampler(platform::TextureSlot slot, const platform::SamplerInterface *sampler) {
-            UniversalSampler *dxObj = (UniversalSampler *)sampler;
+            const UniversalSampler *dxObj = static_cast<const UniversalSampler *>(sampler);
             dxObj->set(slot);
         }
 
         void UniversalPlatform::rdSetShaderConstBuffer(const platform::ShaderConstantBufferInterface *cbuffer) {
-            UniversalShaderConstantBuffer *dxObj = (UniversalShaderConstantBuffer *)cbuffer;
+            const UniversalShaderConstantBuffer *dxObj = static_cast<const UniversalShaderConstantBuffer *>(cbuffer);
             dxObj->set();
         }
 
         void UniversalPlatform::rdSetTexture2D(platform::TextureSlot slot, const platform::Texture2DInterface *texture) {
             if(texture) {
-                UniversalTexture2D *dxObj = (UniversalTexture2D *)texture;
+                const UniversalTexture2D *dxObj = static_cast<const UniversalTexture2D *>(texture);
                 dxObj->set(slot);
                 _lastTextureWidth[unsigned(slot)] = float(dxObj->getWidth());
                 _lastTextureHeight[unsigned(slot)] = float(dxObj->getHeight());
             }
             else {
                 ID3D11ShaderResourceView *tnull = nullptr;
-                _context->PSSetShaderResources(unsigned(slot), 1, &tnull);
+                context->PSSetShaderResources(unsigned(slot), 1, &tnull);
             }
         }
 
         void UniversalPlatform::rdSetTextureCube(platform::TextureSlot slot, const platform::TextureCubeInterface *texture) {
             if (texture) {
-                UniversalTextureCube *dxObj = (UniversalTextureCube *)texture;
+                const UniversalTextureCube *dxObj = static_cast<const UniversalTextureCube *>(texture);
                 dxObj->set(slot);
             }
             else {
                 ID3D11ShaderResourceView *tnull = nullptr;
-                _context->PSSetShaderResources(unsigned(slot), 1, &tnull);
+                context->PSSetShaderResources(unsigned(slot), 1, &tnull);
             }
         }
 
@@ -1804,51 +2091,51 @@ namespace fg {
             rect.top = int(topLeft.y);
             rect.right = int(bottomRight.x);
             rect.bottom = int(bottomRight.y);
-            _context->RSSetScissorRects(1, &rect);
+            context->RSSetScissorRects(1, &rect);
         }
 
         void UniversalPlatform::rdDrawGeometry(const platform::VertexBufferInterface *vbuffer, const platform::InstanceDataInterface *instanceData, platform::PrimitiveTopology topology, unsigned vertexCount, unsigned instanceCount) {
-            UniversalVertexBuffer *dxVB = (UniversalVertexBuffer *)vbuffer;
-            UniversalInstanceData *dxInstanceData = (UniversalInstanceData *)instanceData;
+            const UniversalVertexBuffer *dxVB = static_cast<const UniversalVertexBuffer *>(vbuffer);
+            const UniversalInstanceData *dxInstanceData = static_cast<const UniversalInstanceData *>(instanceData);
 
             unsigned int offsets[2] = {0, 0};
             unsigned int strides[2] = {dxVB->getVertexSize(), dxInstanceData->getInstanceDataSize()};
             ID3D11Buffer *buffers[2] = {dxVB->getBuffer(), dxInstanceData->getBuffer()};
 
-            _context->IASetVertexBuffers(0, 2, buffers, strides, offsets);
-            _context->IASetPrimitiveTopology(__nativeTopology[(unsigned int)topology]);
-            _context->Draw(vertexCount, 0); // instancing draw now not working on windows Universal 
+            context->IASetVertexBuffers(0, 2, buffers, strides, offsets);
+            context->IASetPrimitiveTopology(__nativeTopology[(unsigned int)topology]);
+            context->Draw(vertexCount, 0); // instancing draw now not working on windows Universal 
         }
 
         void UniversalPlatform::rdDrawIndexedGeometry(const platform::IndexedVertexBufferInterface *ivbuffer, const platform::InstanceDataInterface *instanceData, platform::PrimitiveTopology topology, unsigned indexCount, unsigned instanceCount) {
-            UniversalIndexedVertexBuffer *dxIVB = (UniversalIndexedVertexBuffer *)ivbuffer;
-            UniversalInstanceData *dxInstanceData = (UniversalInstanceData *)instanceData;
+            const UniversalIndexedVertexBuffer *dxIVB = static_cast<const UniversalIndexedVertexBuffer *>(ivbuffer);
+            const UniversalInstanceData *dxInstanceData = static_cast<const UniversalInstanceData *>(instanceData);
 
             unsigned int offsets[2] = {0, 0};
             unsigned int strides[2] = {dxIVB->getVertexSize(), dxInstanceData->getInstanceDataSize()};
             ID3D11Buffer *buffers[2] = {dxIVB->getVBuffer(), dxInstanceData->getBuffer()};
             ID3D11Buffer *indexBuff = dxIVB->getIBuffer();
 
-            _context->IASetVertexBuffers(0, 2, buffers, strides, offsets);
-            _context->IASetIndexBuffer(indexBuff, DXGI_FORMAT_R16_UINT, 0);
-            _context->IASetPrimitiveTopology(__nativeTopology[(unsigned int)topology]);
-            _context->DrawIndexedInstanced(indexCount, instanceCount, 0, 0, 0); 
+            context->IASetVertexBuffers(0, 2, buffers, strides, offsets);
+            context->IASetIndexBuffer(indexBuff, DXGI_FORMAT_R16_UINT, 0);
+            context->IASetPrimitiveTopology(__nativeTopology[(unsigned int)topology]);
+            context->DrawIndexedInstanced(indexCount, instanceCount, 0, 0, 0); 
         }
 
         void UniversalPlatform::rdPresent() {
-            if(_swapChain) {
-                if(_swapChain->Present(_syncInterval, 0) == DXGI_ERROR_DEVICE_REMOVED) {
+            if(swapChain) {
+                if(swapChain->Present(_syncInterval, 0) == DXGI_ERROR_DEVICE_REMOVED) {
                     //
                 }
                 else {
                     static ID3D11ShaderResourceView *tnull[platform::TEXTURE_UNITS_MAX] = {nullptr};
-                    _context->PSSetShaderResources(0, platform::TEXTURE_UNITS_MAX, tnull);
+                    context->PSSetShaderResources(0, platform::TEXTURE_UNITS_MAX, tnull);
                 }
             }            
         }
 
         bool UniversalPlatform::isInited() const {
-            return _device != nullptr;
+            return device != nullptr;
         }
     }
 }

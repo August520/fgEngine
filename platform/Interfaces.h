@@ -71,6 +71,8 @@ namespace fg {
             NOBLEND    = 0,
             ALPHA_LERP = 1,
             ALPHA_ADD  = 2,
+            MIN_VALUE  = 3,
+            MAX_VALUE  = 4,
         };
 
         enum class DepthFunc {
@@ -86,9 +88,19 @@ namespace fg {
 
         enum class ShaderConstBufferUsing {
             FRAME_DATA            = 0,
-            SKIN_DATA             = 1,
-            MATERIAL_DATA         = 2,   
-            ADDITIONAL_DATA       = 3,
+            CAMERA_DATA           = 1,
+            MATERIAL_DATA         = 2,
+            LIGHTING_DATA         = 3,
+            SKIN_DATA             = 4,
+            ADDITIONAL_DATA       = 5,
+        };
+
+        enum class RenderTargetType {
+            Normal              = 0,
+            OnlyColorNullDepth  = 1,
+            OnlyDepthNullColor  = 2,
+            OnlyColorPrevDepth  = 3,
+            OnlyDepthPrevColor  = 4,
         };
 
         class InitParams {
@@ -204,9 +216,22 @@ namespace fg {
         class RenderTargetInterface {
         public:
             virtual ~RenderTargetInterface() {}
-            virtual Texture2DInterface *getDepthBuffer() = 0;
-            virtual Texture2DInterface *getRenderBuffer(unsigned index) = 0;
+            virtual const Texture2DInterface *getDepthBuffer() const = 0;
+            virtual const Texture2DInterface *getRenderBuffer(unsigned index) const = 0;
+            
             virtual unsigned getRenderBufferCount() const = 0;
+            virtual unsigned getWidth() const = 0;
+            virtual unsigned getHeight() const = 0;
+
+            virtual void  release() = 0;
+        };
+
+        class CubeRenderTargetInterface {
+        public:
+            virtual ~CubeRenderTargetInterface() {}
+            virtual const Texture2DInterface   *getDepthBuffer() const = 0;
+            virtual const TextureCubeInterface *getRenderBuffer() const = 0;
+            virtual unsigned getSize() const = 0;
             
             virtual void  release() = 0;
         };
@@ -242,13 +267,15 @@ namespace fg {
             virtual Texture2DInterface            *rdCreateTexture2D(unsigned char *const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount, platform::TextureFormat fmt = platform::TextureFormat::RGBA8) = 0;
             virtual Texture2DInterface            *rdCreateTexture2D(TextureFormat format, unsigned originWidth, unsigned originHeight, unsigned mipCount) = 0;
             virtual TextureCubeInterface          *rdCreateTextureCube(unsigned char **imgMipsBinaryData[6], unsigned originSize, unsigned mipCount, platform::TextureFormat fmt = platform::TextureFormat::RGBA8) = 0;
-            virtual RenderTargetInterface         *rdCreateRenderTarget(unsigned colorTargetCount, unsigned originWidth, unsigned originHeight) = 0;
+            virtual RenderTargetInterface         *rdCreateRenderTarget(unsigned colorTargetCount, unsigned originWidth, unsigned originHeight, RenderTargetType type = RenderTargetType::Normal) = 0;
+            virtual CubeRenderTargetInterface     *rdCreateCubeRenderTarget(unsigned originSize, RenderTargetType type) = 0;
             virtual RenderTargetInterface         *rdGetDefaultRenderTarget() = 0;
 
             virtual void  rdClearCurrentDepthBuffer(float depth = 1.0f) = 0;
             virtual void  rdClearCurrentColorBuffer(const color &c = color(0.0f, 0.0f, 0.0f, 0.0f)) = 0;
 
             virtual void  rdSetRenderTarget(const RenderTargetInterface *rt) = 0;
+            virtual void  rdSetCubeRenderTarget(const CubeRenderTargetInterface *rt, unsigned faceIndex) = 0;
             virtual void  rdSetShader(const ShaderInterface *vshader) = 0;
             virtual void  rdSetRasterizerParams(const RasterizerParamsInterface *params) = 0;
             virtual void  rdSetBlenderParams(const BlenderParamsInterface *params) = 0;

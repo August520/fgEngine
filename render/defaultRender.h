@@ -1,7 +1,9 @@
 
 namespace fg {
     namespace render {
-        const unsigned FG_DEFAULT_ENV_MIPS = 6;
+        struct AdditionalData {
+            math::p4d lightPositionAndDistance;
+        };
 
         class DefaultRender : public RenderInterface {
         public:
@@ -17,9 +19,13 @@ namespace fg {
             const char *getRenderResourceList() const override;
 
         protected:
-            const platform::TextureCubeInterface *_irradiance;
-            const platform::TextureCubeInterface *_environments[FG_DEFAULT_ENV_MIPS];
-            fg::render::TransparentDrawer <1024> _transparentDrawer;
+            const platform::TextureCubeInterface *_irradiance = nullptr;
+            const platform::TextureCubeInterface *_environments[FG_DEFAULT_ENV_MIPS] = {nullptr};
+
+            platform::RasterizerParamsInterface  *_shadowRasterizer = nullptr;
+            platform::BlenderParamsInterface     *_shadowBlend = nullptr;
+            platform::CubeRenderTargetInterface  *_shadowCubeRT[FG_DEFAULT_LIGHTS_MAX] = {nullptr};
+            ShaderConstantBufferStruct           <AdditionalData> *_additionalConstants;
 
             float _frameCount = 0.0f;
             float _countedTime = 0.0f;
