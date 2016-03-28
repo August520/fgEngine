@@ -184,11 +184,7 @@ namespace fg {
         };
 
         //---
-
-        static const unsigned FG_MESH_MAX = 128;
-        static const unsigned FG_MATERIAL_ENTRY_MAX = 32;
-        static const unsigned FG_MATERIAL_TEXTURE_MAX = 8;
-
+        
         struct MaterialMeshParams {
             fg::string      shaderPath;
             fg::string      textureBinds[FG_MATERIAL_TEXTURE_MAX];
@@ -248,9 +244,7 @@ namespace fg {
         };
 
         //---
-
-        static const unsigned FG_EMITTERS_MAX = 32;
-
+        
         class ParticleResourceInterface : virtual public ResourceInterface {
         public:
             virtual void getEmitters(std::vector <particles::EmitterInterface *> &out) const = 0;

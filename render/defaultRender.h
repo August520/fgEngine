@@ -23,6 +23,8 @@ namespace fg {
             const platform::TextureCubeInterface *_environments[FG_DEFAULT_ENV_MIPS] = {nullptr};
 
             platform::RasterizerParamsInterface  *_shadowRasterizer = nullptr;
+            platform::RasterizerParamsInterface  *_twoSideRasterizer = nullptr;
+            platform::RasterizerParamsInterface  *_currentRasterizer = nullptr;
             platform::BlenderParamsInterface     *_shadowBlend = nullptr;
             platform::CubeRenderTargetInterface  *_shadowCubeRT[FG_DEFAULT_LIGHTS_MAX] = {nullptr};
             ShaderConstantBufferStruct           <AdditionalData> *_additionalConstants;

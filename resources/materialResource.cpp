@@ -75,7 +75,7 @@ namespace fg {
 
                     curParams->glossiness = std::max(std::min(float(params.get("glossiness")), 1.0f), 0.0f);
                     curParams->isTransparent = params.get("transparent");
-                    curParams->isBackFaced = params.get("cullBack");
+                    curParams->isBackFaced = bool(params.get("drawBackFace"));
 
                     const luaObj &castShadows = params.get("castShadows");
                     curParams->isShadowCaster = castShadows.type() == LUATYPE_BOOL ? castShadows : true;

@@ -1,9 +1,6 @@
 
 namespace fg {
     namespace platform {
-        const unsigned TEXTURE_UNITS_MAX = 8;
-        const unsigned RENDERTARGETS_MAX = 4;
-
         enum class Orientation {
             PORTRAIT = 0,
             ALBUM    = 1,

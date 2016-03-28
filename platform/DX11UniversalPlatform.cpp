@@ -850,7 +850,7 @@ namespace fg {
         UniversalRenderTarget::UniversalRenderTarget(UniversalPlatform *owner) : PlatformObject(owner) {
             _depthTexture._owner = owner;
             
-            for(unsigned i = 0; i < platform::RENDERTARGETS_MAX; i++) {
+            for(unsigned i = 0; i < FG_RENDERTARGETS_MAX; i++) {
                 _rtViews[i] = nullptr;
                 _renderTextures[i]._owner = owner;
             }
@@ -862,12 +862,12 @@ namespace fg {
             _width = originWidth;
             _height = originHeight;
             
-            for(unsigned i = 0; i < platform::RENDERTARGETS_MAX; i++) {
+            for(unsigned i = 0; i < FG_RENDERTARGETS_MAX; i++) {
                 _rtViews[i] = nullptr;
                 _renderTextures[i]._owner = owner;
             }
 
-            if(colorTargetCount > platform::RENDERTARGETS_MAX) {
+            if(colorTargetCount > FG_RENDERTARGETS_MAX) {
                 return;
             }
             
@@ -977,7 +977,7 @@ namespace fg {
                 _depthTexture._view->Release();
             }
 
-            for(unsigned i = 0; i < platform::RENDERTARGETS_MAX; i++) {
+            for(unsigned i = 0; i < FG_RENDERTARGETS_MAX; i++) {
                 if(_renderTextures[i]._self) {
                     _renderTextures[i]._self->Release();
                     _renderTextures[i]._view->Release();
@@ -1274,7 +1274,7 @@ namespace fg {
 
             _defSampler = new UniversalSampler(this, platform::TextureFilter::LINEAR, platform::TextureAddressMode::CLAMP, 0, 0);
 
-            for (unsigned i = 0; i < platform::TEXTURE_UNITS_MAX; i++) {
+            for (unsigned i = 0; i < FG_TEXTURE_UNITS_MAX; i++) {
                 _lastTextureWidth[i] = 0.0f;
                 _lastTextureHeight[i] = 0.0f;
                 rdSetSampler(platform::TextureSlot(i), _defSampler);
@@ -2129,8 +2129,8 @@ namespace fg {
                     //
                 }
                 else {
-                    static ID3D11ShaderResourceView *tnull[platform::TEXTURE_UNITS_MAX] = {nullptr};
-                    context->PSSetShaderResources(0, platform::TEXTURE_UNITS_MAX, tnull);
+                    static ID3D11ShaderResourceView *tnull[FG_TEXTURE_UNITS_MAX] = {nullptr};
+                    context->PSSetShaderResources(0, FG_TEXTURE_UNITS_MAX, tnull);
                 }
             }            
         }

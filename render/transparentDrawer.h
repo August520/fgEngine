@@ -1,4 +1,6 @@
 
+// TODO: total remake, now it doesn't work for multiple meshes/particle sources
+//
 namespace fg {
     namespace render {
         template <unsigned PRIMITIVE_MAX> class TransparentDrawer {

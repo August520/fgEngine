@@ -24,7 +24,7 @@ namespace fg {
                 const Particles3D            &_owner;
                 particles::EmitterInterface  *_emitter;
 
-                const resources::Texture2DResourceInterface  *_textureBinds[resources::FG_MATERIAL_TEXTURE_MAX];
+                const resources::Texture2DResourceInterface  *_textureBinds[FG_MATERIAL_TEXTURE_MAX];
                 const resources::ShaderResourceInterface     *_shader;
                         
                 particles::EmitterInterface *getEmitter();

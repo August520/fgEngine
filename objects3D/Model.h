@@ -104,7 +104,7 @@ namespace fg {
 
                 const resources::MeshInterface               *_mesh = nullptr;
                 const resources::MaterialMeshParams          *_materialParams = nullptr;
-                const resources::Texture2DResourceInterface  *_textureBinds[resources::FG_MATERIAL_TEXTURE_MAX];
+                const resources::Texture2DResourceInterface  *_textureBinds[FG_MATERIAL_TEXTURE_MAX];
                 const resources::ShaderResourceInterface     *_shader = nullptr;
             };
 
@@ -158,7 +158,7 @@ namespace fg {
             bool        _modelReady;
             fg::color   _rgba;
 
-            mutable StaticHash  <resources::FG_MESH_MAX, MeshData *> _meshesByName;
+            mutable StaticHash  <FG_MESH_MAX, MeshData *> _meshesByName;
             std::vector         <callback <void()>> _resourceReadyApplies;
 
             MeshData *_getOrCreateMeshByName(const fg::string &meshName) const;

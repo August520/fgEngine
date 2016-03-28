@@ -139,7 +139,7 @@ namespace fg {
 
             ParticleType      _type;
             fg::string        _shaderPath;
-            fg::string        _textureBinds[resources::FG_MATERIAL_TEXTURE_MAX];
+            fg::string        _textureBinds[FG_MATERIAL_TEXTURE_MAX];
             unsigned          _textureBindCount;
 
             float _getModifiedEmitterRandomParam(EmitterParamType paramTypeMin, EmitterParamType paramTypeMax, float koeff) const;

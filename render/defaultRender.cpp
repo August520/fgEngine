@@ -18,6 +18,7 @@ namespace fg {
             _environments[4] = ((resources::TextureCubeResourceInterface *)api.resources.getResource("defaultEnvironment4.cubemap"))->getPlatformObject();
             _environments[5] = ((resources::TextureCubeResourceInterface *)api.resources.getResource("defaultEnvironment5.cubemap"))->getPlatformObject();
 
+            _twoSideRasterizer = api.platform.rdCreateRasterizerParams(platform::CullMode::NONE);
             _shadowRasterizer = api.platform.rdCreateRasterizerParams(platform::CullMode::BACK);
             _shadowBlend = api.platform.rdCreateBlenderParams(platform::BlendMode::MIN_VALUE);
             _additionalConstants = new ShaderConstantBufferStruct <AdditionalData> (api.platform, platform::ShaderConstBufferUsing::ADDITIONAL_DATA);
@@ -35,6 +36,10 @@ namespace fg {
             if (_shadowRasterizer) {
                 _shadowRasterizer->release();
                 _shadowRasterizer = nullptr;
+            }
+            if (_twoSideRasterizer) {
+                _twoSideRasterizer->release();
+                _twoSideRasterizer = nullptr;
             }
             if (_additionalConstants) {
                 delete _additionalConstants;
@@ -141,15 +146,16 @@ namespace fg {
                 api.platform.rdSetTextureCube(platform::TextureSlot(FG_SHADOW_TEXTURES_BASE + i), _shadowCubeRT[i]->getRenderBuffer());
             }
 
+            fg::platform::RasterizerParamsInterface *defRasterizer = api.rendering.getDefaultRasterizerParams();
+
+            api.platform.rdSetRasterizerParams(defRasterizer);
             api.platform.rdSetBlenderParams(api.rendering.getDefaultLerpBlenderParams());
-            api.platform.rdSetRasterizerParams(api.rendering.getDefaultRasterizerParams());
             api.platform.rdSetSampler(platform::TextureSlot::TEXTURE0, api.rendering.getDefaultLinearSampler());
             api.platform.rdSetSampler(platform::TextureSlot::TEXTURE1, api.rendering.getDefaultPointSampler());
             
             api.rendering.getCamera().set(api.gameCamera);
             api.rendering.defCameraConst().camViewProj = api.rendering.getCamera().getVPMatrix();
-            api.rendering.defCameraConstApplyChanges();
-                      
+            api.rendering.defCameraConstApplyChanges();                      
             api.rendering.debugDrawAxis();
 
             regularMeshes.resetIteration();
@@ -158,6 +164,19 @@ namespace fg {
                 const object3d::Model3DInterface::MeshComponentInterface *component = regularMeshes.get();
 
                 if (component->isVisible()) {
+                    if (component->isBackFaced()) {
+                        if (_currentRasterizer != _twoSideRasterizer) {
+                            api.platform.rdSetRasterizerParams(_twoSideRasterizer);
+                            _currentRasterizer = _twoSideRasterizer;
+                        }
+                    }
+                    else {
+                        if (_currentRasterizer != defRasterizer) {
+                            api.platform.rdSetRasterizerParams(defRasterizer);
+                            _currentRasterizer = defRasterizer;
+                        }
+                    }
+
                     for (unsigned i = 0; i < component->getTextureBindCount(); i++) {
                         api.rendering.setTexture(platform::TextureSlot(i), component->getTextureBind(i));
                     }

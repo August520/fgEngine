@@ -6,7 +6,7 @@ namespace fg {
             _shader(nullptr),
             _owner(owner) 
         {
-            for(unsigned i = 0; i < resources::FG_MATERIAL_TEXTURE_MAX; i++) {
+            for(unsigned i = 0; i < FG_MATERIAL_TEXTURE_MAX; i++) {
                 _textureBinds[i] = nullptr;
             }
         }

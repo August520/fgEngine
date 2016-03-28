@@ -361,10 +361,10 @@ namespace fg {
             unsigned _width  = 0;
             unsigned _height = 0;
 
-            UniversalTexture2D  _renderTextures[platform::RENDERTARGETS_MAX];
+            UniversalTexture2D  _renderTextures[FG_RENDERTARGETS_MAX];
             UniversalTexture2D  _depthTexture;
 
-            ID3D11RenderTargetView  *_rtViews[platform::RENDERTARGETS_MAX];
+            ID3D11RenderTargetView  *_rtViews[FG_RENDERTARGETS_MAX];
             ID3D11DepthStencilView  *_depthView = nullptr;
         };
 
@@ -490,13 +490,13 @@ namespace fg {
             unsigned int _curRTWidth = 1;
             unsigned int _curRTHeight = 1;
             unsigned int _curRTColorTargetCount = 1;
-            ID3D11RenderTargetView *_curRTColorViews[platform::RENDERTARGETS_MAX];
+            ID3D11RenderTargetView *_curRTColorViews[FG_RENDERTARGETS_MAX];
             ID3D11DepthStencilView *_curRTDepthView;
 
             float      _nativeWidth = 1.0f;
             float      _nativeHeight = 1.0f;
-            float      _lastTextureWidth[platform::TEXTURE_UNITS_MAX];
-            float      _lastTextureHeight[platform::TEXTURE_UNITS_MAX];
+            float      _lastTextureWidth[FG_TEXTURE_UNITS_MAX];
+            float      _lastTextureHeight[FG_TEXTURE_UNITS_MAX];
             unsigned   _syncInterval = 0;
 
             void _initDevice();
