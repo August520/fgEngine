@@ -196,6 +196,8 @@ namespace fg {
             math::p3d       metalness;
             float           glossiness;
             bool            isTransparent;
+            bool            isShadowCaster;
+            bool            isBackFaced;
         };
 
         class MaterialResourceInterface : virtual public ResourceInterface {

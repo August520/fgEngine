@@ -241,6 +241,14 @@ namespace fg {
         bool Model3D::MeshData::isVisible() const {
             return _visible;
         }
+
+        bool Model3D::MeshData::isShadowCaster() const {
+            return _materialParams ? _materialParams->isShadowCaster : true;
+        }
+
+        bool Model3D::MeshData::isBackFaced() const {
+            return _materialParams ? _materialParams->isBackFaced : false;
+        }
         
         bool Model3D::MeshData::isResourcesReady(platform::PlatformInterface &platform, resources::ResourceManagerInterface &resMan) {
             if(_materialParams == nullptr) {

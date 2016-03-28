@@ -86,6 +86,7 @@
 const char *_binaryResources = "\
 $/displayObject.shader\n\
 $/depthR32FModel.shader\n\
+$/depthR32FSkin.shader\n\
 $/simpleModel.shader\n\
 $/simpleSkin.shader\n\
 $/texturedModel.shader\n\

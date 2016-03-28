@@ -109,6 +109,8 @@ namespace fg {
                 virtual bool isTransparent() const = 0;
                 virtual bool isVisible() const = 0;
                 virtual bool isSkinned() const = 0;
+                virtual bool isShadowCaster() const = 0;
+                virtual bool isBackFaced() const = 0;
             };
 
             virtual ~Model3DBase() {}

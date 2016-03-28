@@ -641,8 +641,9 @@ namespace fg {
         }
 
         void UniversalShaderConstantBuffer::set() const {
-            _owner->context->VSSetConstantBuffers(_inputIndex, 1, &_self);
-            
+            if (_inputIndex != unsigned(platform::ShaderConstBufferUsing::LIGHTING_DATA)) {
+                _owner->context->VSSetConstantBuffers(_inputIndex, 1, &_self);
+            }
             if(_inputIndex != unsigned(platform::ShaderConstBufferUsing::SKIN_DATA)) {
                 _owner->context->PSSetConstantBuffers(_inputIndex, 1, &_self);
             }

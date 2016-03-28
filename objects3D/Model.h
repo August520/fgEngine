@@ -83,6 +83,8 @@ namespace fg {
                 bool isTransparent() const override;
                 bool isSkinned() const override;
                 bool isVisible() const override;
+                bool isShadowCaster() const override;
+                bool isBackFaced() const override;
 
                 bool isResourcesReady(platform::PlatformInterface &platform, resources::ResourceManagerInterface &resMan) override;
 

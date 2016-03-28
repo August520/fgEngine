@@ -74,7 +74,11 @@ namespace fg {
                     }
 
                     curParams->glossiness = std::max(std::min(float(params.get("glossiness")), 1.0f), 0.0f);
-                    curParams->isTransparent = params.get("isTransparent");
+                    curParams->isTransparent = params.get("transparent");
+                    curParams->isBackFaced = params.get("cullBack");
+
+                    const luaObj &castShadows = params.get("castShadows");
+                    curParams->isShadowCaster = castShadows.type() == LUATYPE_BOOL ? castShadows : true;
 
                     target.add(meshName, curParams);
                     return true; // continue cycle

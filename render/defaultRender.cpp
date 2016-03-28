@@ -23,7 +23,7 @@ namespace fg {
             _additionalConstants = new ShaderConstantBufferStruct <AdditionalData> (api.platform, platform::ShaderConstBufferUsing::ADDITIONAL_DATA);
 
             for (unsigned i = 0; i < FG_DEFAULT_LIGHTS_MAX; i++) {
-                _shadowCubeRT[i] = api.platform.rdCreateCubeRenderTarget(256, platform::RenderTargetType::OnlyColorNullDepth);
+                _shadowCubeRT[i] = api.platform.rdCreateCubeRenderTarget(FG_SHADOW_DEFAULT_RESOLUTION, platform::RenderTargetType::OnlyColorNullDepth);
             }
         }
 
@@ -67,12 +67,11 @@ namespace fg {
 
             auto &pointLights = sceneComposition.getPointLightEnumerator();
             api.rendering.defLightingConst().lightCount = std::min(FG_DEFAULT_LIGHTS_MAX, pointLights.count());
-            api.rendering.defLightingConst().shadowSpreadFactor = 0.8f;
+            api.rendering.defLightingConst().shadowSpreadFactor = FG_SHADOW_DEFAULT_SPREAD;
 
             api.platform.rdSetSampler(platform::TextureSlot::TEXTURE0, api.rendering.getDefaultPointSampler());
             api.platform.rdSetRasterizerParams(_shadowRasterizer);
             api.platform.rdSetBlenderParams(_shadowBlend);
-            api.rendering.setShader(api.resources.getResource("depthR32FModel.shader"));
 
             static const math::p3d cubeFdDirs[] = {
                 math::p3d(-1, 0, 0), math::p3d(1, 0, 0),
@@ -101,7 +100,7 @@ namespace fg {
                     api.platform.rdClearCurrentColorBuffer(color(1.0f, 1.0f, 1.0f, 1.0f));
                     
                     math::m4x4 cubeSideProj, cubeSideView;
-                    cubeSideProj.perspectiveFovLH(0.5f * M_PI, 1.0f, 0.1f, 20.0f);
+                    cubeSideProj.perspectiveFovLH(0.5f * M_PI, 1.0f, 0.1f, distance);
                     cubeSideView.lookAt(pos, pos + cubeFdDirs[c], cubeUpDirs[c]);
 
                     api.rendering.defCameraConst().camViewProj = cubeSideView * cubeSideProj;
@@ -110,7 +109,17 @@ namespace fg {
                     while (regularMeshes.next()) {
                         const object3d::Model3DInterface::MeshComponentInterface *component = regularMeshes.get();
 
-                        if (component->isVisible()) {
+                        if (component->isVisible() && component->isShadowCaster()) {
+                            if (component->isSkinned()) {
+                                platform::ShaderConstantBufferInterface *skinTable = component->getMesh()->getSkinConstBuffer();
+                                skinTable->update(component->getSkinMatrixArray());
+                                api.platform.rdSetShaderConstBuffer(skinTable);
+                                api.rendering.setShader(api.resources.getResource("depthR32FSkin.shader"));
+                            }
+                            else {
+                                api.rendering.setShader(api.resources.getResource("depthR32FModel.shader"));
+                            }
+
                             api.rendering.defInstanceData().rgba = color();
                             api.rendering.defInstanceData().modelTransform = component->getFullTransform();
                             api.rendering.defInstanceDataApplyChanges();
@@ -135,12 +144,13 @@ namespace fg {
             api.platform.rdSetBlenderParams(api.rendering.getDefaultLerpBlenderParams());
             api.platform.rdSetRasterizerParams(api.rendering.getDefaultRasterizerParams());
             api.platform.rdSetSampler(platform::TextureSlot::TEXTURE0, api.rendering.getDefaultLinearSampler());
+            api.platform.rdSetSampler(platform::TextureSlot::TEXTURE1, api.rendering.getDefaultPointSampler());
             
             api.rendering.getCamera().set(api.gameCamera);
             api.rendering.defCameraConst().camViewProj = api.rendering.getCamera().getVPMatrix();
             api.rendering.defCameraConstApplyChanges();
                       
-            //api.rendering.debugDrawAxis();
+            api.rendering.debugDrawAxis();
 
             regularMeshes.resetIteration();
             
