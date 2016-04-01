@@ -19,7 +19,7 @@ static const unsigned FG_SHADOW_TEXTURES_BASE = 4;
 //
 static const unsigned FG_SHADOW_DEFAULT_RESOLUTION = 256;
 //
-static const float    FG_SHADOW_DEFAULT_SPREAD = 0.3f;
+static const float    FG_SHADOW_DEFAULT_SPREAD = 0.1f;
 // ~max meshes per model
 static const unsigned FG_MESH_MAX = 128;
 // ~max material entries per material resource

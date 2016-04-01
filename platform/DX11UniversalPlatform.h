@@ -23,7 +23,7 @@ using namespace concurrency;
 namespace fg {
     namespace dx11 {
         class UniversalPlatform;
-        class PlatformObject {
+        class PlatformObject : uncopyable {
             friend class UniversalPlatform;
 
         public:
@@ -33,11 +33,7 @@ namespace fg {
         protected:
             PlatformObject(UniversalPlatform *owner) : _owner(owner) {}
             
-            UniversalPlatform *_owner;
-
-        private:
-            PlatformObject(const PlatformObject &) {}
-            PlatformObject &operator =(const PlatformObject &) {}
+            UniversalPlatform *_owner = nullptr;
         };
 
         //---

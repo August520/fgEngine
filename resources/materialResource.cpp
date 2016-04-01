@@ -41,10 +41,6 @@ namespace fg {
         }
 
         const MaterialMeshParams *MaterialResource::getMeshSubTreeParams(const fg::string &rootName) const {
-            if(rootName == "obs_rot_bridge") {
-                printf("");
-            }
-
             return _roots.get(rootName);
         }
 

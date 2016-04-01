@@ -5,7 +5,6 @@ namespace fg {
         const unsigned __INSTANCE_DATA_SIZES_MAX = 2;
         const unsigned __CB_NAMES_MAX = 5;
         const unsigned __LAYOUT_FMT_MAX = 5;
-        const unsigned __BUFFER_MAX = 4096;
 
         unsigned __vertexSizes[__VERTEX_SIZES_MAX] = {
             sizeof(VertexSimple),
@@ -30,8 +29,6 @@ namespace fg {
                 {DXGI_FORMAT_R32G32B32_FLOAT, 12},
                 {DXGI_FORMAT_R32G32B32A32_FLOAT, 16},
         };
-
-        char __buffer[__BUFFER_MAX];
 
         D3D11_TEXTURE_ADDRESS_MODE  __nativeAddrMode[] = {D3D11_TEXTURE_ADDRESS_WRAP, D3D11_TEXTURE_ADDRESS_CLAMP};
         D3D11_CULL_MODE             __nativeCullMode[] = {D3D11_CULL_NONE, D3D11_CULL_BACK, D3D11_CULL_FRONT};
@@ -1017,8 +1014,8 @@ namespace fg {
                 }
             }
 
-            for(unsigned i = 0; i < _colorTargetCount; i++) {
-                if(_rtViews[i] == nullptr) {
+            for (unsigned i = 0; i < _colorTargetCount; i++) {
+                if (_rtViews[i] == nullptr) {
                     return false;
                 }
             }
@@ -1269,7 +1266,6 @@ namespace fg {
 
             //---
 
-            _defRenderTarget._owner = this;
             _initDefaultRenderTarget();
 
             _defSampler = new UniversalSampler(this, platform::TextureFilter::LINEAR, platform::TextureAddressMode::CLAMP, 0, 0);
@@ -1374,6 +1370,8 @@ namespace fg {
         }
         
         void UniversalPlatform::_initDefaultRenderTarget() {
+            _defRenderTarget._owner = this;
+
             ID3D11Texture2D *tmptex;
             swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void **)&tmptex);
 

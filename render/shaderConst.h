@@ -1,7 +1,7 @@
 
 namespace fg {
     namespace render {
-        template <typename BASE> class ShaderConstantBufferStruct {
+        template <typename BASE> class ShaderConstantBufferStruct : public uncopyable {
         public:
             BASE data;
 
@@ -15,10 +15,6 @@ namespace fg {
         protected:
             platform::PlatformInterface &_platform;
             platform::ShaderConstantBufferInterface *_self;
-
-        private:
-            ShaderConstantBufferStruct(const ShaderConstantBufferStruct <BASE> &);
-            ShaderConstantBufferStruct <BASE> &operator =(const ShaderConstantBufferStruct <BASE> &);
         };
 
         //---
