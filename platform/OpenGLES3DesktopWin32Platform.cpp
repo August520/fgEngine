@@ -3,7 +3,7 @@ namespace fg {
     namespace opengl {
         const unsigned __VERTEX_PARAMS_MAX        = 4;
         const unsigned __INSTANCE_PARAMS_MAX      = 2;
-        const unsigned __UBO_NAMES_MAX            = 4;
+        const unsigned __UBO_NAMES_MAX            = 6;
         const unsigned __VERTEX_COMPONENT_MAX     = 7;
         const unsigned __INSTANCE_COMPONENT_START = 8;
         const unsigned __INSTANCE_COMPONENT_MAX   = 8;
@@ -33,8 +33,10 @@ namespace fg {
 
         const char *__uboNames[__UBO_NAMES_MAX] = {
             "FrameData",
-            "SkinData",
+            "CameraData"
             "MaterialData",
+            "LightingData",
+            "SkinData",
             "AdditionalData",
         };
 
@@ -59,7 +61,7 @@ namespace fg {
             "instance_data7",
         };
 
-        const char *__textureSamplerNames[platform::TEXTURE_UNITS_MAX] = {
+        const char *__textureSamplerNames[FG_TEXTURE_UNITS_MAX] = {
             "texture0",
             "texture1",
             "texture2",
@@ -71,8 +73,8 @@ namespace fg {
         };
 
         char   __buffer[__BUFFER_MAX];
-        GLenum __nativeTextureFormat[] = {GL_RGBA, GL_RGBA, GL_RED, GL_NONE, GL_NONE, GL_NONE};
-        GLenum __nativeTextureInternalFormat[] = {GL_RGBA8, GL_RGBA8, GL_R8, GL_NONE, GL_NONE, GL_NONE};
+        GLenum __nativeTextureFormat[] = {GL_RGBA, GL_RGBA, GL_RED, GL_RGBA, GL_RGBA, GL_RGBA};
+        GLenum __nativeTextureInternalFormat[] = {GL_RGBA8, GL_RGBA8, GL_R8, GL_RGBA8, GL_RGBA8, GL_RGBA8};
         GLenum __nativeTopology[] = {GL_LINES, GL_LINE_STRIP, GL_TRIANGLES, GL_TRIANGLE_STRIP};
         GLenum __nativeCmpFunc[] = {GL_NEVER, GL_LESS, GL_EQUAL, GL_LEQUAL, GL_GREATER, GL_NOTEQUAL, GL_GEQUAL, GL_ALWAYS};
 
@@ -82,8 +84,6 @@ namespace fg {
             unsigned index = unsigned(type);
             unsigned offset = 0;
             
-            _vao = 0;
-            _vbo = 0;
             _usage = usage;
             _attribsCount = __vertexParams[index].layoutCount;
 
@@ -132,6 +132,10 @@ namespace fg {
             delete this;
         }
 
+        bool ES3DesktopWin32VertexBuffer::valid() const {
+            return _vbo != 0 && _vao != 0;
+        }
+
         unsigned ES3DesktopWin32VertexBuffer::getLength() const {
             return _length;
         }
@@ -142,9 +146,6 @@ namespace fg {
             unsigned index = unsigned(type);
             unsigned offset = 0;
 
-            _vao = 0;
-            _ibo = 0;
-            _vbo = 0;
             _usage = usage;
             _attribsCount = __vertexParams[index].layoutCount;
 
@@ -214,6 +215,10 @@ namespace fg {
             delete this;
         }
 
+        bool ES3DesktopWin32IndexedVertexBuffer::valid() const {
+            return _vbo != 0 && _vao != 0 && _ibo != 0;
+        }
+
         unsigned ES3DesktopWin32IndexedVertexBuffer::getVertexDataLength() const {
             return _vlength;
         }
@@ -229,7 +234,6 @@ namespace fg {
             
             _length = instanceCount * __instanceParams[unsigned(type)].size;
             _type = type;
-            _vbo = 0;
             
             glGenBuffers(1, &_vbo);
             glBindBuffer(GL_ARRAY_BUFFER, _vbo);
@@ -269,6 +273,10 @@ namespace fg {
         void ES3DesktopWin32InstanceData::release() {
             glDeleteBuffers(1, &_vbo);
             delete this;
+        }
+
+        bool ES3DesktopWin32InstanceData::valid() const {
+            return _vbo != 0;
         }
 
         platform::InstanceDataType ES3DesktopWin32InstanceData::getType() const {
@@ -348,10 +356,8 @@ namespace fg {
         //---
 
         ES3DesktopWin32Sampler::ES3DesktopWin32Sampler(platform::TextureFilter filter, platform::TextureAddressMode addrMode, float minLod, float bias) {
-            _self = 0;
             glGenSamplers(1, &_self);
 
-            glSamplerParameteri(_self, GL_TEXTURE_MIN_LOD, (GLint)(minLod));
             glSamplerParameteri(_self, GL_TEXTURE_MIN_FILTER, filter == platform::TextureFilter::POINT ? GL_NEAREST : GL_LINEAR_MIPMAP_LINEAR);
             glSamplerParameteri(_self, GL_TEXTURE_MAG_FILTER, filter == platform::TextureFilter::POINT ? GL_NEAREST : GL_LINEAR);
             glSamplerParameteri(_self, GL_TEXTURE_WRAP_S, addrMode == platform::TextureAddressMode::CLAMP ? GL_CLAMP_TO_EDGE : GL_REPEAT);
@@ -371,12 +377,13 @@ namespace fg {
             glBindSampler(unsigned(slot), _self);
         }
 
+        bool ES3DesktopWin32Sampler::valid() const {
+            return _self != 0;
+        }
+
         //---
 
         ES3DesktopWin32Shader::ES3DesktopWin32Shader(const byteinput &binary, const diag::LogInterface &log) {
-            _program = 0;
-            _vShader = 0;
-            _fShader = 0;
             _program = glCreateProgram();
             _vShader = glCreateShader(GL_VERTEX_SHADER);
             _fShader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -442,7 +449,7 @@ namespace fg {
 
             glUseProgram(_program);
 
-            for(unsigned i = 0; i < platform::TEXTURE_UNITS_MAX; i++) {
+            for(unsigned i = 0; i < FG_TEXTURE_UNITS_MAX; i++) {
                 _textureLocations[i] = glGetUniformLocation(_program, __textureSamplerNames[i]);
 
                 if(_textureLocations[i] != -1) {
@@ -467,6 +474,10 @@ namespace fg {
             glDeleteShader(_fShader);
             glDeleteProgram(_program);
             delete this;
+        }
+
+        bool ES3DesktopWin32Shader::valid() const {
+            return _vShader != 0 && _fShader != 0 && _program != 0;
         }
 
         //---
@@ -496,13 +507,13 @@ namespace fg {
             delete this;
         }
 
+        bool ES3DesktopWin32ShaderConstantBuffer::valid() const {
+            return _ubo != 0;
+        }
+
         //---
         
         ES3DesktopWin32Texture2D::ES3DesktopWin32Texture2D() {
-            _texture = 0;
-            _width = 0;
-            _height = 0;
-            _mipCount = 0;
             _format = platform::TextureFormat::UNKNOWN;
         }
 
@@ -582,7 +593,15 @@ namespace fg {
             delete this;
         }
 
+        bool ES3DesktopWin32Texture2D::valid() const {
+            return _texture != 0;
+        }
+
         //---
+
+        ES3DesktopWin32TextureCube::ES3DesktopWin32TextureCube() {
+
+        }
 
         ES3DesktopWin32TextureCube::ES3DesktopWin32TextureCube(unsigned char **imgMipsBinaryData[6], unsigned originSize, unsigned mipCount, platform::TextureFormat format) {
             _format = format;
@@ -600,18 +619,8 @@ namespace fg {
             glTexStorage2D(GL_TEXTURE_CUBE_MAP, mipCount, __nativeTextureInternalFormat[unsigned(_format)], originSize, originSize);
 
             for (unsigned i = 0; i < 6; i++) {
-
-            //    //glTexImage2D()
-
-            //    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_REPEAT);
-            //    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-                //glTexImage2D(faces[i], 0, GL_RGB, originSize, originSize, 0, GL_RGB, GL_UNSIGNED_BYTE, imgMipsBinaryData[i][0]);
-
                 for (unsigned c = 0; c < mipCount; c++) {
                     unsigned curSize = originSize >> c;
-
-
                     glTexSubImage2D(faces[i], c, 0, 0, curSize, curSize, __nativeTextureFormat[unsigned(_format)], GL_UNSIGNED_BYTE, imgMipsBinaryData[i][c]);
                 }
             }
@@ -633,15 +642,18 @@ namespace fg {
             glBindTexture(GL_TEXTURE_CUBE_MAP, _texture);
         }
 
+        bool ES3DesktopWin32TextureCube::valid() const {
+            return _texture != 0;
+        }
+
         //---
 
         ES3DesktopWin32RenderTarget::ES3DesktopWin32RenderTarget() {
-            _fbo = 0;
-            _colorTargetCount = 0;
+
         }
 
-        ES3DesktopWin32RenderTarget::ES3DesktopWin32RenderTarget(unsigned colorTargetCount, unsigned originWidth, unsigned originHeight) {
-            _fbo = 0;
+        ES3DesktopWin32RenderTarget::ES3DesktopWin32RenderTarget(unsigned colorTargetCount, unsigned originWidth, unsigned originHeight, platform::RenderTargetType type) {
+            _type = type;
             _colorTargetCount = colorTargetCount;
 
             _depthTexture._format = platform::TextureFormat::UNKNOWN;
@@ -649,28 +661,32 @@ namespace fg {
             _depthTexture._height = originHeight;
             _depthTexture._mipCount = 1;
 
+            if (colorTargetCount > FG_RENDERTARGETS_MAX) {
+                return;
+            }
+
             glGenFramebuffers(1, &_fbo);
             glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
 
-            glGenTextures(1, &_depthTexture._texture);
-            glBindTexture(GL_TEXTURE_2D, _depthTexture._texture);
-            glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH_COMPONENT24, originWidth, originHeight);
-            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, _depthTexture._texture, 0);
-
-            for(unsigned i = 0; i < _colorTargetCount; i++) {
-                _renderTexture[i]._format = platform::TextureFormat::RGBA8;
-                _renderTexture[i]._width = originWidth;
-                _renderTexture[i]._height = originHeight;
-                _renderTexture[i]._mipCount = 1;
-
-                glGenTextures(1, &_renderTexture[i]._texture);
-                glBindTexture(GL_TEXTURE_2D, _renderTexture[i]._texture);
-                glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, originWidth, originHeight);
-                glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, _renderTexture[i]._texture, 0);
+            if (_type == platform::RenderTargetType::Normal || _type == platform::RenderTargetType::OnlyDepthNullColor || _type == platform::RenderTargetType::OnlyDepthPrevColor) {
+                glGenTextures(1, &_depthTexture._texture);
+                glBindTexture(GL_TEXTURE_2D, _depthTexture._texture);
+                glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH_COMPONENT24, originWidth, originHeight);
+                glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, _depthTexture._texture, 0);
             }
 
-            //GLenum status;
-            //status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+            if (_type == platform::RenderTargetType::Normal || _type == platform::RenderTargetType::OnlyColorNullDepth || _type == platform::RenderTargetType::OnlyColorPrevDepth) {
+                for (unsigned i = 0; i < _colorTargetCount; i++) {
+                    _renderTextures[i]._format = platform::TextureFormat::RGBA8;
+                    _renderTextures[i]._width = originWidth;
+                    _renderTextures[i]._height = originHeight;
+                    _renderTextures[i]._mipCount = 1;
+
+                    glGenTextures(1, &_renderTextures[i]._texture);
+                    glBindTexture(GL_TEXTURE_2D, _renderTextures[i]._texture);
+                    glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, originWidth, originHeight);
+                }
+            }
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glBindTexture(GL_TEXTURE_2D, 0);
@@ -680,47 +696,141 @@ namespace fg {
             
         }
 
-        platform::Texture2DInterface *ES3DesktopWin32RenderTarget::getDepthBuffer() {
+        const platform::Texture2DInterface *ES3DesktopWin32RenderTarget::getDepthBuffer() const {
             return &_depthTexture;
         }
 
-        platform::Texture2DInterface *ES3DesktopWin32RenderTarget::getRenderBuffer(unsigned index) {
-            return &_renderTexture[index];
+        const platform::Texture2DInterface *ES3DesktopWin32RenderTarget::getRenderBuffer(unsigned index) const {
+            return &_renderTextures[index];
         }
         
         unsigned ES3DesktopWin32RenderTarget::getRenderBufferCount() const {
             return _colorTargetCount;
         }
+
+        unsigned ES3DesktopWin32RenderTarget::getWidth() const {
+            return _width;
+        }
+
+        unsigned ES3DesktopWin32RenderTarget::getHeight() const {
+            return _height;
+        }
         
         void ES3DesktopWin32RenderTarget::release() {
-            for(unsigned i = 0; i < platform::RENDERTARGETS_MAX; i++) {
-                if(_renderTexture[i]._texture) {
-                    glDeleteTextures(1, &_renderTexture[i]._texture);
+            for(unsigned i = 0; i < FG_RENDERTARGETS_MAX; i++) {
+                if(_renderTextures[i]._texture) {
+                    glDeleteTextures(1, &_renderTextures[i]._texture);
                 }
             }
 
-            glDeleteTextures(1, &_depthTexture._texture);
+            if (_depthTexture._texture) {
+                glDeleteTextures(1, &_depthTexture._texture);
+            }
+
             glDeleteFramebuffers(1, &_fbo);
             delete this;
         }
 
         void ES3DesktopWin32RenderTarget::set() {
             glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
-            glViewport(0, 0, _renderTexture->_width, _renderTexture->_height);
+
+            for (unsigned i = 0; i < _colorTargetCount; i++) {
+                glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, _renderTextures[i]._texture, 0);
+            }
+            
+            glViewport(0, 0, _width, _height);
+        }
+
+        bool ES3DesktopWin32RenderTarget::valid() const {
+            return _fbo != 0 && glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
+        }
+
+        //---
+
+        ES3DesktopWin32CubeRenderTarget::ES3DesktopWin32CubeRenderTarget() {
+
+        }
+
+        ES3DesktopWin32CubeRenderTarget::ES3DesktopWin32CubeRenderTarget(unsigned originSize, platform::RenderTargetType type) {
+            _type = type;
+            _depthTexture._format = platform::TextureFormat::UNKNOWN;
+            _depthTexture._width = originSize;
+            _depthTexture._height = originSize;
+            _depthTexture._mipCount = 1;
+
+            glGenFramebuffers(1, &_fbo);
+            glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
+
+            if (_type == platform::RenderTargetType::Normal || _type == platform::RenderTargetType::OnlyDepthNullColor || _type == platform::RenderTargetType::OnlyDepthPrevColor) {
+                glGenTextures(1, &_depthTexture._texture);
+                glBindTexture(GL_TEXTURE_2D, _depthTexture._texture);
+                glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH_COMPONENT24, originSize, originSize);
+                glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, _depthTexture._texture, 0);
+            }
+
+            if (_type == platform::RenderTargetType::Normal || _type == platform::RenderTargetType::OnlyColorNullDepth || _type == platform::RenderTargetType::OnlyColorPrevDepth) {
+                glGenTextures(1, &_renderCube._texture);
+                glBindTexture(GL_TEXTURE_CUBE_MAP, _renderCube._texture);
+                glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+                glTexStorage2D(GL_TEXTURE_CUBE_MAP, 1, GL_RGBA8, originSize, originSize);
+                glBindTexture(GL_TEXTURE_CUBE_MAP, 0);                
+            }
+
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glBindTexture(GL_TEXTURE_2D, 0);
+        }
+
+        ES3DesktopWin32CubeRenderTarget::~ES3DesktopWin32CubeRenderTarget() {
+
+        }
+
+        const platform::Texture2DInterface *ES3DesktopWin32CubeRenderTarget::getDepthBuffer() const {
+            return &_depthTexture;
+        }
+
+        const platform::TextureCubeInterface *ES3DesktopWin32CubeRenderTarget::getRenderBuffer() const {
+            return &_renderCube;
+        }
+
+        unsigned ES3DesktopWin32CubeRenderTarget::getSize() const {
+            return _size;
+        }
+
+        void ES3DesktopWin32CubeRenderTarget::set(unsigned faceIndex) {
+            glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
+            
+            unsigned faces[] = {
+                GL_TEXTURE_CUBE_MAP_POSITIVE_X, GL_TEXTURE_CUBE_MAP_NEGATIVE_X,
+                GL_TEXTURE_CUBE_MAP_POSITIVE_Y, GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,
+                GL_TEXTURE_CUBE_MAP_POSITIVE_Z, GL_TEXTURE_CUBE_MAP_NEGATIVE_Z,
+            };
+
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, faces[faceIndex], _renderCube._texture, 0);
+            glViewport(0, 0, _size, _size);
+        }
+
+        void ES3DesktopWin32CubeRenderTarget::release() {
+            if (_renderCube._texture) {
+                glDeleteTextures(1, &_renderCube._texture);
+            }
+
+            if (_depthTexture._texture) {
+                glDeleteTextures(1, &_depthTexture._texture);
+            }
+
+            glDeleteFramebuffers(1, &_fbo);
+            delete this;
+        }
+
+        bool ES3DesktopWin32CubeRenderTarget::valid() const {
+            return _fbo != 0 && glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
         }
 
         //---
 
         ES3DesktopWin32Platform::ES3DesktopWin32Platform(const diag::LogInterface &log) : _log(log) {
-            _hwnd = 0;
-            _hdc = 0;
-            _eglDisplay = nullptr;
-            _eglConfig = nullptr;
-            _eglSurface = nullptr;
-            _eglContext = nullptr;
-            _nativeWidth = 0.0f;
-            _nativeHeight = 0.0f;
-            _curRenderTarget = nullptr;
+
         }
 
         bool ES3DesktopWin32Platform::init(const platform::InitParams &initParams) {
@@ -778,7 +888,7 @@ namespace fg {
                                         glDisable(GL_BLEND);
                                         glEnable(GL_DEPTH_TEST);
 
-                                        for(unsigned i = 0; i < platform::TEXTURE_UNITS_MAX; i++) {
+                                        for(unsigned i = 0; i < FG_TEXTURE_UNITS_MAX; i++) {
                                             _lastTextureWidth[i] = 0.0f;
                                             _lastTextureHeight[i] = 0.0f;
                                         }
@@ -787,11 +897,9 @@ namespace fg {
                                         _defaultRenderTarget._depthTexture._width = unsigned(_nativeWidth);
                                         _defaultRenderTarget._depthTexture._height = unsigned(_nativeHeight);
                                         _defaultRenderTarget._depthTexture._mipCount = 1;
-                                        _defaultRenderTarget._renderTexture[0]._width = unsigned(_nativeWidth);
-                                        _defaultRenderTarget._renderTexture[0]._height = unsigned(_nativeHeight);
-                                        _defaultRenderTarget._renderTexture[0]._mipCount = 1;
-
-                                        _curRenderTarget = &_defaultRenderTarget;
+                                        _defaultRenderTarget._renderTextures[0]._width = unsigned(_nativeWidth);
+                                        _defaultRenderTarget._renderTextures[0]._height = unsigned(_nativeHeight);
+                                        _defaultRenderTarget._renderTextures[0]._mipCount = 1;                                        
                                         return true;
                                     }
                                 }
@@ -832,11 +940,11 @@ namespace fg {
         }
 
         float ES3DesktopWin32Platform::getCurrentRTWidth() const {
-            return float(_curRenderTarget->getRenderBuffer(0)->getWidth());
+            return float(_curRTWidth);
         }
 
         float ES3DesktopWin32Platform::getCurrentRTHeight() const {
-            return float(_curRenderTarget->getRenderBuffer(0)->getHeight());
+            return float(_curRTHeight);
         }
 
         float ES3DesktopWin32Platform::getTextureWidth(platform::TextureSlot slot) const {
@@ -958,73 +1066,187 @@ namespace fg {
         }
 
         platform::VertexBufferInterface *ES3DesktopWin32Platform::rdCreateVertexBuffer(platform::VertexType vtype, unsigned vcount, bool isDynamic, const void *data) {
-            auto ptr = new ES3DesktopWin32VertexBuffer (vtype, vcount, isDynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
+            auto result = new ES3DesktopWin32VertexBuffer (vtype, vcount, isDynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
 
-            if(data) {
-                memcpy(ptr->lock(), data, ptr->getLength());
-                ptr->unlock();
+            if (result->valid()) {
+                if (data) {
+                    memcpy(result->lock(), data, result->getLength());
+                    result->unlock();
+                }
+            }
+            else {
+                _log.msgError("cant't create vertex buffer");
+                delete result;
+                result = nullptr;
             }
 
-            return ptr; 
+            return result;
         }
 
         platform::IndexedVertexBufferInterface *ES3DesktopWin32Platform::rdCreateIndexedVertexBuffer(platform::VertexType vtype, unsigned vcount, unsigned ushortIndexCount, bool isDynamic, const void *vdata, const void *idata) {
-            auto ptr = new ES3DesktopWin32IndexedVertexBuffer(vtype, vcount, ushortIndexCount, isDynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
+            auto result = new ES3DesktopWin32IndexedVertexBuffer(vtype, vcount, ushortIndexCount, isDynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
 
-            if(vdata) {
-                memcpy(ptr->lockVertices(), vdata, ptr->getVertexDataLength());
-                ptr->unlockVertices();
+            if (result->valid()) {
+                if (vdata) {
+                    memcpy(result->lockVertices(), vdata, result->getVertexDataLength());
+                    result->unlockVertices();
+                }
+                if (idata) {
+                    memcpy(result->lockIndices(), idata, result->getIndexDataLength());
+                    result->unlockIndices();
+                }
             }
-            if(idata) {
-                memcpy(ptr->lockIndices(), idata, ptr->getIndexDataLength());
-                ptr->unlockIndices();
+            else {
+                _log.msgError("cant't create indexed vertex buffer");
+                delete result;
+                result = nullptr;
             }
 
-            return ptr;
+            return result;
         }
 
         platform::InstanceDataInterface *ES3DesktopWin32Platform::rdCreateInstanceData(platform::InstanceDataType type, unsigned instanceCount) {
-            return new ES3DesktopWin32InstanceData (type, instanceCount);
+            auto result = new ES3DesktopWin32InstanceData (type, instanceCount);
+
+            if (result->valid() == false) {
+                _log.msgError("cant't create instance data");
+                delete result;
+                result = nullptr;
+            }
+
+            return result;
         }
 
         platform::ShaderInterface *ES3DesktopWin32Platform::rdCreateShader(const byteinput &binary) {
-            return new ES3DesktopWin32Shader (binary, _log);
+            auto result = new ES3DesktopWin32Shader (binary, _log);
+
+            if (result->valid() == false) {
+                _log.msgError("cant't create shader");
+                delete result;
+                result = nullptr;
+            }
+
+            return result;
         }
 
         platform::RasterizerParamsInterface *ES3DesktopWin32Platform::rdCreateRasterizerParams(platform::CullMode cull) {
-            return new ES3DesktopWin32RasterizerParams (cull);
+            auto result = new ES3DesktopWin32RasterizerParams (cull);
+
+            if (result->valid() == false) {
+                _log.msgError("cant't create rasterizer params");
+                delete result;
+                result = nullptr;
+            }
+
+            return result;
         }
 
         platform::BlenderParamsInterface *ES3DesktopWin32Platform::rdCreateBlenderParams(const platform::BlendMode blendMode) {
-            return new ES3DesktopWin32BlenderParams (blendMode);
+            auto result = new ES3DesktopWin32BlenderParams (blendMode);
+
+            if (result->valid() == false) {
+                _log.msgError("cant't create blend params");
+                delete result;
+                result = nullptr;
+            }
+
+            return result;
         }
 
         platform::DepthParamsInterface *ES3DesktopWin32Platform::rdCreateDepthParams(bool depthEnabled, platform::DepthFunc compareFunc, bool depthWriteEnabled) {
-            return new ES3DesktopWin32DepthParams (depthEnabled, compareFunc, depthWriteEnabled);
+            auto result = new ES3DesktopWin32DepthParams (depthEnabled, compareFunc, depthWriteEnabled);
+
+            if (result->valid() == false) {
+                _log.msgError("cant't create depth params");
+                delete result;
+                result = nullptr;
+            }
+
+            return result;
         }
 
         platform::SamplerInterface *ES3DesktopWin32Platform::rdCreateSampler(platform::TextureFilter filter, platform::TextureAddressMode addrMode, float minLod, float bias) {
-            return new ES3DesktopWin32Sampler (filter, addrMode, minLod, bias);
+            auto result = new ES3DesktopWin32Sampler (filter, addrMode, minLod, bias);
+
+            if (result->valid() == false) {
+                _log.msgError("cant't create sampler");
+                delete result;
+                result = nullptr;
+            }
+
+            return result;
         }
 
         platform::ShaderConstantBufferInterface *ES3DesktopWin32Platform::rdCreateShaderConstantBuffer(platform::ShaderConstBufferUsing appoint, unsigned byteWidth) {
-            return new ES3DesktopWin32ShaderConstantBuffer (unsigned(appoint), byteWidth);
+            auto result = new ES3DesktopWin32ShaderConstantBuffer (unsigned(appoint), byteWidth);
+
+            if (result->valid() == false) {
+                _log.msgError("cant't create uniform buffer");
+                delete result;
+                result = nullptr;
+            }
+
+            return result;
         }
 
         platform::Texture2DInterface *ES3DesktopWin32Platform::rdCreateTexture2D(unsigned char *const *imgMipsBinaryData, unsigned originWidth, unsigned originHeight, unsigned mipCount, platform::TextureFormat fmt) {
-            return new ES3DesktopWin32Texture2D (imgMipsBinaryData, originWidth, originHeight, mipCount, fmt);
+            auto result = new ES3DesktopWin32Texture2D (imgMipsBinaryData, originWidth, originHeight, mipCount, fmt);
+
+            if (result->valid() == false) {
+                _log.msgError("cant't create 2d texture from memory");
+                delete result;
+                result = nullptr;
+            }
+
+            return result;
         }
 
         platform::Texture2DInterface *ES3DesktopWin32Platform::rdCreateTexture2D(platform::TextureFormat format, unsigned originWidth, unsigned originHeight, unsigned mipCount) {
-            return new ES3DesktopWin32Texture2D (format, originWidth, originHeight, mipCount);
+            auto result = new ES3DesktopWin32Texture2D (format, originWidth, originHeight, mipCount);
+
+            if (result->valid() == false) {
+                _log.msgError("cant't create 2d texture");
+                delete result;
+                result = nullptr;
+            }
+
+            return result;
         }
 
         platform::TextureCubeInterface *ES3DesktopWin32Platform::rdCreateTextureCube(unsigned char **imgMipsBinaryData[6], unsigned originSize, unsigned mipCount, platform::TextureFormat fmt) {
-            return new ES3DesktopWin32TextureCube(imgMipsBinaryData, originSize, mipCount, fmt);
+            auto result = new ES3DesktopWin32TextureCube(imgMipsBinaryData, originSize, mipCount, fmt);
+
+            if (result->valid() == false) {
+                _log.msgError("cant't create cube texture");
+                delete result;
+                result = nullptr;
+            }
+
+            return result;
         }
 
-        platform::RenderTargetInterface *ES3DesktopWin32Platform::rdCreateRenderTarget(unsigned colorTargetCount, unsigned originWidth, unsigned originHeight) {
-            return new ES3DesktopWin32RenderTarget (colorTargetCount, originWidth, originHeight);
+        platform::RenderTargetInterface *ES3DesktopWin32Platform::rdCreateRenderTarget(unsigned colorTargetCount, unsigned originWidth, unsigned originHeight, platform::RenderTargetType type) {
+            auto result = new ES3DesktopWin32RenderTarget (colorTargetCount, originWidth, originHeight, type);
+
+            if (result->valid() == false) {
+                _log.msgError("cant't create render target");
+                delete result;
+                result = nullptr;
+            }
+
+            return result;
+        }
+
+        platform::CubeRenderTargetInterface *ES3DesktopWin32Platform::rdCreateCubeRenderTarget(unsigned originSize, platform::RenderTargetType type) {
+            auto result = new ES3DesktopWin32CubeRenderTarget(originSize, type);
+
+            if (result->valid() == false) {
+                _log.msgError("cant't create cube render target");
+                delete result;
+                result = nullptr;
+            }
+
+            return result;
         }
 
         platform::RenderTargetInterface *ES3DesktopWin32Platform::rdGetDefaultRenderTarget() {
@@ -1043,10 +1265,24 @@ namespace fg {
 
         void ES3DesktopWin32Platform::rdSetRenderTarget(const platform::RenderTargetInterface *rt) {
             ES3DesktopWin32RenderTarget *platformObject = (ES3DesktopWin32RenderTarget *)rt;
-            _curRenderTarget = platformObject;
             
             if (platformObject) {
+                _curRTWidth = platformObject->getWidth();
+                _curRTHeight = platformObject->getHeight();
+                _curRTColorTargetCount = platformObject->getRenderBufferCount();
+
                 platformObject->set();
+            }
+        }
+
+        void ES3DesktopWin32Platform::rdSetCubeRenderTarget(const platform::CubeRenderTargetInterface *rt, unsigned faceIndex) {
+            ES3DesktopWin32CubeRenderTarget *platformObject = (ES3DesktopWin32CubeRenderTarget *)rt;
+            
+            if (platformObject) {
+                _curRTWidth = platformObject->getSize();
+                _curRTHeight = platformObject->getSize();
+
+                platformObject->set(faceIndex);
             }
         }
 

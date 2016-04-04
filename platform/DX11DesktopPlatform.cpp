@@ -1812,32 +1812,50 @@ namespace fg {
 
         void DesktopPlatform::rdSetShader(const platform::ShaderInterface *shader) {
             DesktopShader *dxObject = (DesktopShader *)shader;
-            dxObject->set();
+            
+            if (dxObject) {
+                dxObject->set();
+            }
         }
 
         void DesktopPlatform::rdSetRasterizerParams(const platform::RasterizerParamsInterface *params) {
             DesktopRasterizerParams *dxObj = (DesktopRasterizerParams *)params;
-            dxObj->set();
+
+            if (dxObj) {
+                dxObj->set();
+            }
         }
 
         void DesktopPlatform::rdSetBlenderParams(const platform::BlenderParamsInterface *params) {
             DesktopBlenderParams *dxObj = (DesktopBlenderParams *)params;
-            dxObj->set();
+
+            if (dxObj) {
+                dxObj->set();
+            }
         }
 
         void DesktopPlatform::rdSetDepthParams(const platform::DepthParamsInterface *params) {
             DesktopDepthParams *dxObj = (DesktopDepthParams *)params;
-            dxObj->set();
+
+            if (dxObj) {
+                dxObj->set();
+            }
         }
 
         void DesktopPlatform::rdSetSampler(platform::TextureSlot slot, const platform::SamplerInterface *sampler) {
             DesktopSampler *dxObj = (DesktopSampler *)sampler;
-            dxObj->set(slot);
+
+            if (dxObj) {
+                dxObj->set(slot);
+            }
         }
 
         void DesktopPlatform::rdSetShaderConstBuffer(const platform::ShaderConstantBufferInterface *cbuffer) {
             DesktopShaderConstantBuffer *dxObj = (DesktopShaderConstantBuffer *)cbuffer;
-            dxObj->set();
+
+            if (dxObj) {
+                dxObj->set();
+            }
         }
 
         void DesktopPlatform::rdSetTexture2D(platform::TextureSlot slot, const platform::Texture2DInterface *texture) {

@@ -1,5 +1,9 @@
 
 namespace fg {    
+    namespace object3d {
+        template <bool(*op)(float, float)> class RenderObjectComponentCmp;  
+    }
+
     namespace render {
         struct DefaultFrameConstants {
             float       screenWidth;
